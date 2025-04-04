@@ -1,0 +1,39 @@
+{
+  "name": "five-adventures",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "seed:install": "node scripts/install-seed-deps.js",
+    "seed:items": "node scripts/seed-data.js items ./data/items.json",
+    "seed:adventures": "node scripts/seed-data.js adventures ./data/adventures.json",
+    "seed:worldboss": "node scripts/seed-data.js worldboss ./data/worldboss.json",
+    "seed:all": "node scripts/seed-data.js all ./data"
+  },
+  "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.8.7",
+    "@supabase/supabase-js": "^2.39.3",
+    "dotenv": "^16.4.7",
+    "next": "14.1.1",
+    "react": "^18",
+    "react-dom": "^18",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5",
+    "uuid": "^9.0.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/uuid": "^9.0.7",
+    "autoprefixer": "^10.0.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.1.1",
+    "postcss": "^8",
+    "typescript": "^5"
+  }
+}

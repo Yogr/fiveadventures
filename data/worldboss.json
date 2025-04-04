@@ -1,0 +1,122 @@
+[
+  {
+    "name": "Ancient Dragon",
+    "description": "A fearsome dragon that has awakened from its slumber. Its scales shimmer with magical energy, and its breath can melt stone.",
+    "week": 1,
+    "total_hitpoints": 10000,
+    "current_hitpoints": 10000,
+    "player_count": 0,
+    "attack_count": 0,
+    "total_damage": 0,
+    "is_defeated": false,
+    "image_url": null
+  },
+  {
+    "name": "Forest Guardian",
+    "description": "A massive treant that has been corrupted by dark magic. Once a protector of the forest, it now seeks to destroy all who enter its domain.",
+    "week": 2,
+    "total_hitpoints": 15000,
+    "current_hitpoints": 15000,
+    "player_count": 0,
+    "attack_count": 0,
+    "total_damage": 0,
+    "is_defeated": false,
+    "image_url": null
+  },
+  {
+    "name": "Kraken of the Deep",
+    "description": "A colossal sea monster with tentacles that can crush ships. It has risen from the ocean depths to terrorize coastal villages.",
+    "week": 3,
+    "total_hitpoints": 20000,
+    "current_hitpoints": 20000,
+    "player_count": 0,
+    "attack_count": 0,
+    "total_damage": 0,
+    "is_defeated": false,
+    "image_url": null
+  },
+  {
+    "name": "Undead Lich King",
+    "description": "A powerful necromancer who achieved immortality through dark rituals. He commands an army of the dead and wields devastating magic.",
+    "week": 4,
+    "total_hitpoints": 25000,
+    "current_hitpoints": 25000,
+    "player_count": 0,
+    "attack_count": 0,
+    "total_damage": 0,
+    "is_defeated": false,
+    "image_url": null
+  },
+  {
+    "name": "Elemental Titan",
+    "description": "A massive being formed from the four primal elements: earth, fire, water, and air. Its power is unmatched in the mortal realm.",
+    "week": 5,
+    "total_hitpoints": 30000,
+    "current_hitpoints": 30000,
+    "player_count": 0,
+    "attack_count": 0,
+    "total_damage": 0,
+    "is_defeated": false,
+    "image_url": null
+  },
+  {
+    "name": "Shadow Demon",
+    "description": "A terrifying entity from the realm of shadows. It feeds on fear and can manipulate darkness to its will.",
+    "week": 6,
+    "total_hitpoints": 35000,
+    "current_hitpoints": 35000,
+    "player_count": 0,
+    "attack_count": 0,
+    "total_damage": 0,
+    "is_defeated": false,
+    "image_url": null
+  },
+  {
+    "name": "Celestial Phoenix",
+    "description": "A divine bird of immense power that has been corrupted by chaos magic. Its flames burn with both creation and destruction.",
+    "week": 7,
+    "total_hitpoints": 40000,
+    "current_hitpoints": 40000,
+    "player_count": 0,
+    "attack_count": 0,
+    "total_damage": 0,
+    "is_defeated": false,
+    "image_url": null
+  },
+  {
+    "name": "Mountain Colossus",
+    "description": "A giant made of living stone that has slumbered for centuries. Now awakened, it threatens to reshape the land with its immense strength.",
+    "week": 8,
+    "total_hitpoints": 45000,
+    "current_hitpoints": 45000,
+    "player_count": 0,
+    "attack_count": 0,
+    "total_damage": 0,
+    "is_defeated": false,
+    "image_url": null
+  },
+  {
+    "name": "Arcane Construct",
+    "description": "A magical creation designed by ancient wizards as the ultimate weapon. It has broken free from its creators' control and now seeks to absorb all magic in the world.",
+    "week": 9,
+    "total_hitpoints": 50000,
+    "current_hitpoints": 50000,
+    "player_count": 0,
+    "attack_count": 0,
+    "total_damage": 0,
+    "is_defeated": false,
+    "image_url": null
+  },
+  {
+    "name": "Chaos Dragon",
+    "description": "The most powerful dragon in existence, capable of manipulating reality itself. Its mere presence warps the fabric of the world around it.",
+    "week": 10,
+    "total_hitpoints": 100000,
+    "current_hitpoints": 100000,
+    "player_count": 0,
+    "attack_count": 0,
+    "total_damage": 0,
+    "is_defeated": false,
+    "image_url": null
+  }
+]

@@ -1,0 +1,369 @@
+[
+  {
+    "name": "Steel Longsword",
+    "type": "Weapon",
+    "rarity": "Common",
+    "weapon_type": "Slashing",
+    "base_damage": 8,
+    "effects": {
+      "stat_boosts": {
+        "strength": 2
+      }
+    },
+    "value": 20,
+    "image_url": null
+  },
+  {
+    "name": "Iron Mace",
+    "type": "Weapon",
+    "rarity": "Common",
+    "weapon_type": "Blunt",
+    "base_damage": 7,
+    "effects": {
+      "stat_boosts": {
+        "strength": 1
+      },
+      "critical_hit": {
+        "chance": 5,
+        "multiplier": 1.5
+      }
+    },
+    "value": 18,
+    "image_url": null
+  },
+  {
+    "name": "Hunter's Bow",
+    "type": "Weapon",
+    "rarity": "Common",
+    "weapon_type": "Piercing",
+    "base_damage": 6,
+    "effects": {
+      "stat_boosts": {
+        "agility": 2
+      }
+    },
+    "value": 15,
+    "image_url": null
+  },
+  {
+    "name": "Apprentice Wand",
+    "type": "Weapon",
+    "rarity": "Common",
+    "weapon_type": "Magic",
+    "base_damage": 5,
+    "effects": {
+      "stat_boosts": {
+        "intelligence": 3
+      }
+    },
+    "value": 25,
+    "image_url": null
+  },
+  {
+    "name": "Leather Cap",
+    "type": "Helmet",
+    "rarity": "Common",
+    "base_defense": 2,
+    "effects": {
+      "stat_boosts": {
+        "agility": 1
+      }
+    },
+    "value": 10,
+    "image_url": null
+  },
+  {
+    "name": "Iron Helmet",
+    "type": "Helmet",
+    "rarity": "Common",
+    "base_defense": 4,
+    "effects": null,
+    "value": 20,
+    "image_url": null
+  },
+  {
+    "name": "Wizard's Hat",
+    "type": "Helmet",
+    "rarity": "Uncommon",
+    "base_defense": 1,
+    "effects": {
+      "stat_boosts": {
+        "intelligence": 3
+      }
+    },
+    "value": 35,
+    "image_url": null
+  },
+  {
+    "name": "Leather Armor",
+    "type": "Armor",
+    "rarity": "Common",
+    "base_defense": 5,
+    "effects": {
+      "stat_boosts": {
+        "agility": 1
+      }
+    },
+    "value": 25,
+    "image_url": null
+  },
+  {
+    "name": "Chain Mail",
+    "type": "Armor",
+    "rarity": "Common",
+    "base_defense": 8,
+    "effects": {
+      "stat_boosts": {
+        "strength": 1
+      }
+    },
+    "value": 40,
+    "image_url": null
+  },
+  {
+    "name": "Mage Robes",
+    "type": "Armor",
+    "rarity": "Uncommon",
+    "base_defense": 3,
+    "effects": {
+      "stat_boosts": {
+        "intelligence": 3,
+        "energy": 10
+      }
+    },
+    "value": 45,
+    "image_url": null
+  },
+  {
+    "name": "Lucky Coin",
+    "type": "Trinket",
+    "rarity": "Uncommon",
+    "effects": {
+      "stat_boosts": {
+        "luck": 3
+      }
+    },
+    "value": 30,
+    "image_url": null
+  },
+  {
+    "name": "Warrior's Pendant",
+    "type": "Trinket",
+    "rarity": "Uncommon",
+    "effects": {
+      "stat_boosts": {
+        "strength": 2,
+        "hitpoints": 10
+      }
+    },
+    "value": 35,
+    "image_url": null
+  },
+  {
+    "name": "Thief's Charm",
+    "type": "Trinket",
+    "rarity": "Uncommon",
+    "effects": {
+      "stat_boosts": {
+        "agility": 2,
+        "luck": 2
+      }
+    },
+    "value": 40,
+    "image_url": null
+  },
+  {
+    "name": "Enchanted Amulet",
+    "type": "Trinket",
+    "rarity": "Rare",
+    "effects": {
+      "stat_boosts": {
+        "intelligence": 3,
+        "energy": 15
+      },
+      "elemental": {
+        "type": "Fire",
+        "damage": 5
+      }
+    },
+    "value": 75,
+    "image_url": null
+  },
+  {
+    "name": "Flaming Sword",
+    "type": "Weapon",
+    "rarity": "Rare",
+    "weapon_type": "Slashing",
+    "base_damage": 12,
+    "effects": {
+      "elemental": {
+        "type": "Fire",
+        "damage": 5
+      },
+      "stat_boosts": {
+        "strength": 3
+      }
+    },
+    "value": 120,
+    "image_url": null
+  },
+  {
+    "name": "Frost Staff",
+    "type": "Weapon",
+    "rarity": "Rare",
+    "weapon_type": "Magic",
+    "base_damage": 10,
+    "effects": {
+      "elemental": {
+        "type": "Ice",
+        "damage": 6
+      },
+      "stat_boosts": {
+        "intelligence": 4
+      }
+    },
+    "value": 130,
+    "image_url": null
+  },
+  {
+    "name": "Shadow Dagger",
+    "type": "Weapon",
+    "rarity": "Rare",
+    "weapon_type": "Piercing",
+    "base_damage": 9,
+    "effects": {
+      "critical_hit": {
+        "chance": 15,
+        "multiplier": 2.0
+      },
+      "stat_boosts": {
+        "agility": 4,
+        "luck": 2
+      }
+    },
+    "value": 110,
+    "image_url": null
+  },
+  {
+    "name": "Plate Armor",
+    "type": "Armor",
+    "rarity": "Rare",
+    "base_defense": 15,
+    "effects": {
+      "stat_boosts": {
+        "strength": 2,
+        "hitpoints": 20
+      }
+    },
+    "value": 150,
+    "image_url": null
+  },
+  {
+    "name": "Enchanted Helmet",
+    "type": "Helmet",
+    "rarity": "Rare",
+    "base_defense": 8,
+    "effects": {
+      "stat_boosts": {
+        "intelligence": 2,
+        "energy": 10
+      }
+    },
+    "value": 100,
+    "image_url": null
+  },
+  {
+    "name": "Dragon Slayer",
+    "type": "Weapon",
+    "rarity": "Epic",
+    "weapon_type": "Slashing",
+    "base_damage": 18,
+    "effects": {
+      "boss_damage_multiplier": 1.5,
+      "stat_boosts": {
+        "strength": 5
+      }
+    },
+    "value": 300,
+    "image_url": null
+  },
+  {
+    "name": "Archmage Staff",
+    "type": "Weapon",
+    "rarity": "Epic",
+    "weapon_type": "Magic",
+    "base_damage": 15,
+    "effects": {
+      "elemental": {
+        "type": "Lightning",
+        "damage": 10
+      },
+      "stat_boosts": {
+        "intelligence": 6,
+        "energy": 20
+      }
+    },
+    "value": 320,
+    "image_url": null
+  },
+  {
+    "name": "Amulet of Second Chances",
+    "type": "Trinket",
+    "rarity": "Epic",
+    "effects": {
+      "special": {
+        "type": "Retry",
+        "description": "Allows retrying one adventure outcome per day"
+      },
+      "stat_boosts": {
+        "luck": 5
+      }
+    },
+    "value": 500,
+    "image_url": null
+  },
+  {
+    "name": "Legendary Blade of Heroes",
+    "type": "Weapon",
+    "rarity": "Legendary",
+    "weapon_type": "Slashing",
+    "base_damage": 25,
+    "effects": {
+      "elemental": {
+        "type": "Light",
+        "damage": 15
+      },
+      "boss_damage_multiplier": 2.0,
+      "stat_boosts": {
+        "strength": 8,
+        "agility": 5,
+        "luck": 5
+      }
+    },
+    "value": 1000,
+    "image_url": null
+  },
+  {
+    "name": "Ancient Wizard's Grimoire",
+    "type": "Weapon",
+    "rarity": "Legendary",
+    "weapon_type": "Magic",
+    "base_damage": 22,
+    "effects": {
+      "elemental": {
+        "type": "Arcane",
+        "damage": 20
+      },
+      "stat_boosts": {
+        "intelligence": 10,
+        "energy": 50
+      },
+      "special": {
+        "type": "EnergyRegen",
+        "description": "Regenerates 5 energy after each adventure"
+      }
+    },
+    "value": 1200,
+    "image_url": null
+  }
+]

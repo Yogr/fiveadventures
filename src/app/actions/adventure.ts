@@ -1,0 +1,316 @@
+'use server';
+
+import { cookies } from 'next/headers';
+import { supabase } from '@/lib/supabase';
+import { 
+  generateAdventureSeed, 
+  getCurrentGameDay,
+  calculateSuccessRate,
+  getLevelFromExperience
+} from '@/lib/utils';
+import { COOKIE_NAMES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
+import { 
+  ApiResponse, 
+  Adventure, 
+  AdventureOutcome, 
+  Character 
+} from '@/lib/types';
+import { getCharacter } from './character';
+
+// Get a random adventure for a character
+export async function getAdventure(
+  characterId: string
+): Promise<ApiResponse<Adventure>> {
+  try {
+    // Get character data to check if they need a non-violent adventure
+    const characterResponse = await getCharacter(characterId);
+    if (!characterResponse.success || !characterResponse.data) {
+      return {
+        success: false,
+        error: 'Character not found'
+      };
+    }
+    
+    const character = characterResponse.data;
+    
+    // Check if character has completed all adventures for the day
+    if (character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
+      return {
+        success: false,
+        error: 'All adventures completed for today'
+      };
+    }
+    
+    // Determine if we need a non-violent adventure (if character has 0 HP)
+    const needsNonViolent = character.current_hitpoints <= 0;
+    
+    // Generate a seed based on character ID and current day
+    const seed = generateAdventureSeed(characterId, character.last_played_day);
+    
+    // Get all available adventures
+    let query = supabase
+      .from('adventures')
+      .select(`
+        *,
+        decisions:adventure_decisions(
+          *,
+          outcomes:adventure_outcomes(*)
+        )
+      `);
+    
+    // Filter for non-violent adventures if needed
+    if (needsNonViolent) {
+      query = query.eq('is_violent', false);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error || !data || data.length === 0) {
+      console.error('Error getting adventures:', error);
+      return {
+        success: false,
+        error: 'Failed to get adventures'
+      };
+    }
+    
+    // Use the seed to select a random adventure
+    // For simplicity, we'll use the seed to generate an index
+    const adventureIndex = Math.abs(seed) % data.length;
+    const selectedAdventure = data[adventureIndex];
+    
+    return {
+      success: true,
+      data: selectedAdventure as Adventure
+    };
+  } catch (err) {
+    console.error('Unexpected error getting adventure:', err);
+    return {
+      success: false,
+      error: 'An unexpected error occurred'
+    };
+  }
+}
+
+// Complete an adventure
+export async function completeAdventure({
+  characterId,
+  adventureId,
+  decisionId
+}: {
+  characterId: string;
+  adventureId: string;
+  decisionId: string;
+}): Promise<ApiResponse<{
+  character: Character;
+  outcome: AdventureOutcome;
+}>> {
+  try {
+    // Get character data
+    const characterResponse = await getCharacter(characterId);
+    if (!characterResponse.success || !characterResponse.data) {
+      return {
+        success: false,
+        error: 'Character not found'
+      };
+    }
+    
+    const character = characterResponse.data;
+    
+    // Check if character has completed all adventures for the day
+    if (character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
+      return {
+        success: false,
+        error: 'All adventures completed for today'
+      };
+    }
+    
+    // Get the adventure decision and its outcomes
+    const { data: decision, error: decisionError } = await supabase
+      .from('adventure_decisions')
+      .select(`
+        *,
+        outcomes:adventure_outcomes(*)
+      `)
+      .eq('id', decisionId)
+      .eq('adventure_id', adventureId)
+      .single();
+    
+    if (decisionError || !decision) {
+      console.error('Error getting decision:', decisionError);
+      return {
+        success: false,
+        error: 'Failed to get decision'
+      };
+    }
+    
+    // Get the adventure for min rewards
+    const { data: adventure, error: adventureError } = await supabase
+      .from('adventures')
+      .select('*')
+      .eq('id', adventureId)
+      .single();
+    
+    if (adventureError || !adventure) {
+      console.error('Error getting adventure:', adventureError);
+      return {
+        success: false,
+        error: 'Failed to get adventure'
+      };
+    }
+    
+    // Determine the outcome based on character stats and requirements
+    // For now, we'll just pick the first outcome
+    // In a real implementation, we would calculate success rates based on character stats
+    const outcomes = decision.outcomes as AdventureOutcome[];
+    if (!outcomes || outcomes.length === 0) {
+      return {
+        success: false,
+        error: 'No outcomes available for this decision'
+      };
+    }
+    
+    // Calculate success rates for each outcome based on character stats
+    const characterStats = {
+      strength: character.strength,
+      intelligence: character.intelligence,
+      agility: character.agility,
+      luck: character.luck,
+      level: getLevelFromExperience(character.experience)
+    };
+    
+    // Choose an outcome based on success rates
+    // For now, we'll just pick the first outcome
+    // In a real implementation, we would use a weighted random selection
+    const outcome = outcomes[0];
+    
+    // Calculate rewards
+    const experienceGained = adventure.min_experience + outcome.experience_bonus;
+    const goldGained = adventure.min_gold + outcome.gold_bonus;
+    
+    // Update character stats
+    const newExperience = character.experience + experienceGained;
+    const newGold = character.gold + goldGained;
+    const newHitpoints = Math.max(0, Math.min(character.max_hitpoints, character.current_hitpoints + outcome.hitpoints_change));
+    const newEnergy = Math.max(0, Math.min(character.max_energy, character.current_energy + outcome.energy_change));
+    const newAdventureCount = character.daily_adventure_count + 1;
+    
+    // Update character in database
+    const { error: updateError } = await supabase
+      .from('characters')
+      .update({
+        experience: newExperience,
+        gold: newGold,
+        current_hitpoints: newHitpoints,
+        current_energy: newEnergy,
+        daily_adventure_count: newAdventureCount,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', characterId);
+    
+    if (updateError) {
+      console.error('Error updating character:', updateError);
+      return {
+        success: false,
+        error: 'Failed to update character'
+      };
+    }
+    
+    // Record the adventure in the character's history
+    const { error: historyError } = await supabase
+      .from('character_adventures')
+      .insert({
+        character_id: characterId,
+        adventure_id: adventureId,
+        decision_id: decisionId,
+        outcome_id: outcome.id,
+        day: character.last_played_day,
+        adventure_number: newAdventureCount,
+        experience_gained: experienceGained,
+        gold_gained: goldGained,
+        item_gained_id: outcome.item_reward_id,
+        completed_at: new Date().toISOString()
+      });
+    
+    if (historyError) {
+      console.error('Error recording adventure history:', historyError);
+      // Continue anyway, this isn't critical
+    }
+    
+    // If there's an item reward, add it to the character's inventory
+    if (outcome.item_reward_id) {
+      const { error: inventoryError } = await supabase
+        .from('character_inventory')
+        .insert({
+          character_id: characterId,
+          item_id: outcome.item_reward_id,
+          quantity: 1,
+          acquired_at: new Date().toISOString()
+        });
+      
+      if (inventoryError) {
+        console.error('Error adding item to inventory:', inventoryError);
+        // Continue anyway, this isn't critical
+      }
+    }
+    
+    // Return updated character and outcome
+    return {
+      success: true,
+      data: {
+        character: {
+          ...character,
+          experience: newExperience,
+          gold: newGold,
+          current_hitpoints: newHitpoints,
+          current_energy: newEnergy,
+          daily_adventure_count: newAdventureCount
+        },
+        outcome
+      }
+    };
+  } catch (err) {
+    console.error('Unexpected error completing adventure:', err);
+    return {
+      success: false,
+      error: 'An unexpected error occurred'
+    };
+  }
+}
+
+// Get adventure history for a character
+export async function getAdventureHistory(
+  characterId: string
+): Promise<ApiResponse<any[]>> {
+  try {
+    const { data, error } = await supabase
+      .from('character_adventures')
+      .select(`
+        *,
+        adventure:adventure_id(*),
+        decision:decision_id(*),
+        outcome:outcome_id(*),
+        item_gained:item_gained_id(*)
+      `)
+      .eq('character_id', characterId)
+      .order('completed_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error getting adventure history:', error);
+      return {
+        success: false,
+        error: 'Failed to get adventure history'
+      };
+    }
+    
+    return {
+      success: true,
+      data: data || []
+    };
+  } catch (err) {
+    console.error('Unexpected error getting adventure history:', err);
+    return {
+      success: false,
+      error: 'An unexpected error occurred'
+    };
+  }
+}
