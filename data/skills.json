@@ -1,0 +1,197 @@
+[
+  {
+    "id": 1,
+    "name": "Rage",
+    "description": "Enter a rage, increasing your strength and attack power for 3 turns.",
+    "class": "Warrior",
+    "energy_cost": 15,
+    "cooldown": 5,
+    "effects": {
+      "strength_boost": 5,
+      "duration": 3
+    },
+    "image_url": "rage"
+  },
+  {
+    "id": 2,
+    "name": "Shield Bash",
+    "description": "Bash your enemy with your shield, stunning them for 1 turn.",
+    "class": "Warrior",
+    "energy_cost": 20,
+    "cooldown": 4,
+    "effects": {
+      "damage": 8,
+      "stun": 1
+    },
+    "image_url": "shield_bash"
+  },
+  {
+    "id": 3,
+    "name": "Cleave",
+    "description": "A powerful sweeping attack that can hit multiple enemies.",
+    "class": "Warrior",
+    "energy_cost": 25,
+    "cooldown": 3,
+    "effects": {
+      "damage": 15,
+      "multi_target": true
+    },
+    "image_url": "cleave"
+  },
+  {
+    "id": 4,
+    "name": "Fireball",
+    "description": "Launch a ball of fire at your enemy, dealing high damage.",
+    "class": "Wizard",
+    "energy_cost": 20,
+    "cooldown": 2,
+    "effects": {
+      "damage_multiplier": 1.5,
+      "element": "fire"
+    },
+    "image_url": "fireball"
+  },
+  {
+    "id": 5,
+    "name": "Ice Spike",
+    "description": "Summon a spike of ice to pierce your enemy, slowing them.",
+    "class": "Wizard",
+    "energy_cost": 15,
+    "cooldown": 3,
+    "effects": {
+      "damage": 12,
+      "slow": 2,
+      "element": "ice"
+    },
+    "image_url": "ice_spike"
+  },
+  {
+    "id": 6,
+    "name": "Arcane Shield",
+    "description": "Create a magical barrier that absorbs damage.",
+    "class": "Wizard",
+    "energy_cost": 25,
+    "cooldown": 5,
+    "effects": {
+      "shield": 20,
+      "duration": 3
+    },
+    "image_url": "arcane_shield"
+  },
+  {
+    "id": 7,
+    "name": "Pickpocket",
+    "description": "Attempt to steal gold or an item from your enemy.",
+    "class": "Thief",
+    "energy_cost": 10,
+    "cooldown": 3,
+    "effects": {
+      "gold_chance": 75,
+      "item_chance": 25
+    },
+    "image_url": "pickpocket"
+  },
+  {
+    "id": 8,
+    "name": "Backstab",
+    "description": "A deadly attack from behind that deals massive damage.",
+    "class": "Thief",
+    "energy_cost": 20,
+    "cooldown": 4,
+    "effects": {
+      "damage_multiplier": 2.0,
+      "requires_stealth": true
+    },
+    "image_url": "backstab"
+  },
+  {
+    "id": 9,
+    "name": "Smoke Bomb",
+    "description": "Throw a smoke bomb to escape combat or enter stealth.",
+    "class": "Thief",
+    "energy_cost": 15,
+    "cooldown": 5,
+    "effects": {
+      "escape_chance": 75,
+      "stealth": true
+    },
+    "image_url": "smoke_bomb"
+  },
+  {
+    "id": 10,
+    "name": "Precise Shot",
+    "description": "A carefully aimed shot that deals extra damage.",
+    "class": "Ranger",
+    "energy_cost": 15,
+    "cooldown": 2,
+    "effects": {
+      "damage_multiplier": 1.3,
+      "ignore_defense": true
+    },
+    "image_url": "precise_shot"
+  },
+  {
+    "id": 11,
+    "name": "Trap",
+    "description": "Set a trap that damages and slows your enemy.",
+    "class": "Ranger",
+    "energy_cost": 15,
+    "cooldown": 4,
+    "effects": {
+      "damage": 10,
+      "slow": 2
+    },
+    "image_url": "trap"
+  },
+  {
+    "id": 12,
+    "name": "Animal Companion",
+    "description": "Summon an animal companion to fight alongside you.",
+    "class": "Ranger",
+    "energy_cost": 30,
+    "cooldown": 6,
+    "effects": {
+      "summon": "animal",
+      "duration": 5
+    },
+    "image_url": "animal_companion"
+  },
+  {
+    "id": 13,
+    "name": "Heal",
+    "description": "Restore health to yourself.",
+    "class": "Cleric",
+    "energy_cost": 25,
+    "cooldown": 3,
+    "effects": {
+      "healing": 30
+    },
+    "image_url": "heal"
+  },
+  {
+    "id": 14,
+    "name": "Smite",
+    "description": "Channel divine energy to smite your enemy.",
+    "class": "Cleric",
+    "energy_cost": 20,
+    "cooldown": 2,
+    "effects": {
+      "damage": 15,
+      "bonus_vs_undead": 10
+    },
+    "image_url": "smite"
+  },
+  {
+    "id": 15,
+    "name": "Divine Shield",
+    "description": "Surround yourself with divine protection.",
+    "class": "Cleric",
+    "energy_cost": 30,
+    "cooldown": 5,
+    "effects": {
+      "shield": 25,
+      "duration": 3
+    },
+    "image_url": "divine_shield"
+  }
+]

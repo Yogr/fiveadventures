@@ -206,6 +206,128 @@ async function seedWorldBoss(filePath) {
   console.log('World boss seeding completed.');
 }
 
+// Seed monsters
+async function seedMonsters(filePath) {
+  console.log('Seeding monsters...');
+  const monsters = readJsonFile(filePath);
+  
+  if (!monsters || !Array.isArray(monsters)) {
+    console.error('Invalid monsters data format. Expected an array of monsters.');
+    return;
+  }
+  
+  for (const monster of monsters) {
+    // Add created_at if not provided
+    if (!monster.created_at) {
+      monster.created_at = new Date().toISOString();
+    }
+    
+    // Insert monster
+    const { error } = await supabase
+      .from('monsters')
+      .insert(monster);
+    
+    if (error) {
+      console.error(`Error inserting monster ${monster.name}:`, error);
+    } else {
+      console.log(`Monster inserted: ${monster.name}`);
+    }
+  }
+  
+  console.log('Monsters seeding completed.');
+}
+
+// Seed reward tables
+async function seedRewardTables(filePath) {
+  console.log('Seeding reward tables...');
+  const rewardTables = readJsonFile(filePath);
+  
+  if (!rewardTables || !Array.isArray(rewardTables)) {
+    console.error('Invalid reward tables data format. Expected an array of reward tables.');
+    return;
+  }
+  
+  for (const rewardTable of rewardTables) {
+    // Add created_at if not provided
+    if (!rewardTable.created_at) {
+      rewardTable.created_at = new Date().toISOString();
+    }
+    
+    // Extract reward items
+    const { items, ...rewardTableData } = rewardTable;
+    
+    // Insert reward table
+    const { error: tableError } = await supabase
+      .from('reward_tables')
+      .insert(rewardTableData);
+    
+    if (tableError) {
+      console.error(`Error inserting reward table ${rewardTable.name}:`, tableError);
+      continue;
+    }
+    
+    console.log(`Reward table inserted: ${rewardTable.name}`);
+    
+    // Insert reward items
+    if (items && Array.isArray(items)) {
+      for (const item of items) {
+        // Add created_at if not provided
+        if (!item.created_at) {
+          item.created_at = new Date().toISOString();
+        }
+        
+        // Set reward_table_id
+        item.reward_table_id = rewardTable.id;
+        
+        // Insert reward item
+        const { error: itemError } = await supabase
+          .from('reward_items')
+          .insert(item);
+        
+        if (itemError) {
+          console.error(`Error inserting reward item for table ${rewardTable.name}:`, itemError);
+          continue;
+        }
+        
+        console.log(`Reward item inserted for table ${rewardTable.name}: Item ID ${item.item_id}`);
+      }
+    }
+  }
+  
+  console.log('Reward tables seeding completed.');
+}
+
+// Seed skills
+async function seedSkills(filePath) {
+  console.log('Seeding skills...');
+  const skills = readJsonFile(filePath);
+  
+  if (!skills || !Array.isArray(skills)) {
+    console.error('Invalid skills data format. Expected an array of skills.');
+    return;
+  }
+  
+  for (const skill of skills) {
+    // Add created_at if not provided
+    if (!skill.created_at) {
+      skill.created_at = new Date().toISOString();
+    }
+    
+    // Insert skill
+    const { error } = await supabase
+      .from('skills')
+      .insert(skill);
+    
+    if (error) {
+      console.error(`Error inserting skill ${skill.name}:`, error);
+    } else {
+      console.log(`Skill inserted: ${skill.name}`);
+    }
+  }
+  
+  console.log('Skills seeding completed.');
+}
+
 // Main function
 async function main() {
   const args = process.argv.slice(2);
@@ -215,15 +337,21 @@ async function main() {
 Usage: node seed-data.js <command> <file>
 
 Commands:
-  items <file>       - Seed items from JSON file
-  adventures <file>  - Seed adventures from JSON file
-  worldboss <file>   - Seed world boss from JSON file
-  all <directory>    - Seed all data from directory (looks for items.json, adventures.json, worldboss.json)
+  items <file>         - Seed items from JSON file
+  adventures <file>    - Seed adventures from JSON file
+  worldboss <file>     - Seed world boss from JSON file
+  monsters <file>      - Seed monsters from JSON file
+  rewardtables <file>  - Seed reward tables from JSON file
+  skills <file>        - Seed skills from JSON file
+  all <directory>      - Seed all data from directory (looks for items.json, adventures.json, worldboss.json, monsters.json, rewardtables.json, skills.json)
 
 Examples:
   node seed-data.js items ./data/items.json
   node seed-data.js adventures ./data/adventures.json
   node seed-data.js worldboss ./data/worldboss.json
+  node seed-data.js monsters ./data/monsters.json
+  node seed-data.js rewardtables ./data/rewardtables.json
+  node seed-data.js skills ./data/skills.json
   node seed-data.js all ./data
     `);
     return;
@@ -248,11 +376,23 @@ Examples:
       case 'worldboss':
         await seedWorldBoss(filePath);
         break;
+      case 'monsters':
+        await seedMonsters(filePath);
+        break;
+      case 'rewardtables':
+        await seedRewardTables(filePath);
+        break;
+      case 'skills':
+        await seedSkills(filePath);
+        break;
       case 'all':
         const directory = filePath;
         await seedItems(path.join(directory, 'items.json'));
         await seedAdventures(path.join(directory, 'adventures.json'));
         await seedWorldBoss(path.join(directory, 'worldboss.json'));
+        await seedMonsters(path.join(directory, 'monsters.json'));
+        await seedRewardTables(path.join(directory, 'rewardtables.json'));
+        await seedSkills(path.join(directory, 'skills.json'));
         break;
       default:
         console.error(`Unknown command: ${command}`);

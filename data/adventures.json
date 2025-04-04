@@ -28,14 +28,16 @@
         "requirements": null,
         "outcomes": [
           {
-            "description": "You encounter a wild beast and barely escape! You're wounded but manage to grab some valuables in your hasty retreat.",
+            "description": "You encounter a wild beast! Prepare for combat!",
             "experience_bonus": 25,
             "gold_bonus": 5,
-            "item_reward_id": null,
-            "hitpoints_change": -10,
+            "reward_table_id": 5,
+            "hitpoints_change": 0,
             "energy_change": -10,
             "stat_requirements": null,
-            "success_rate_formula": null
+            "success_rate_formula": null,
+            "has_combat": true,
+            "monster_ids": [1, 2]
           }
         ]
       }
@@ -54,16 +56,18 @@
         "requirements": null,
         "outcomes": [
           {
-            "description": "You navigate through the temple's traps and puzzles, finding an ancient artifact of great value!",
+            "description": "As you navigate through the temple, you encounter ancient guardians protecting its treasures! Prepare for combat!",
             "experience_bonus": 40,
             "gold_bonus": 30,
-            "item_reward_id": null,
-            "hitpoints_change": -5,
+            "reward_table_id": 2,
+            "hitpoints_change": 0,
             "energy_change": -15,
             "stat_requirements": {
               "intelligence": 8
             },
-            "success_rate_formula": null
+            "success_rate_formula": null,
+            "has_combat": true,
+            "monster_ids": [3, 9]
           }
         ]
       },
@@ -116,16 +120,18 @@
         "requirements": null,
         "outcomes": [
           {
-            "description": "You defeat the bandits in combat! The grateful villagers reward you generously and spread tales of your bravery.",
+            "description": "You find the bandits' hideout and challenge them directly! Prepare for combat!",
             "experience_bonus": 50,
             "gold_bonus": 40,
-            "item_reward_id": null,
-            "hitpoints_change": -15,
+            "reward_table_id": 8,
+            "hitpoints_change": 0,
             "energy_change": -20,
             "stat_requirements": {
               "strength": 10
             },
-            "success_rate_formula": null
+            "success_rate_formula": null,
+            "has_combat": true,
+            "monster_ids": [2, 8]
           }
         ]
       },
@@ -243,14 +249,16 @@
         },
         "outcomes": [
           {
-            "description": "Your strength and agility allow you to scale the cliff with ease! You find a hidden cave containing valuable minerals on your way up.",
+            "description": "Your strength and agility allow you to scale the cliff with ease! In a hidden cave, you encounter a territorial beast! Prepare for combat!",
             "experience_bonus": 35,
             "gold_bonus": 30,
-            "item_reward_id": null,
+            "reward_table_id": 1,
             "hitpoints_change": 0,
             "energy_change": -15,
             "stat_requirements": null,
-            "success_rate_formula": null
+            "success_rate_formula": null,
+            "has_combat": true,
+            "monster_ids": [1, 7]
           }
         ]
       },
@@ -303,16 +311,18 @@
         "requirements": null,
         "outcomes": [
           {
-            "description": "You discover that the 'haunting' is actually caused by a group of thieves using the manor as their hideout. You defeat them and claim their ill-gotten treasures!",
+            "description": "You discover that the 'haunting' is actually caused by a group of thieves using the manor as their hideout. They attack as soon as they see you! Prepare for combat!",
             "experience_bonus": 45,
             "gold_bonus": 50,
-            "item_reward_id": null,
-            "hitpoints_change": -10,
+            "reward_table_id": 7,
+            "hitpoints_change": 0,
             "energy_change": -15,
             "stat_requirements": {
               "strength": 8
             },
-            "success_rate_formula": null
+            "success_rate_formula": null,
+            "has_combat": true,
+            "monster_ids": [2, 8]
           }
         ]
       },
@@ -365,16 +375,18 @@
         "requirements": null,
         "outcomes": [
           {
-            "description": "You follow the bandits' trail and ambush them at their camp. After a fierce battle, you recover most of the stolen merchandise. The grateful merchants reward you generously!",
+            "description": "You follow the bandits' trail to their camp. They spot you and prepare to defend their ill-gotten gains! Prepare for combat!",
             "experience_bonus": 40,
             "gold_bonus": 45,
-            "item_reward_id": null,
-            "hitpoints_change": -15,
+            "reward_table_id": 6,
+            "hitpoints_change": 0,
             "energy_change": -20,
             "stat_requirements": {
               "strength": 9
             },
-            "success_rate_formula": null
+            "success_rate_formula": null,
+            "has_combat": true,
+            "monster_ids": [2, 8]
           }
         ]
       },
@@ -428,17 +440,19 @@
         "requirements": null,
         "outcomes": [
           {
-            "description": "Deep within the cave, you find a chamber containing a magical crystal that's the source of the light. As you approach, creatures made of living stone attack! You defeat them and claim a piece of the crystal.",
+            "description": "Deep within the cave, you find a chamber containing a magical crystal that's the source of the light. As you approach, creatures made of living stone attack! Prepare for combat!",
             "experience_bonus": 50,
             "gold_bonus": 30,
-            "item_reward_id": null,
-            "hitpoints_change": -20,
+            "reward_table_id": 3,
+            "hitpoints_change": 0,
             "energy_change": -25,
             "stat_requirements": {
               "strength": 10,
               "intelligence": 8
             },
-            "success_rate_formula": null
+            "success_rate_formula": null,
+            "has_combat": true,
+            "monster_ids": [5, 9]
           }
         ]
       },
@@ -575,14 +589,16 @@
         },
         "outcomes": [
           {
-            "description": "You skillfully climb the tower and slip through an open window. Inside, you find the wizard's treasure room and manage to take some valuable magical artifacts before escaping undetected.",
+            "description": "You skillfully climb the tower and slip through an open window. Inside, you're confronted by the wizard's magical guardians! Prepare for combat!",
             "experience_bonus": 50,
             "gold_bonus": 45,
-            "item_reward_id": null,
+            "reward_table_id": 4,
             "hitpoints_change": 0,
             "energy_change": -15,
             "stat_requirements": null,
-            "success_rate_formula": null
+            "success_rate_formula": null,
+            "has_combat": true,
+            "monster_ids": [4, 6, 10]
           }
         ]
       },
