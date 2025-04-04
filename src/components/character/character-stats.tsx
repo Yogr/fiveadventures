@@ -20,49 +20,53 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
   const energyPercentage = (character.current_energy / character.max_energy) * 100;
   
   return (
-    <div className="bg-gray-800 p-4 rounded-md">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-2xl font-bold">{character.name}</h3>
-        <div className="text-xl">
+    <div className="bg-gray-800 p-2 sm:p-3 md:p-4 rounded-md">
+      <div className="flex justify-between items-center mb-2 sm:mb-3">
+        <h3 className="text-lg sm:text-xl md:text-2xl font-bold">{character.name}</h3>
+        <div className="text-sm sm:text-base md:text-lg">
           <span className="text-purple-400">Lv. {level}</span> {character.class}
         </div>
       </div>
       
-      {/* Character avatar placeholder */}
-      <div className="w-24 h-24 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
-        <span className="text-3xl">{character.name.charAt(0)}</span>
-      </div>
-      
-      {/* HP Bar */}
-      <div className="mb-2">
-        <div className="flex justify-between text-sm mb-1">
-          <span>HP</span>
-          <span>{character.current_hitpoints} / {character.max_hitpoints}</span>
+      <div className="flex flex-row gap-2 sm:gap-3 mb-2 sm:mb-3">
+        {/* Character avatar placeholder */}
+        <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
+          <span className="text-xl sm:text-2xl md:text-3xl">{character.name.charAt(0)}</span>
         </div>
-        <div className="stat-bar hp-bar">
-          <div 
-            className="stat-bar-fill" 
-            style={{ width: `${Math.max(0, Math.min(100, hpPercentage))}%` }}
-          ></div>
-          <div className="stat-bar-text">
-            {formatNumber(character.current_hitpoints)}/{formatNumber(character.max_hitpoints)}
+        
+        <div className="flex-grow flex flex-col justify-center">
+          {/* HP Bar */}
+          <div className="mb-2">
+            <div className="flex justify-between text-xs sm:text-sm mb-1">
+              <span>HP</span>
+              <span>{character.current_hitpoints} / {character.max_hitpoints}</span>
+            </div>
+            <div className="stat-bar hp-bar">
+              <div 
+                className="stat-bar-fill" 
+                style={{ width: `${Math.max(0, Math.min(100, hpPercentage))}%` }}
+              ></div>
+              <div className="stat-bar-text">
+                {formatNumber(character.current_hitpoints)}/{formatNumber(character.max_hitpoints)}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      
-      {/* Energy Bar */}
-      <div className="mb-2">
-        <div className="flex justify-between text-sm mb-1">
-          <span>Energy</span>
-          <span>{character.current_energy} / {character.max_energy}</span>
-        </div>
-        <div className="stat-bar energy-bar">
-          <div 
-            className="stat-bar-fill" 
-            style={{ width: `${Math.max(0, Math.min(100, energyPercentage))}%` }}
-          ></div>
-          <div className="stat-bar-text">
-            {formatNumber(character.current_energy)}/{formatNumber(character.max_energy)}
+          
+          {/* Energy Bar */}
+          <div className="mb-0">
+            <div className="flex justify-between text-xs sm:text-sm mb-1">
+              <span>Energy</span>
+              <span>{character.current_energy} / {character.max_energy}</span>
+            </div>
+            <div className="stat-bar energy-bar">
+              <div 
+                className="stat-bar-fill" 
+                style={{ width: `${Math.max(0, Math.min(100, energyPercentage))}%` }}
+              ></div>
+              <div className="stat-bar-text">
+                {formatNumber(character.current_energy)}/{formatNumber(character.max_energy)}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -85,26 +89,26 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
       </div>
       
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-2 mb-2">
-        <div className="bg-gray-700 p-2 rounded-md">
+      <div className="grid grid-cols-2 gap-1 sm:gap-2 mb-1 sm:mb-2 text-sm sm:text-base">
+        <div className="bg-gray-700 p-1 sm:p-2 rounded-md">
           <div className="flex justify-between">
             <span>STR</span>
             <span className="text-red-400">{character.strength}</span>
           </div>
         </div>
-        <div className="bg-gray-700 p-2 rounded-md">
+        <div className="bg-gray-700 p-1 sm:p-2 rounded-md">
           <div className="flex justify-between">
             <span>INT</span>
             <span className="text-blue-400">{character.intelligence}</span>
           </div>
         </div>
-        <div className="bg-gray-700 p-2 rounded-md">
+        <div className="bg-gray-700 p-1 sm:p-2 rounded-md">
           <div className="flex justify-between">
             <span>AGI</span>
             <span className="text-green-400">{character.agility}</span>
           </div>
         </div>
-        <div className="bg-gray-700 p-2 rounded-md">
+        <div className="bg-gray-700 p-1 sm:p-2 rounded-md">
           <div className="flex justify-between">
             <span>LCK</span>
             <span className="text-yellow-400">{character.luck}</span>
@@ -113,7 +117,7 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
       </div>
       
       {/* Gold */}
-      <div className="bg-gray-700 p-2 rounded-md">
+      <div className="bg-gray-700 p-1 sm:p-2 rounded-md text-sm sm:text-base">
         <div className="flex justify-between">
           <span>Gold</span>
           <span className="text-yellow-400">{formatNumber(character.gold)}</span>

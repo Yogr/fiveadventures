@@ -310,12 +310,12 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   // Show adventure and decisions
   return (
     <div className="pixel-border bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
-      <div className="flex flex-col md:flex-row gap-6 mb-6">
-        <div className="md:w-1/3">
+      <div className="flex flex-col gap-4 mb-6">
+        <div>
           <CharacterStats character={character} />
         </div>
         
-        <div className="md:w-2/3">
+        <div>
           <AdventureTracker 
             totalAdventures={MAX_ADVENTURES_PER_DAY} 
             completedAdventures={character.daily_adventure_count} 

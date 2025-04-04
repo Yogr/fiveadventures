@@ -2,8 +2,21 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['ebmwfcmwnnbeyjxeadmj.supabase.co'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ebmwfcmwnnbeyjxeadmj.supabase.co',
+        pathname: '**',
+      },
+    ],
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['localhost:3000', 'five-adventures.com'],
+    },
+    optimizePackageImports: ['@/components'],
+  },
+  poweredByHeader: false,
 };
 
 module.exports = nextConfig;

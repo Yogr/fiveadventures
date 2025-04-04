@@ -1,8 +1,20 @@
 -- Five Adventures Database Schema
 
+-- Enable Row Level Security
+ALTER TABLE IF EXISTS users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS characters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS character_inventory ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS character_equipment ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS character_adventures ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS character_boss_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS boss_rewards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS character_skills ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS combat ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS combat_turns ENABLE ROW LEVEL SECURITY;
+
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY,
+  id INTEGER PRIMARY KEY,
   email TEXT NOT NULL UNIQUE,
   auth_provider TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -11,8 +23,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Characters table
 CREATE TABLE IF NOT EXISTS characters (
-  id UUID PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
   name TEXT NOT NULL,
   class TEXT NOT NULL,
   level INTEGER NOT NULL DEFAULT 1,
@@ -35,7 +47,7 @@ CREATE TABLE IF NOT EXISTS characters (
 
 -- Items table
 CREATE TABLE IF NOT EXISTS items (
-  id UUID PRIMARY KEY,
+  id INTEGER PRIMARY KEY,
   name TEXT NOT NULL,
   type TEXT NOT NULL,
   rarity TEXT NOT NULL,
@@ -50,28 +62,28 @@ CREATE TABLE IF NOT EXISTS items (
 
 -- Character Inventory table
 CREATE TABLE IF NOT EXISTS character_inventory (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  character_id UUID NOT NULL REFERENCES characters(id),
-  item_id UUID NOT NULL REFERENCES items(id),
+  id INTEGER PRIMARY KEY,
+  character_id INTEGER NOT NULL REFERENCES characters(id),
+  item_id INTEGER NOT NULL REFERENCES items(id),
   quantity INTEGER NOT NULL DEFAULT 1,
   acquired_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Character Equipment table
 CREATE TABLE IF NOT EXISTS character_equipment (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  character_id UUID NOT NULL REFERENCES characters(id) UNIQUE,
-  weapon_id UUID REFERENCES items(id),
-  helmet_id UUID REFERENCES items(id),
-  armor_id UUID REFERENCES items(id),
-  trinket_id UUID REFERENCES items(id),
+  id INTEGER PRIMARY KEY,
+  character_id INTEGER NOT NULL REFERENCES characters(id) UNIQUE,
+  weapon_id INTEGER REFERENCES items(id),
+  helmet_id INTEGER REFERENCES items(id),
+  armor_id INTEGER REFERENCES items(id),
+  trinket_id INTEGER REFERENCES items(id),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Shop Items table
 CREATE TABLE IF NOT EXISTS shop_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  item_id UUID NOT NULL REFERENCES items(id),
+  id INTEGER PRIMARY KEY,
+  item_id INTEGER NOT NULL REFERENCES items(id),
   day INTEGER NOT NULL,
   price INTEGER NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -79,7 +91,7 @@ CREATE TABLE IF NOT EXISTS shop_items (
 
 -- Adventures table
 CREATE TABLE IF NOT EXISTS adventures (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id INTEGER PRIMARY KEY,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
   min_experience INTEGER NOT NULL DEFAULT 10,
@@ -91,46 +103,105 @@ CREATE TABLE IF NOT EXISTS adventures (
 
 -- Adventure Decisions table
 CREATE TABLE IF NOT EXISTS adventure_decisions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  adventure_id UUID NOT NULL REFERENCES adventures(id),
+  id INTEGER PRIMARY KEY,
+  adventure_id INTEGER NOT NULL REFERENCES adventures(id),
   description TEXT NOT NULL,
   requirements JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Skills table
+CREATE TABLE IF NOT EXISTS skills (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  class TEXT NOT NULL,
+  energy_cost INTEGER NOT NULL,
+  cooldown INTEGER NOT NULL DEFAULT 0,
+  effects JSONB,
+  image_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Character Skills table
+CREATE TABLE IF NOT EXISTS character_skills (
+  id INTEGER PRIMARY KEY,
+  character_id INTEGER NOT NULL REFERENCES characters(id),
+  skill_id INTEGER NOT NULL REFERENCES skills(id),
+  level INTEGER NOT NULL DEFAULT 1,
+  acquired_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(character_id, skill_id)
+);
+
+-- Monsters table
+CREATE TABLE IF NOT EXISTS monsters (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  hitpoints INTEGER NOT NULL,
+  attack INTEGER NOT NULL,
+  defense INTEGER NOT NULL,
+  experience_reward INTEGER NOT NULL,
+  gold_reward INTEGER NOT NULL,
+  difficulty INTEGER NOT NULL,
+  attack_type TEXT NOT NULL,
+  abilities JSONB,
+  image_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Reward Tables
+CREATE TABLE IF NOT EXISTS reward_tables (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Reward Items
+CREATE TABLE IF NOT EXISTS reward_items (
+  id INTEGER PRIMARY KEY,
+  reward_table_id INTEGER NOT NULL REFERENCES reward_tables(id),
+  item_id INTEGER NOT NULL REFERENCES items(id),
+  chance INTEGER NOT NULL, -- 0-100
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Adventure Outcomes table
 CREATE TABLE IF NOT EXISTS adventure_outcomes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  decision_id UUID NOT NULL REFERENCES adventure_decisions(id),
+  id INTEGER PRIMARY KEY,
+  decision_id INTEGER NOT NULL REFERENCES adventure_decisions(id),
   description TEXT NOT NULL,
   experience_bonus INTEGER NOT NULL DEFAULT 0,
   gold_bonus INTEGER NOT NULL DEFAULT 0,
-  item_reward_id UUID REFERENCES items(id),
+  reward_table_id INTEGER REFERENCES reward_tables(id),
   hitpoints_change INTEGER NOT NULL DEFAULT 0,
   energy_change INTEGER NOT NULL DEFAULT 0,
   stat_requirements JSONB,
   success_rate_formula JSONB,
+  has_combat BOOLEAN NOT NULL DEFAULT false,
+  monster_ids INTEGER[],
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Character Adventures table
 CREATE TABLE IF NOT EXISTS character_adventures (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  character_id UUID NOT NULL REFERENCES characters(id),
-  adventure_id UUID NOT NULL REFERENCES adventures(id),
-  decision_id UUID REFERENCES adventure_decisions(id),
-  outcome_id UUID REFERENCES adventure_outcomes(id),
+  id INTEGER PRIMARY KEY,
+  character_id INTEGER NOT NULL REFERENCES characters(id),
+  adventure_id INTEGER NOT NULL REFERENCES adventures(id),
+  decision_id INTEGER REFERENCES adventure_decisions(id),
+  outcome_id INTEGER REFERENCES adventure_outcomes(id),
   day INTEGER NOT NULL,
   adventure_number INTEGER NOT NULL,
   experience_gained INTEGER NOT NULL,
   gold_gained INTEGER NOT NULL,
-  item_gained_id UUID REFERENCES items(id),
+  item_gained_id INTEGER REFERENCES items(id),
   completed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- World Boss table
 CREATE TABLE IF NOT EXISTS world_boss (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id INTEGER PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT NOT NULL,
   week INTEGER NOT NULL,
@@ -147,9 +218,9 @@ CREATE TABLE IF NOT EXISTS world_boss (
 
 -- Character Boss Progress table
 CREATE TABLE IF NOT EXISTS character_boss_progress (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  character_id UUID NOT NULL REFERENCES characters(id),
-  boss_id UUID NOT NULL REFERENCES world_boss(id),
+  id INTEGER PRIMARY KEY,
+  character_id INTEGER NOT NULL REFERENCES characters(id),
+  boss_id INTEGER NOT NULL REFERENCES world_boss(id),
   week INTEGER NOT NULL,
   attack_count INTEGER NOT NULL DEFAULT 0,
   total_damage INTEGER NOT NULL DEFAULT 0,
@@ -161,15 +232,45 @@ CREATE TABLE IF NOT EXISTS character_boss_progress (
 
 -- Boss Rewards table
 CREATE TABLE IF NOT EXISTS boss_rewards (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  character_id UUID NOT NULL REFERENCES characters(id),
-  boss_id UUID NOT NULL REFERENCES world_boss(id),
+  id INTEGER PRIMARY KEY,
+  character_id INTEGER NOT NULL REFERENCES characters(id),
+  boss_id INTEGER NOT NULL REFERENCES world_boss(id),
   week INTEGER NOT NULL,
   reward_tier TEXT NOT NULL,
-  item_id UUID REFERENCES items(id),
+  item_id INTEGER REFERENCES items(id),
   is_claimed BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   claimed_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Combat table
+CREATE TABLE IF NOT EXISTS combat (
+  id INTEGER PRIMARY KEY,
+  character_id INTEGER NOT NULL REFERENCES characters(id),
+  adventure_id INTEGER NOT NULL REFERENCES adventures(id),
+  outcome_id INTEGER NOT NULL REFERENCES adventure_outcomes(id),
+  monster_id INTEGER NOT NULL REFERENCES monsters(id),
+  is_completed BOOLEAN NOT NULL DEFAULT false,
+  is_victory BOOLEAN,
+  turns INTEGER NOT NULL DEFAULT 0,
+  character_damage_dealt INTEGER NOT NULL DEFAULT 0,
+  monster_damage_dealt INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  completed_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Combat Turns table
+CREATE TABLE IF NOT EXISTS combat_turns (
+  id INTEGER PRIMARY KEY,
+  combat_id INTEGER NOT NULL REFERENCES combat(id),
+  turn_number INTEGER NOT NULL,
+  actor TEXT NOT NULL, -- 'character' or 'monster'
+  action TEXT NOT NULL, -- 'attack', 'skill', 'run'
+  skill_id INTEGER REFERENCES skills(id),
+  damage_dealt INTEGER,
+  healing_done INTEGER,
+  effects JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create indexes for performance
@@ -186,30 +287,92 @@ CREATE INDEX IF NOT EXISTS idx_character_boss_progress_character_id ON character
 CREATE INDEX IF NOT EXISTS idx_character_boss_progress_boss_id ON character_boss_progress(boss_id);
 CREATE INDEX IF NOT EXISTS idx_boss_rewards_character_id ON boss_rewards(character_id);
 CREATE INDEX IF NOT EXISTS idx_boss_rewards_boss_id ON boss_rewards(boss_id);
+CREATE INDEX IF NOT EXISTS idx_character_skills_character_id ON character_skills(character_id);
+CREATE INDEX IF NOT EXISTS idx_combat_character_id ON combat(character_id);
+CREATE INDEX IF NOT EXISTS idx_combat_turns_combat_id ON combat_turns(combat_id);
+CREATE INDEX IF NOT EXISTS idx_reward_items_reward_table_id ON reward_items(reward_table_id);
 
--- Sample data for testing
+-- Row Level Security Policies
 
--- Sample items
-INSERT INTO items (id, name, type, rarity, weapon_type, base_damage, value, effects) VALUES
-  ('11111111-1111-1111-1111-111111111111', 'Rusty Sword', 'Weapon', 'Common', 'Slashing', 5, 10, '{"stat_boosts": {"strength": 1}}'),
-  ('22222222-2222-2222-2222-222222222222', 'Wooden Shield', 'Armor', 'Common', NULL, NULL, 8, '{"stat_boosts": {"defense": 2}}'),
-  ('33333333-3333-3333-3333-333333333333', 'Leather Cap', 'Helmet', 'Common', NULL, NULL, 5, '{"stat_boosts": {"defense": 1}}'),
-  ('44444444-4444-4444-4444-444444444444', 'Lucky Coin', 'Trinket', 'Uncommon', NULL, NULL, 25, '{"stat_boosts": {"luck": 2}}');
+-- Users can only access their own data
+CREATE POLICY users_policy ON users
+  FOR ALL
+  USING (auth.uid() = id);
 
--- Sample adventure
-INSERT INTO adventures (id, title, description, min_experience, min_gold, is_violent) VALUES
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'The Forest Path', 'You encounter a mysterious path leading deep into the forest. Strange sounds echo from within.', 20, 10, true);
+-- Characters can only be accessed by their owner
+CREATE POLICY characters_policy ON characters
+  FOR ALL
+  USING (auth.uid() = user_id OR user_id IS NULL);
 
--- Sample adventure decisions
-INSERT INTO adventure_decisions (id, adventure_id, description) VALUES
-  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Follow the path deeper into the forest'),
-  ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Investigate the strange sounds');
+-- Character inventory can only be accessed by the character's owner
+CREATE POLICY character_inventory_policy ON character_inventory
+  FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM characters
+    WHERE characters.id = character_inventory.character_id
+    AND (characters.user_id = auth.uid() OR characters.user_id IS NULL)
+  ));
 
--- Sample adventure outcomes
-INSERT INTO adventure_outcomes (id, decision_id, description, experience_bonus, gold_bonus, hitpoints_change, energy_change) VALUES
-  ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'You discover a hidden treasure chest!', 30, 20, 0, -5),
-  ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'You encounter a wild beast and barely escape!', 25, 5, -10, -10);
+-- Character equipment can only be accessed by the character's owner
+CREATE POLICY character_equipment_policy ON character_equipment
+  FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM characters
+    WHERE characters.id = character_equipment.character_id
+    AND (characters.user_id = auth.uid() OR characters.user_id IS NULL)
+  ));
 
--- Sample world boss
-INSERT INTO world_boss (id, name, description, week, total_hitpoints, current_hitpoints) VALUES
-  ('ffffffff-ffff-ffff-ffff-ffffffffffff', 'Ancient Dragon', 'A fearsome dragon that has awakened from its slumber.', 1, 10000, 10000);
+-- Character adventures can only be accessed by the character's owner
+CREATE POLICY character_adventures_policy ON character_adventures
+  FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM characters
+    WHERE characters.id = character_adventures.character_id
+    AND (characters.user_id = auth.uid() OR characters.user_id IS NULL)
+  ));
+
+-- Character boss progress can only be accessed by the character's owner
+CREATE POLICY character_boss_progress_policy ON character_boss_progress
+  FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM characters
+    WHERE characters.id = character_boss_progress.character_id
+    AND (characters.user_id = auth.uid() OR characters.user_id IS NULL)
+  ));
+
+-- Boss rewards can only be accessed by the character's owner
+CREATE POLICY boss_rewards_policy ON boss_rewards
+  FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM characters
+    WHERE characters.id = boss_rewards.character_id
+    AND (characters.user_id = auth.uid() OR characters.user_id IS NULL)
+  ));
+
+-- Character skills can only be accessed by the character's owner
+CREATE POLICY character_skills_policy ON character_skills
+  FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM characters
+    WHERE characters.id = character_skills.character_id
+    AND (characters.user_id = auth.uid() OR characters.user_id IS NULL)
+  ));
+
+-- Combat can only be accessed by the character's owner
+CREATE POLICY combat_policy ON combat
+  FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM characters
+    WHERE characters.id = combat.character_id
+    AND (characters.user_id = auth.uid() OR characters.user_id IS NULL)
+  ));
+
+-- Combat turns can only be accessed by the character's owner
+CREATE POLICY combat_turns_policy ON combat_turns
+  FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM combat
+    JOIN characters ON combat.character_id = characters.id
+    WHERE combat.id = combat_turns.combat_id
+    AND (characters.user_id = auth.uid() OR characters.user_id IS NULL)
+  ));

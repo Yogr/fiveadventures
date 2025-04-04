@@ -43,28 +43,53 @@ body {
 /* Pixel border */
 .pixel-border {
   position: relative;
-  border: 4px solid white;
-  box-shadow: 0 0 0 4px black, inset 0 0 0 2px black;
+  border: 3px solid white;
+  box-shadow: 0 0 0 3px black, inset 0 0 0 1px black;
+}
+
+@media (min-width: 640px) {
+  .pixel-border {
+    border: 4px solid white;
+    box-shadow: 0 0 0 4px black, inset 0 0 0 2px black;
+  }
 }
 
 .pixel-border::before {
   content: '';
   position: absolute;
-  top: -8px;
-  left: -8px;
-  right: -8px;
-  bottom: -8px;
-  border: 2px solid black;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border: 1px solid black;
   z-index: -1;
+}
+
+@media (min-width: 640px) {
+  .pixel-border::before {
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    border: 2px solid black;
+  }
 }
 
 /* Pixel button */
 .pixel-button {
-  @apply px-4 py-2 bg-purple-600 text-white font-pixel text-xl;
+  @apply px-3 py-1 bg-purple-600 text-white font-pixel text-base;
   position: relative;
-  border: 3px solid white;
-  box-shadow: 0 0 0 3px black, inset 0 0 0 2px black;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px black, inset 0 0 0 1px black;
   transition: all 0.1s ease-in-out;
+}
+
+@media (min-width: 640px) {
+  .pixel-button {
+    @apply px-4 py-2 text-xl;
+    border: 3px solid white;
+    box-shadow: 0 0 0 3px black, inset 0 0 0 2px black;
+  }
 }
 
 .pixel-button:hover {
@@ -100,13 +125,20 @@ body {
 
 /* Adventure tracker */
 .adventure-tracker {
-  @apply flex justify-between items-center w-full max-w-md mx-auto my-4;
+  @apply flex justify-between items-center w-full max-w-md mx-auto my-2 sm:my-4;
 }
 
 .adventure-node {
-  @apply w-10 h-10 rounded-full flex items-center justify-center;
-  border: 3px solid white;
-  box-shadow: 0 0 0 2px black;
+  @apply w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm md:text-base;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px black;
+}
+
+@media (min-width: 640px) {
+  .adventure-node {
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px black;
+  }
 }
 
 .adventure-node.completed {
@@ -130,8 +162,14 @@ body {
 
 /* Character stats */
 .stat-bar {
-  @apply h-4 rounded-full overflow-hidden relative;
-  border: 2px solid black;
+  @apply h-3 sm:h-4 rounded-full overflow-hidden relative;
+  border: 1px solid black;
+}
+
+@media (min-width: 640px) {
+  .stat-bar {
+    border: 2px solid black;
+  }
 }
 
 .stat-bar-fill {
@@ -141,6 +179,13 @@ body {
 .stat-bar-text {
   @apply absolute inset-0 flex items-center justify-center text-xs font-bold text-white;
   text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
+  font-size: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .stat-bar-text {
+    font-size: 0.75rem;
+  }
 }
 
 /* HP bar */
@@ -221,7 +266,7 @@ body {
 
 /* Loading spinner */
 .loading-spinner {
-  @apply w-10 h-10 border-4 border-purple-200 rounded-full;
+  @apply w-8 h-8 sm:w-10 sm:h-10 border-2 sm:border-4 border-purple-200 rounded-full;
   border-top-color: theme('colors.purple.600');
   animation: spin 1s linear infinite;
 }
@@ -234,10 +279,16 @@ body {
 
 /* Tooltip */
 .tooltip {
-  @apply absolute invisible opacity-0 bg-black text-white p-2 rounded text-sm z-50 transition-opacity duration-200;
+  @apply absolute invisible opacity-0 bg-black text-white p-1 sm:p-2 rounded text-xs sm:text-sm z-50 transition-opacity duration-200;
   width: max-content;
-  max-width: 300px;
+  max-width: 250px;
   border: 1px solid white;
+}
+
+@media (min-width: 640px) {
+  .tooltip {
+    max-width: 300px;
+  }
 }
 
 .tooltip-trigger:hover .tooltip {
@@ -250,9 +301,16 @@ body {
 }
 
 .dialog-content {
-  @apply bg-gray-900 p-6 rounded-lg max-w-md w-full mx-4;
-  border: 4px solid white;
-  box-shadow: 0 0 0 4px black;
+  @apply bg-gray-900 p-3 sm:p-4 md:p-6 rounded-lg max-w-md w-full mx-2 sm:mx-4;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px black;
+}
+
+@media (min-width: 640px) {
+  .dialog-content {
+    border: 3px solid white;
+    box-shadow: 0 0 0 3px black;
+  }
 }
 
 /* Scrollbar */

@@ -1,7 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
 
 // Load environment variables
 require('dotenv').config({ path: '.env.local' });
@@ -17,8 +16,21 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Helper function to generate UUIDs
-const generateId = () => uuidv4();
+// Helper function to get next ID for a table
+async function getNextId(tableName) {
+  const { data, error } = await supabase
+    .from(tableName)
+    .select('id')
+    .order('id', { ascending: false })
+    .limit(1);
+  
+  if (error) {
+    console.error(`Error getting next ID for ${tableName}:`, error);
+    return 1; // Default to 1 if error
+  }
+  
+  return data && data.length > 0 ? data[0].id + 1 : 1;
+}
 
 // Helper function to read JSON data
 const readJsonFile = (filePath) => {
@@ -41,10 +53,12 @@ async function seedItems(filePath) {
     return;
   }
   
+  let nextId = await getNextId('items');
+  
   for (const item of items) {
     // Generate ID if not provided
     if (!item.id) {
-      item.id = generateId();
+      item.id = nextId++;
     }
     
     // Add created_at if not provided
@@ -60,7 +74,7 @@ async function seedItems(filePath) {
     if (error) {
       console.error(`Error inserting item ${item.name}:`, error);
     } else {
-      console.log(`Item inserted: ${item.name}`);
+      console.log(`Item inserted: ${item.name} with ID ${item.id}`);
     }
   }
   
@@ -77,10 +91,12 @@ async function seedAdventures(filePath) {
     return;
   }
   
+  let nextAdventureId = await getNextId('adventures');
+  
   for (const adventure of adventures) {
     // Generate ID if not provided
     if (!adventure.id) {
-      adventure.id = generateId();
+      adventure.id = nextAdventureId++;
     }
     
     // Add created_at if not provided
@@ -101,14 +117,16 @@ async function seedAdventures(filePath) {
       continue;
     }
     
-    console.log(`Adventure inserted: ${adventure.title}`);
+    console.log(`Adventure inserted: ${adventure.title} with ID ${adventure.id}`);
     
     // Insert decisions and outcomes
     if (decisions && Array.isArray(decisions)) {
+      let nextDecisionId = await getNextId('adventure_decisions');
+      
       for (const decision of decisions) {
         // Generate ID if not provided
         if (!decision.id) {
-          decision.id = generateId();
+          decision.id = nextDecisionId++;
         }
         
         // Add created_at if not provided
@@ -132,14 +150,16 @@ async function seedAdventures(filePath) {
           continue;
         }
         
-        console.log(`Decision inserted for adventure ${adventure.title}: ${decision.description}`);
+        console.log(`Decision inserted for adventure ${adventure.title}: ${decision.description} with ID ${decision.id}`);
         
         // Insert outcomes
         if (outcomes && Array.isArray(outcomes)) {
+          let nextOutcomeId = await getNextId('adventure_outcomes');
+          
           for (const outcome of outcomes) {
             // Generate ID if not provided
             if (!outcome.id) {
-              outcome.id = generateId();
+              outcome.id = nextOutcomeId++;
             }
             
             // Add created_at if not provided
@@ -160,7 +180,7 @@ async function seedAdventures(filePath) {
               continue;
             }
             
-            console.log(`Outcome inserted for decision ${decision.description}: ${outcome.description.substring(0, 30)}...`);
+            console.log(`Outcome inserted for decision ${decision.description}: ${outcome.description.substring(0, 30)}... with ID ${outcome.id}`);
           }
         }
       }
@@ -180,10 +200,12 @@ async function seedWorldBoss(filePath) {
     return;
   }
   
+  let nextBossId = await getNextId('world_boss');
+  
   for (const boss of bosses) {
     // Generate ID if not provided
     if (!boss.id) {
-      boss.id = generateId();
+      boss.id = nextBossId++;
     }
     
     // Add created_at if not provided
@@ -199,7 +221,7 @@ async function seedWorldBoss(filePath) {
     if (error) {
       console.error(`Error inserting world boss ${boss.name}:`, error);
     } else {
-      console.log(`World boss inserted: ${boss.name}`);
+      console.log(`World boss inserted: ${boss.name} with ID ${boss.id}`);
     }
   }
   
@@ -216,7 +238,14 @@ async function seedMonsters(filePath) {
     return;
   }
   
+  let nextMonsterId = await getNextId('monsters');
+  
   for (const monster of monsters) {
+    // Generate ID if not provided
+    if (!monster.id) {
+      monster.id = nextMonsterId++;
+    }
+    
     // Add created_at if not provided
     if (!monster.created_at) {
       monster.created_at = new Date().toISOString();
@@ -230,7 +259,7 @@ async function seedMonsters(filePath) {
     if (error) {
       console.error(`Error inserting monster ${monster.name}:`, error);
     } else {
-      console.log(`Monster inserted: ${monster.name}`);
+      console.log(`Monster inserted: ${monster.name} with ID ${monster.id}`);
     }
   }
   
@@ -247,7 +276,14 @@ async function seedRewardTables(filePath) {
     return;
   }
   
+  let nextRewardTableId = await getNextId('reward_tables');
+  
   for (const rewardTable of rewardTables) {
+    // Generate ID if not provided
+    if (!rewardTable.id) {
+      rewardTable.id = nextRewardTableId++;
+    }
+    
     // Add created_at if not provided
     if (!rewardTable.created_at) {
       rewardTable.created_at = new Date().toISOString();
@@ -266,11 +302,18 @@ async function seedRewardTables(filePath) {
       continue;
     }
     
-    console.log(`Reward table inserted: ${rewardTable.name}`);
+    console.log(`Reward table inserted: ${rewardTable.name} with ID ${rewardTable.id}`);
     
     // Insert reward items
     if (items && Array.isArray(items)) {
+      let nextRewardItemId = await getNextId('reward_items');
+      
       for (const item of items) {
+        // Generate ID if not provided
+        if (!item.id) {
+          item.id = nextRewardItemId++;
+        }
+        
         // Add created_at if not provided
         if (!item.created_at) {
           item.created_at = new Date().toISOString();
@@ -289,7 +332,7 @@ async function seedRewardTables(filePath) {
           continue;
         }
         
-        console.log(`Reward item inserted for table ${rewardTable.name}: Item ID ${item.item_id}`);
+        console.log(`Reward item inserted for table ${rewardTable.name}: Item ID ${item.item_id} with ID ${item.id}`);
       }
     }
   }
@@ -307,7 +350,14 @@ async function seedSkills(filePath) {
     return;
   }
   
+  let nextSkillId = await getNextId('skills');
+  
   for (const skill of skills) {
+    // Generate ID if not provided
+    if (!skill.id) {
+      skill.id = nextSkillId++;
+    }
+    
     // Add created_at if not provided
     if (!skill.created_at) {
       skill.created_at = new Date().toISOString();
@@ -321,7 +371,7 @@ async function seedSkills(filePath) {
     if (error) {
       console.error(`Error inserting skill ${skill.name}:`, error);
     } else {
-      console.log(`Skill inserted: ${skill.name}`);
+      console.log(`Skill inserted: ${skill.name} with ID ${skill.id}`);
     }
   }
   

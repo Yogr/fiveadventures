@@ -216,7 +216,7 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
     <div className="pixel-border bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
       <h2 className="text-3xl mb-4 text-red-400 text-center">Combat!</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 gap-4 mb-4">
         {/* Character */}
         <div className="bg-gray-800 p-4 rounded-md">
           <h3 className="text-xl mb-2">{character.name}</h3>
@@ -282,7 +282,7 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
       
       {/* Actions */}
       {!combat.is_completed && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-3 gap-2 mb-4">
           <button 
             onClick={handleAttack}
             disabled={actionInProgress}
@@ -314,7 +314,7 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
         <div className="bg-gray-800 p-4 rounded-md">
           <h3 className="text-xl mb-2">Skills</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             {skills.map((skill) => (
               <div 
                 key={skill.id}

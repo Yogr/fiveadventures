@@ -10,9 +10,10 @@ Key features:
 - Character creation and progression
 - Daily adventures with multiple decision paths
 - Item collection and equipment management
-- Shop system for buying and selling items
+- Shop system for buying and selling items with dynamic pricing
 - Weekly world boss battles with tiered rewards
 - Persistent character progression
+- Optimized database schema with integer IDs
 
 ## Tech Stack
 
@@ -83,13 +84,16 @@ Key features:
 
 6. Seed the database with initial data:
    ```bash
-   # Seed all data (items, adventures, world bosses)
+   # Seed all data
    npm run seed:all
    
    # Or seed individual data types
    npm run seed:items
    npm run seed:adventures
    npm run seed:worldboss
+   npm run seed:monsters
+   npm run seed:rewardtables
+   npm run seed:skills
    ```
 
 6. Run the development server:
@@ -103,11 +107,14 @@ Key features:
 
 ### Adding New Content
 
-You can add new items, adventures, and world bosses by modifying the JSON files in the `data` directory:
+You can add new content by modifying the JSON files in the `data` directory:
 
 - `data/items.json` - Add new weapons, armor, helmets, and trinkets
 - `data/adventures.json` - Add new adventures with decisions and outcomes
 - `data/worldboss.json` - Add new weekly world bosses
+- `data/monsters.json` - Add new monsters for combat encounters
+- `data/rewardtables.json` - Add new reward tables for adventures and bosses
+- `data/skills.json` - Add new character skills and abilities
 
 After modifying the files, run the appropriate seed command to update the database:
 
@@ -115,6 +122,9 @@ After modifying the files, run the appropriate seed command to update the databa
 npm run seed:items
 npm run seed:adventures
 npm run seed:worldboss
+npm run seed:monsters
+npm run seed:rewardtables
+npm run seed:skills
 ```
 
 You can also create your own JSON files and use the seed-data.js script directly:
@@ -160,6 +170,26 @@ Items have different rarities (Common, Uncommon, Rare, Epic, Legendary) and prov
 After completing daily adventures, players can attack the weekly world boss. Damage dealt is based on character level, stats, equipment, and remaining HP. When the boss is defeated, rewards are distributed to all participants based on their contribution.
 
 ## Development
+
+### Database Schema
+
+The game uses an optimized database schema with integer IDs for all tables, which improves performance and reduces storage requirements. The schema is defined in `supabase-schema.sql` and includes tables for:
+
+- Users and characters
+- Items and inventory
+- Adventures, decisions, and outcomes
+- Shop system
+- World bosses and rewards
+- Monsters and combat
+- Skills and abilities
+
+### Shop System
+
+The shop system features:
+- Daily refreshing items
+- Dynamic pricing based on item rarity and character level
+- Inventory management with equipped item detection
+- Selling unwanted items for gold
 
 ### Adding New Adventures
 
