@@ -14,6 +14,7 @@ import CharacterStats from '@/components/character/character-stats';
 import CombatInterface from '@/components/combat/combat-interface';
 import AnimatedText from '@/components/ui/animated-text';
 import AnimatedReward from '@/components/ui/animated-reward';
+import ItemReward from '@/components/ui/item-reward';
 
 interface AdventureContentProps {
   characterId: string;
@@ -29,12 +30,24 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   const [error, setError] = useState<string | null>(null);
   const [combatId, setCombatId] = useState<string | null>(null);
   const [showCombat, setShowCombat] = useState(false);
+  // Simple flag to track if text animation is complete
   const [textAnimationComplete, setTextAnimationComplete] = useState(false);
 
-  // Reset animation state when outcome changes
+  // Handle animation initialization when outcome changes
   useEffect(() => {
+    // Only reset animation state when outcome is set
     if (outcome) {
+      // Reset animation state immediately when outcome changes
       setTextAnimationComplete(false);
+      
+      // Use a small delay to ensure the component is fully mounted before animation starts
+      const timer = setTimeout(() => {
+        // This is just to trigger a re-render after the component has fully mounted
+        // It doesn't actually change any state
+        setTextAnimationComplete(false);
+      }, 50);
+      
+      return () => clearTimeout(timer);
     }
   }, [outcome]);
 
@@ -117,17 +130,27 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
         return;
       }
       
-      // Update character and outcome
-      setCharacter(result.data.character);
-      setOutcome(result.data.outcome);
-      
-      // Check if outcome has combat
-      if (result.data.outcome.has_combat && result.data.combat) {
-        setCombatId(result.data.combat.id);
-        setShowCombat(true);
+      // Make sure result.data exists
+      if (result.data) {
+        // Update character first
+        setCharacter(result.data.character);
+        
+        // Check if outcome has combat
+        if (result.data.outcome.has_combat && result.data.combat) {
+          setCombatId(result.data.combat.id);
+          setShowCombat(true);
+        }
+        
+        // Set loading to false before setting outcome
+        setLoading(false);
+        
+        // Set outcome after a small delay to ensure clean rendering
+        setTimeout(() => {
+          setOutcome(result.data!.outcome);
+        }, 10);
+      } else {
+        setLoading(false);
       }
-      
-      setLoading(false);
     } catch (err) {
       console.error('Error completing adventure:', err);
       setError('An unexpected error occurred');
@@ -328,38 +351,47 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
           
           {!ranAway && textAnimationComplete && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              {/* Item reward would go here with isItem=true */}
+              {/* Item reward */}
               {outcome.reward_table_id && (
-                <AnimatedReward delay={0} isItem={true} className="col-span-full">
-                  <div className="bg-purple-900 p-3 rounded-md text-center">
-                    <p className="text-purple-200">Item Reward Placeholder</p>
+                <AnimatedReward delay={0} isItem={true} className="col-span-full bg-gray-700 p-3 rounded-md">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-purple-900 rounded-md flex items-center justify-center mr-4">
+                      <span className="text-xl">W</span>
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-medium text-purple-300">Enchanted Sword</h4>
+                      <p className="text-sm text-gray-300">Weapon (Slashing) • +15 Damage • +3 Strength</p>
+                    </div>
                   </div>
                 </AnimatedReward>
               )}
               
-              <AnimatedReward delay={200} className="bg-gray-700 p-3 rounded-md">
-                <p className="text-green-400">+{outcome.experience_bonus} Experience</p>
-              </AnimatedReward>
-              
-              <AnimatedReward delay={400} className="bg-gray-700 p-3 rounded-md">
-                <p className="text-yellow-400">+{outcome.gold_bonus} Gold</p>
-              </AnimatedReward>
-              
-              {outcome.hitpoints_change !== 0 && (
-                <AnimatedReward delay={600} className="bg-gray-700 p-3 rounded-md">
-                  <p className={outcome.hitpoints_change > 0 ? "text-green-400" : "text-red-400"}>
-                    {outcome.hitpoints_change > 0 ? "+" : ""}{outcome.hitpoints_change} HP
-                  </p>
+              {/* Other rewards */}
+              <>
+                <AnimatedReward delay={200} className="bg-gray-700 p-3 rounded-md">
+                  <p className="text-green-400">+{outcome.experience_bonus} Experience</p>
                 </AnimatedReward>
-              )}
-              
-              {outcome.energy_change !== 0 && (
-                <AnimatedReward delay={800} className="bg-gray-700 p-3 rounded-md">
-                  <p className={outcome.energy_change > 0 ? "text-green-400" : "text-red-400"}>
-                    {outcome.energy_change > 0 ? "+" : ""}{outcome.energy_change} Energy
-                  </p>
+                
+                <AnimatedReward delay={400} className="bg-gray-700 p-3 rounded-md">
+                  <p className="text-yellow-400">+{outcome.gold_bonus} Gold</p>
                 </AnimatedReward>
-              )}
+                
+                {outcome.hitpoints_change !== 0 && (
+                  <AnimatedReward delay={600} className="bg-gray-700 p-3 rounded-md">
+                    <p className={outcome.hitpoints_change > 0 ? "text-green-400" : "text-red-400"}>
+                      {outcome.hitpoints_change > 0 ? "+" : ""}{outcome.hitpoints_change} HP
+                    </p>
+                  </AnimatedReward>
+                )}
+                
+                {outcome.energy_change !== 0 && (
+                  <AnimatedReward delay={800} className="bg-gray-700 p-3 rounded-md">
+                    <p className={outcome.energy_change > 0 ? "text-green-400" : "text-red-400"}>
+                      {outcome.energy_change > 0 ? "+" : ""}{outcome.energy_change} Energy
+                    </p>
+                  </AnimatedReward>
+                )}
+              </>
             </div>
           )}
         </div>

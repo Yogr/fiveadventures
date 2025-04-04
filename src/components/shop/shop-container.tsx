@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { getShopItems, getInventory } from '@/app/actions/shop';
+import type { ShopItemSimple } from '@/app/actions/shop';
 import ShopItem from './shop-item';
 import InventoryItem from './inventory-item';
 import LoadingSpinner from '@/components/ui/loading-spinner';
-import type { ShopItem as ShopItemType, Item } from '@/lib/types';
+import type { Item } from '@/lib/types';
 
 interface ShopContainerProps {
   initialGold: number;
@@ -19,7 +20,7 @@ interface ShopContainerProps {
 
 export default function ShopContainer({ initialGold, equipment }: ShopContainerProps) {
   const [activeTab, setActiveTab] = useState<'shop' | 'inventory'>('shop');
-  const [shopItems, setShopItems] = useState<ShopItemType[]>([]);
+  const [shopItems, setShopItems] = useState<ShopItemSimple[]>([]);
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [gold, setGold] = useState(initialGold);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,7 +85,7 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
   return (
     <div className="bg-gray-800 p-4 rounded-md">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl sm:text-2xl font-bold">Shop & Inventory</h2>
+        <h2 className="text-xl sm:text-2xl font-bold">Shop</h2>
         <div className="text-yellow-300 font-medium">{gold} Gold</div>
       </div>
       
@@ -98,7 +99,7 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
           }`}
           onClick={() => setActiveTab('shop')}
         >
-          Shop
+          Buy
         </button>
         <button
           className={`px-4 py-2 font-medium ${
@@ -108,7 +109,7 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
           }`}
           onClick={() => setActiveTab('inventory')}
         >
-          Inventory
+          Sell
         </button>
       </div>
       

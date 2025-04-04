@@ -2,95 +2,31 @@
 
 import { supabase } from '@/lib/supabase';
 import { MAX_SHOP_ITEMS } from '@/lib/constants';
-import type { Item, ItemRarity, ApiResponse, ShopItem } from '@/lib/types';
+import type { Item, ItemRarity, ApiResponse } from '@/lib/types';
 import { getCharacterFromCookie } from './character';
 import { revalidatePath } from 'next/cache';
-import { getCurrentGameDay } from '@/lib/utils';
+import { getCurrentGameDay, generateShopSeed, getRandomShopItems, generateId } from '@/lib/utils';
+import itemsData from '../../../data/items.json';
+import { unstable_cache } from 'next/cache';
 
-// Get shop items for a character
-export async function getShopItems(): Promise<ApiResponse<ShopItem[]>> {
-  try {
-    // Get character from cookie
-    const characterResponse = await getCharacterFromCookie();
-    if (!characterResponse.success || !characterResponse.data) {
-      return { success: false, error: 'Character not found' };
-    }
-    
-    const character = characterResponse.data;
-    const currentDay = getCurrentGameDay();
-    
-    // Get shop items for the character
-    const { data: shopItems, error } = await supabase
-      .from('shop_items')
-      .select('*, item:items(*)')
-      .eq('character_id', character.id);
-    
-    if (error) {
-      console.error('Error fetching shop items:', error);
-      return { success: false, error: 'Failed to fetch shop items' };
-    }
-    
-    // If no shop items exist for this character, generate them
-    if (!shopItems || shopItems.length === 0) {
-      return await generateShopItems(character.id, currentDay);
-    }
-    
-    // Check if shop items need to be refreshed (daily)
-    // Assuming shop_items has a day field we can use
-    if (shopItems[0] && shopItems[0].day !== currentDay) {
-      return await generateShopItems(character.id, currentDay);
-    }
-    
-    return { success: true, data: shopItems as ShopItem[] };
-  } catch (err) {
-    console.error('Error in getShopItems:', err);
-    return { success: false, error: 'An unexpected error occurred' };
-  }
-}
+// Define a custom shop item type that doesn't rely on the database schema
+export type ShopItemSimple = {
+  id: string;
+  item: Item;
+  price: number;
+};
 
-// Generate new shop items for a character
-async function generateShopItems(characterId: string, day: number): Promise<ApiResponse<ShopItem[]>> {
-  try {
-    // Get character level to determine item quality
-    const { data: character, error: characterError } = await supabase
-      .from('characters')
-      .select('experience')
-      .eq('id', characterId)
-      .single();
+// Cache the shop items for 24 hours
+const getShopItemsCached = unstable_cache(
+  async (day: number): Promise<ShopItemSimple[]> => {
+    // Generate a seed for the day that is the same for all users
+    const seed = generateShopSeed(day);
     
-    if (characterError) {
-      console.error('Error fetching character:', characterError);
-      return { success: false, error: 'Failed to fetch character' };
-    }
+    // Get random items from the items data using the seed
+    const selectedItems = getRandomShopItems(itemsData, MAX_SHOP_ITEMS, seed);
     
-    // Calculate character level from experience
-    const level = Math.floor(Math.sqrt(character.experience / 100)) + 1;
-    
-    // Get random items from the items table
-    const { data: items, error: itemsError } = await supabase
-      .from('items')
-      .select('*')
-      .order('random()')
-      .limit(MAX_SHOP_ITEMS);
-    
-    if (itemsError || !items) {
-      console.error('Error fetching items:', itemsError);
-      return { success: false, error: 'Failed to fetch items' };
-    }
-    
-    // Delete existing shop items for this character
-    const { error: deleteError } = await supabase
-      .from('shop_items')
-      .delete()
-      .eq('character_id', characterId);
-    
-    if (deleteError) {
-      console.error('Error deleting shop items:', deleteError);
-      return { success: false, error: 'Failed to refresh shop items' };
-    }
-    
-    // Calculate prices based on item rarity and character level
-    const shopItems = items.map((item: Item) => {
+    // Calculate prices based on item rarity
+    return selectedItems.map((item: any) => {
       // Base price multiplier based on rarity
       const rarityMultipliers: Record<ItemRarity, number> = {
         'Common': 1,
@@ -103,40 +39,41 @@ async function generateShopItems(characterId: string, day: number): Promise<ApiR
       // Get multiplier with fallback to 1
       const rarityMultiplier = rarityMultipliers[item.rarity as ItemRarity] || 1;
       
-      // Level adjustment (higher level = higher prices)
-      const levelAdjustment = 1 + (level / 20);
+      // Calculate price based on item value and rarity
+      const price = Math.round(item.value * rarityMultiplier);
       
-      // Calculate price
-      const price = Math.round(item.value * rarityMultiplier * levelAdjustment);
-      
+      // Create a shop item
       return {
-        character_id: characterId,
-        item_id: item.id,
-        day: day,
+        id: generateId(), // Generate a unique ID for the shop item
+        item: item,
         price: price
       };
     });
+  },
+  ['shop-items'],
+  { revalidate: 86400 } // Cache for 24 hours (in seconds)
+);
+
+// Get shop items for the current day
+export async function getShopItems(): Promise<ApiResponse<ShopItemSimple[]>> {
+  try {
+    const currentDay = getCurrentGameDay();
     
-    // Insert new shop items
-    const { data: newShopItems, error: insertError } = await supabase
-      .from('shop_items')
-      .insert(shopItems)
-      .select('*, item:items(*)');
+    // Get the cached shop items for the current day
+    const shopItems = await getShopItemsCached(currentDay);
     
-    if (insertError || !newShopItems) {
-      console.error('Error inserting shop items:', insertError);
-      return { success: false, error: 'Failed to generate shop items' };
-    }
-    
-    return { success: true, data: newShopItems as ShopItem[] };
+    return { 
+      success: true, 
+      data: shopItems
+    };
   } catch (err) {
-    console.error('Error in generateShopItems:', err);
+    console.error('Error in getShopItems:', err);
     return { success: false, error: 'An unexpected error occurred' };
   }
 }
 
 // Buy an item from the shop
-export async function buyItem(shopItemId: string): Promise<ApiResponse<{ message: string; item: Item }>> {
+export async function buyItem(itemId: string): Promise<ApiResponse<{ message: string; item: Item }>> {
   try {
     // Get character from cookie
     const characterResponse = await getCharacterFromCookie();
@@ -146,16 +83,15 @@ export async function buyItem(shopItemId: string): Promise<ApiResponse<{ message
     
     const character = characterResponse.data;
     
-    // Get shop item
-    const { data: shopItem, error: shopItemError } = await supabase
-      .from('shop_items')
-      .select('*, item:items(*)')
-      .eq('id', shopItemId)
-      .eq('character_id', character.id)
-      .single();
+    // Get current shop items
+    const shopItemsResponse = await getShopItems();
+    if (!shopItemsResponse.success || !shopItemsResponse.data) {
+      return { success: false, error: 'Failed to get shop items' };
+    }
     
-    if (shopItemError || !shopItem) {
-      console.error('Error fetching shop item:', shopItemError);
+    // Find the item in the shop
+    const shopItem = shopItemsResponse.data.find(item => item.id === itemId);
+    if (!shopItem) {
       return { success: false, error: 'Item not found in shop' };
     }
     
@@ -181,7 +117,7 @@ export async function buyItem(shopItemId: string): Promise<ApiResponse<{ message
       .from('character_inventory')
       .insert({
         character_id: character.id,
-        item_id: shopItem.item_id,
+        item_id: shopItem.item.id || 0,
         quantity: 1,
         acquired_at: new Date().toISOString()
       });

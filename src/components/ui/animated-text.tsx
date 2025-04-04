@@ -49,8 +49,9 @@ export default function AnimatedText({
         <span 
           key={index} 
           className="animate-fadeIn inline-block"
+          style={{ marginRight: '0.25em' }}
         >
-          {word}{' '}
+          {word}
         </span>
       ))}
     </p>

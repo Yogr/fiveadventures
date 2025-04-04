@@ -157,13 +157,48 @@ export const getPrimaryStat = (character: { class: string, strength: number, int
 };
 
 // Generate a seed for daily shop items based on day
-export const generateShopSeed = (day: number): string => {
-  return `shop-${day}`;
+export const generateShopSeed = (day: number): number => {
+  // Use a fixed, large prime number as the base
+  const FIXED_SEED = 68584868;
+  
+  // Get the current year
+  const currentYear = new Date().getFullYear();
+  
+  // Create a deterministic but "random" seed that changes daily
+  // Divide by day and multiply by year to make it unpredictable
+  return Math.abs(FIXED_SEED / day * currentYear);
+};
+
+// Get random shop items based on a seed
+export const getRandomShopItems = (
+  items: any[],
+  count: number,
+  seed: number
+): any[] => {
+  // Create a seeded random number generator
+  const seededRandom = (max: number): number => {
+    // Simple LCG (Linear Congruential Generator)
+    seed = (seed * 1664525 + 1013904223) % 2147483648;
+    return Math.floor((seed / 2147483648) * max);
+  };
+  
+  // Create a copy of the items array to avoid modifying the original
+  const itemsCopy = [...items];
+  const selectedItems = [];
+  
+  // Select 'count' random items
+  for (let i = 0; i < count && itemsCopy.length > 0; i++) {
+    const randomIndex = seededRandom(itemsCopy.length);
+    selectedItems.push(itemsCopy[randomIndex]);
+    itemsCopy.splice(randomIndex, 1);
+  }
+  
+  return selectedItems;
 };
 
 // Calculate the current game day (days since launch)
 export const getCurrentGameDay = (): number => {
-  const launchDate = new Date('2025-04-01'); // Example launch date
+  const launchDate = new Date('2025-04-04'); // Example launch date
   const now = new Date();
   
   const diffTime = Math.abs(now.getTime() - launchDate.getTime());

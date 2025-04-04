@@ -17,6 +17,7 @@ Todo
 - Better name generator, make sure names are unique.
 - all adventures complete page needs some work
 - Combat text output needs to perma scroll to bottom. Move action buttons to above the combat window.
+- Make 'elite' encounters and always have any encounter > 4 fetch an 'elite' encounter. These encounters always feature an encounter with an 'elite' enemy, such as a Goblin King or Minotaur Captain or a Lich or some other more fearsome enemy, but similar to other enemies in the same area.
 
 Game Design
 -----------------
