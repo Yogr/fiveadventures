@@ -113,21 +113,21 @@ export interface Database {
         Row: {
           id: string
           character_id: string
-          item_id: string
+          item_id: number
           quantity: number
           acquired_at: string
         }
         Insert: {
           id?: string
           character_id: string
-          item_id: string
+          item_id: number
           quantity?: number
           acquired_at?: string
         }
         Update: {
           id?: string
           character_id?: string
-          item_id?: string
+          item_id?: number
           quantity?: number
           acquired_at?: string
         }
@@ -150,28 +150,28 @@ export interface Database {
         Row: {
           id: string
           character_id: string
-          weapon_id: string | null
-          helmet_id: string | null
-          armor_id: string | null
-          trinket_id: string | null
+          weapon_id: number | null
+          helmet_id: number | null
+          armor_id: number | null
+          trinket_id: number | null
           updated_at: string
         }
         Insert: {
           id?: string
           character_id: string
-          weapon_id?: string | null
-          helmet_id?: string | null
-          armor_id?: string | null
-          trinket_id?: string | null
+          weapon_id?: number | null
+          helmet_id?: number | null
+          armor_id?: number | null
+          trinket_id?: number | null
           updated_at?: string
         }
         Update: {
           id?: string
           character_id?: string
-          weapon_id?: string | null
-          helmet_id?: string | null
-          armor_id?: string | null
-          trinket_id?: string | null
+          weapon_id?: number | null
+          helmet_id?: number | null
+          armor_id?: number | null
+          trinket_id?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -209,7 +209,7 @@ export interface Database {
       }
       items: {
         Row: {
-          id: string
+          id: number
           name: string
           type: string
           rarity: string
@@ -222,7 +222,7 @@ export interface Database {
           created_at: string
         }
         Insert: {
-          id?: string
+          id?: number
           name: string
           type: string
           rarity: string
@@ -235,7 +235,7 @@ export interface Database {
           created_at?: string
         }
         Update: {
-          id?: string
+          id?: number
           name?: string
           type?: string
           rarity?: string
@@ -252,21 +252,21 @@ export interface Database {
       shop_items: {
         Row: {
           id: string
-          item_id: string
+          item_id: number
           day: number
           price: number
           created_at: string
         }
         Insert: {
           id?: string
-          item_id: string
+          item_id: number
           day: number
           price: number
           created_at?: string
         }
         Update: {
           id?: string
-          item_id?: string
+          item_id?: number
           day?: number
           price?: number
           created_at?: string
@@ -280,34 +280,216 @@ export interface Database {
           }
         ]
       }
-      adventures: {
+      skills: {
         Row: {
-          id: string
-          title: string
+          id: number
+          name: string
           description: string
-          min_experience: number
-          min_gold: number
-          is_violent: boolean
+          class: string
+          energy_cost: number
+          cooldown: number
+          effects: Json | null
           image_url: string | null
           created_at: string
         }
         Insert: {
+          id?: number
+          name: string
+          description: string
+          class: string
+          energy_cost: number
+          cooldown?: number
+          effects?: Json | null
+          image_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          name?: string
+          description?: string
+          class?: string
+          energy_cost?: number
+          cooldown?: number
+          effects?: Json | null
+          image_url?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      character_skills: {
+        Row: {
+          id: string
+          character_id: string
+          skill_id: number
+          level: number
+          acquired_at: string
+        }
+        Insert: {
           id?: string
+          character_id: string
+          skill_id: number
+          level?: number
+          acquired_at?: string
+        }
+        Update: {
+          id?: string
+          character_id?: string
+          skill_id?: number
+          level?: number
+          acquired_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_skills_character_id_fkey"
+            columns: ["character_id"]
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_skills_skill_id_fkey"
+            columns: ["skill_id"]
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      monsters: {
+        Row: {
+          id: number
+          name: string
+          description: string
+          hitpoints: number
+          attack: number
+          defense: number
+          experience_reward: number
+          gold_reward: number
+          difficulty: number
+          attack_type: string
+          abilities: Json | null
+          image_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          name: string
+          description: string
+          hitpoints: number
+          attack: number
+          defense: number
+          experience_reward: number
+          gold_reward: number
+          difficulty: number
+          attack_type: string
+          abilities?: Json | null
+          image_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          name?: string
+          description?: string
+          hitpoints?: number
+          attack?: number
+          defense?: number
+          experience_reward?: number
+          gold_reward?: number
+          difficulty?: number
+          attack_type?: string
+          abilities?: Json | null
+          image_url?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      reward_tables: {
+        Row: {
+          id: number
+          name: string
+          description: string
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          name: string
+          description: string
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          name?: string
+          description?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      reward_items: {
+        Row: {
+          id: number
+          reward_table_id: number
+          item_id: number
+          chance: number
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          reward_table_id: number
+          item_id: number
+          chance: number
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          reward_table_id?: number
+          item_id?: number
+          chance?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_items_reward_table_id_fkey"
+            columns: ["reward_table_id"]
+            referencedRelation: "reward_tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_items_item_id_fkey"
+            columns: ["item_id"]
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      adventures: {
+        Row: {
+          id: number
           title: string
           description: string
           min_experience: number
           min_gold: number
           is_violent: boolean
+          has_combat: boolean
+          image_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          title: string
+          description: string
+          min_experience: number
+          min_gold: number
+          is_violent: boolean
+          has_combat?: boolean
           image_url?: string | null
           created_at?: string
         }
         Update: {
-          id?: string
+          id?: number
           title?: string
           description?: string
           min_experience?: number
           min_gold?: number
           is_violent?: boolean
+          has_combat?: boolean
           image_url?: string | null
           created_at?: string
         }
@@ -315,22 +497,22 @@ export interface Database {
       }
       adventure_decisions: {
         Row: {
-          id: string
-          adventure_id: string
+          id: number
+          adventure_id: number
           description: string
           requirements: Json | null
           created_at: string
         }
         Insert: {
-          id?: string
-          adventure_id: string
+          id?: number
+          adventure_id: number
           description: string
           requirements?: Json | null
           created_at?: string
         }
         Update: {
-          id?: string
-          adventure_id?: string
+          id?: number
+          adventure_id?: number
           description?: string
           requirements?: Json | null
           created_at?: string
@@ -346,42 +528,48 @@ export interface Database {
       }
       adventure_outcomes: {
         Row: {
-          id: string
-          decision_id: string
+          id: number
+          decision_id: number
           description: string
           experience_bonus: number
           gold_bonus: number
-          item_reward_id: string | null
+          reward_table_id: number | null
           hitpoints_change: number
           energy_change: number
           stat_requirements: Json | null
           success_rate_formula: Json | null
+          has_combat: boolean
+          monster_ids: number[] | null
           created_at: string
         }
         Insert: {
-          id?: string
-          decision_id: string
+          id?: number
+          decision_id: number
           description: string
           experience_bonus: number
           gold_bonus: number
-          item_reward_id?: string | null
+          reward_table_id?: number | null
           hitpoints_change: number
           energy_change: number
           stat_requirements?: Json | null
           success_rate_formula?: Json | null
+          has_combat?: boolean
+          monster_ids?: number[] | null
           created_at?: string
         }
         Update: {
-          id?: string
-          decision_id?: string
+          id?: number
+          decision_id?: number
           description?: string
           experience_bonus?: number
           gold_bonus?: number
-          item_reward_id?: string | null
+          reward_table_id?: number | null
           hitpoints_change?: number
           energy_change?: number
           stat_requirements?: Json | null
           success_rate_formula?: Json | null
+          has_combat?: boolean
+          monster_ids?: number[] | null
           created_at?: string
         }
         Relationships: [
@@ -392,9 +580,9 @@ export interface Database {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "adventure_outcomes_item_reward_id_fkey"
-            columns: ["item_reward_id"]
-            referencedRelation: "items"
+            foreignKeyName: "adventure_outcomes_reward_table_id_fkey"
+            columns: ["reward_table_id"]
+            referencedRelation: "reward_tables"
             referencedColumns: ["id"]
           }
         ]
@@ -403,40 +591,40 @@ export interface Database {
         Row: {
           id: string
           character_id: string
-          adventure_id: string
-          decision_id: string | null
-          outcome_id: string | null
+          adventure_id: number
+          decision_id: number | null
+          outcome_id: number | null
           day: number
           adventure_number: number
           experience_gained: number
           gold_gained: number
-          item_gained_id: string | null
+          item_gained_id: number | null
           completed_at: string
         }
         Insert: {
           id?: string
           character_id: string
-          adventure_id: string
-          decision_id?: string | null
-          outcome_id?: string | null
+          adventure_id: number
+          decision_id?: number | null
+          outcome_id?: number | null
           day: number
           adventure_number: number
           experience_gained: number
           gold_gained: number
-          item_gained_id?: string | null
+          item_gained_id?: number | null
           completed_at?: string
         }
         Update: {
           id?: string
           character_id?: string
-          adventure_id?: string
-          decision_id?: string | null
-          outcome_id?: string | null
+          adventure_id?: number
+          decision_id?: number | null
+          outcome_id?: number | null
           day?: number
           adventure_number?: number
           experience_gained?: number
           gold_gained?: number
-          item_gained_id?: string | null
+          item_gained_id?: number | null
           completed_at?: string
         }
         Relationships: [
@@ -472,9 +660,131 @@ export interface Database {
           }
         ]
       }
-      world_boss: {
+      combat: {
         Row: {
           id: string
+          character_id: string
+          adventure_id: number
+          outcome_id: number
+          monster_id: number
+          is_completed: boolean
+          is_victory: boolean | null
+          turns: number
+          character_damage_dealt: number
+          monster_damage_dealt: number
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          character_id: string
+          adventure_id: number
+          outcome_id: number
+          monster_id: number
+          is_completed?: boolean
+          is_victory?: boolean | null
+          turns?: number
+          character_damage_dealt?: number
+          monster_damage_dealt?: number
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          character_id?: string
+          adventure_id?: number
+          outcome_id?: number
+          monster_id?: number
+          is_completed?: boolean
+          is_victory?: boolean | null
+          turns?: number
+          character_damage_dealt?: number
+          monster_damage_dealt?: number
+          created_at?: string
+          completed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combat_character_id_fkey"
+            columns: ["character_id"]
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combat_adventure_id_fkey"
+            columns: ["adventure_id"]
+            referencedRelation: "adventures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combat_outcome_id_fkey"
+            columns: ["outcome_id"]
+            referencedRelation: "adventure_outcomes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combat_monster_id_fkey"
+            columns: ["monster_id"]
+            referencedRelation: "monsters"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      combat_turns: {
+        Row: {
+          id: string
+          combat_id: string
+          turn_number: number
+          actor: string
+          action: string
+          skill_id: number | null
+          damage_dealt: number | null
+          healing_done: number | null
+          effects: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          combat_id: string
+          turn_number: number
+          actor: string
+          action: string
+          skill_id?: number | null
+          damage_dealt?: number | null
+          healing_done?: number | null
+          effects?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          combat_id?: string
+          turn_number?: number
+          actor?: string
+          action?: string
+          skill_id?: number | null
+          damage_dealt?: number | null
+          healing_done?: number | null
+          effects?: Json | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combat_turns_combat_id_fkey"
+            columns: ["combat_id"]
+            referencedRelation: "combat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combat_turns_skill_id_fkey"
+            columns: ["skill_id"]
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      world_boss: {
+        Row: {
+          id: number
           name: string
           description: string
           week: number
@@ -489,7 +799,7 @@ export interface Database {
           defeated_at: string | null
         }
         Insert: {
-          id?: string
+          id?: number
           name: string
           description: string
           week: number
@@ -504,7 +814,7 @@ export interface Database {
           defeated_at?: string | null
         }
         Update: {
-          id?: string
+          id?: number
           name?: string
           description?: string
           week?: number
@@ -524,7 +834,7 @@ export interface Database {
         Row: {
           id: string
           character_id: string
-          boss_id: string
+          boss_id: number
           week: number
           attack_count: number
           total_damage: number
@@ -535,7 +845,7 @@ export interface Database {
         Insert: {
           id?: string
           character_id: string
-          boss_id: string
+          boss_id: number
           week: number
           attack_count?: number
           total_damage?: number
@@ -546,7 +856,7 @@ export interface Database {
         Update: {
           id?: string
           character_id?: string
-          boss_id?: string
+          boss_id?: number
           week?: number
           attack_count?: number
           total_damage?: number
@@ -573,10 +883,10 @@ export interface Database {
         Row: {
           id: string
           character_id: string
-          boss_id: string
+          boss_id: number
           week: number
           reward_tier: string
-          item_id: string | null
+          item_id: number | null
           is_claimed: boolean
           created_at: string
           claimed_at: string | null
@@ -584,10 +894,10 @@ export interface Database {
         Insert: {
           id?: string
           character_id: string
-          boss_id: string
+          boss_id: number
           week: number
           reward_tier: string
-          item_id?: string | null
+          item_id?: number | null
           is_claimed?: boolean
           created_at?: string
           claimed_at?: string | null
@@ -595,10 +905,10 @@ export interface Database {
         Update: {
           id?: string
           character_id?: string
-          boss_id?: string
+          boss_id?: number
           week?: number
           reward_tier?: string
-          item_id?: string | null
+          item_id?: number | null
           is_claimed?: boolean
           created_at?: string
           claimed_at?: string | null

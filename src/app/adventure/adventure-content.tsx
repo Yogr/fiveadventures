@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import { getCharacter } from '@/app/actions/character';
 import { getAdventure, completeAdventure } from '@/app/actions/adventure';
 import { ROUTES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
-import { Character, Adventure, AdventureDecision, AdventureOutcome } from '@/lib/types';
+import { Character, Adventure, AdventureDecision, AdventureOutcome, Combat } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import AdventureTracker from '@/components/adventure/adventure-tracker';
 import CharacterStats from '@/components/character/character-stats';
+import CombatInterface from '@/components/combat/combat-interface';
 
 interface AdventureContentProps {
   characterId: string;
@@ -23,6 +24,8 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   const [selectedDecision, setSelectedDecision] = useState<AdventureDecision | null>(null);
   const [outcome, setOutcome] = useState<AdventureOutcome | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [combatId, setCombatId] = useState<string | null>(null);
+  const [showCombat, setShowCombat] = useState(false);
 
   // Load character and adventure data
   useEffect(() => {
@@ -77,18 +80,16 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   const handleCompleteAdventure = async () => {
     if (!character || !adventure || !selectedDecision) return;
     
-    console.log('Completing adventure with decision:', selectedDecision);
     setLoading(true);
     setError(null);
     
     try {
-      console.log('Completing adventure...');
       const result = await completeAdventure({
         characterId,
         adventureId: adventure.id,
         decisionId: selectedDecision.id
       });
-      console.log('Adventure completion result:', result);
+      
       if (!result.success || !result.data) {
         setError(result.error || 'Failed to complete adventure');
         setLoading(false);
@@ -98,27 +99,70 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
       // Update character and outcome
       setCharacter(result.data.character);
       setOutcome(result.data.outcome);
-
-      console.log('Adventure completed successfully:', result.data.outcome);
       
-      // Refresh the page after a delay to show the next adventure
-      setTimeout(() => {
-        console.log('Refreshing page...');
-        setLoading(false);
-        router.refresh();
-      }, 1000);
+      // Check if outcome has combat
+      if (result.data.outcome.has_combat && result.data.combat) {
+        setCombatId(result.data.combat.id);
+        setShowCombat(true);
+      }
+      
+      setLoading(false);
     } catch (err) {
       console.error('Error completing adventure:', err);
       setError('An unexpected error occurred');
       setLoading(false);
     }
   };
+  
+  // Handle combat end
+  const handleCombatEnd = (isVictory: boolean) => {
+    setShowCombat(false);
+    // Refresh character data after combat
+    getCharacter(characterId).then(response => {
+      if (response.success && response.data) {
+        setCharacter(response.data);
+      }
+    });
+  };
 
   // Handle continue to next adventure
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    setLoading(true);
     setSelectedDecision(null);
     setOutcome(null);
-    router.refresh();
+    
+    try {
+      // Get character data
+      const characterResponse = await getCharacter(characterId);
+      if (!characterResponse.success || !characterResponse.data) {
+        setError('Failed to load character data');
+        setLoading(false);
+        return;
+      }
+      
+      setCharacter(characterResponse.data);
+      
+      // Check if character has completed all adventures for the day
+      if (characterResponse.data.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
+        setLoading(false);
+        return;
+      }
+      
+      // Get next adventure
+      const adventureResponse = await getAdventure(characterId);
+      if (!adventureResponse.success || !adventureResponse.data) {
+        setError('Failed to load adventure data');
+        setLoading(false);
+        return;
+      }
+      
+      setAdventure(adventureResponse.data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error loading next adventure:', err);
+      setError('An unexpected error occurred');
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -153,7 +197,7 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   // All adventures completed for the day
   if (character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
     return (
-      <div className="pixel-border bg-gray-900 bg-opacity-80 p-6 text-center">
+      <div className="pixel-border bg-gray-900 bg-opacity-80 p-6 text-center animate-fadeIn">
         <h2 className="text-3xl mb-4 text-yellow-400">All Adventures Completed!</h2>
         <p className="text-xl mb-6">
           You've completed all {MAX_ADVENTURES_PER_DAY} adventures for today.
@@ -196,10 +240,21 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
     );
   }
 
+  // Show combat if available
+  if (showCombat && combatId && character) {
+    return (
+      <CombatInterface 
+        combatId={combatId}
+        character={character}
+        onCombatEnd={handleCombatEnd}
+      />
+    );
+  }
+
   // Show outcome if available
   if (outcome) {
     return (
-      <div className="pixel-border bg-gray-900 bg-opacity-80 p-6">
+      <div className="pixel-border bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
         <h2 className="text-3xl mb-4 text-green-400">Adventure Outcome</h2>
         
         <div className="mb-6">
@@ -254,7 +309,7 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
 
   // Show adventure and decisions
   return (
-    <div className="pixel-border bg-gray-900 bg-opacity-80 p-6">
+    <div className="pixel-border bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
       <div className="flex flex-col md:flex-row gap-6 mb-6">
         <div className="md:w-1/3">
           <CharacterStats character={character} />

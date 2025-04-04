@@ -98,11 +98,14 @@ export async function completeAdventure({
   decisionId
 }: {
   characterId: string;
-  adventureId: string;
-  decisionId: string;
+  adventureId: number;
+  decisionId: number;
 }): Promise<ApiResponse<{
   character: Character;
   outcome: AdventureOutcome;
+  combat?: {
+    id: string;
+  };
 }>> {
   try {
     // Get character data
@@ -227,7 +230,7 @@ export async function completeAdventure({
         adventure_number: newAdventureCount,
         experience_gained: experienceGained,
         gold_gained: goldGained,
-        item_gained_id: outcome.item_reward_id,
+        item_gained_id: outcome.reward_table_id ? outcome.reward_table_id : null,
         completed_at: new Date().toISOString()
       });
     
@@ -236,20 +239,41 @@ export async function completeAdventure({
       // Continue anyway, this isn't critical
     }
     
-    // If there's an item reward, add it to the character's inventory
-    if (outcome.item_reward_id) {
-      const { error: inventoryError } = await supabase
-        .from('character_inventory')
+    // If there's a reward table, we could potentially add an item to the character's inventory
+    // This would require additional logic to select an item from the reward table
+    // For now, we'll skip this part
+    
+    // Check if outcome has combat
+    let combatData = undefined;
+    
+    if (outcome.has_combat && outcome.monster_ids && outcome.monster_ids.length > 0) {
+      // Select a random monster from the outcome's monster_ids
+      const randomIndex = Math.floor(Math.random() * outcome.monster_ids.length);
+      const monsterId = outcome.monster_ids[randomIndex];
+      
+      // Create a combat encounter
+      const { data: combat, error: combatError } = await supabase
+        .from('combat')
         .insert({
           character_id: characterId,
-          item_id: outcome.item_reward_id,
-          quantity: 1,
-          acquired_at: new Date().toISOString()
-        });
+          adventure_id: adventureId,
+          outcome_id: outcome.id,
+          monster_id: monsterId,
+          is_completed: false,
+          turns: 0,
+          character_damage_dealt: 0,
+          monster_damage_dealt: 0,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
       
-      if (inventoryError) {
-        console.error('Error adding item to inventory:', inventoryError);
-        // Continue anyway, this isn't critical
+      if (combatError) {
+        console.error('Error creating combat encounter:', combatError);
+      } else if (combat) {
+        combatData = {
+          id: combat.id
+        };
       }
     }
     
@@ -265,7 +289,8 @@ export async function completeAdventure({
           current_energy: newEnergy,
           daily_adventure_count: newAdventureCount
         },
-        outcome
+        outcome,
+        combat: combatData
       }
     };
   } catch (err) {
