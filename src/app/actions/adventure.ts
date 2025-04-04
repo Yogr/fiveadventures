@@ -9,11 +9,11 @@ import {
   getLevelFromExperience
 } from '@/lib/utils';
 import { COOKIE_NAMES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
-import { 
-  ApiResponse, 
-  Adventure, 
-  AdventureOutcome, 
-  Character 
+import type {
+  ApiResponse,
+  Adventure,
+  AdventureOutcome,
+  Character
 } from '@/lib/types';
 import { getCharacter } from './character';
 
@@ -181,10 +181,58 @@ export async function completeAdventure({
       level: getLevelFromExperience(character.experience)
     };
     
-    // Choose an outcome based on success rates
-    // For now, we'll just pick the first outcome
-    // In a real implementation, we would use a weighted random selection
-    const outcome = outcomes[0];
+    // Calculate success rates for each outcome
+    const outcomesWithSuccessRates = outcomes.map(outcome => {
+      const successRate = outcome.stat_requirements 
+        ? calculateSuccessRate(characterStats, outcome.stat_requirements)
+        : 100; // Default to 100% if no requirements
+      
+      return {
+        outcome,
+        successRate
+      };
+    });
+    
+    // Choose an outcome based on weighted random selection
+    // First, sort by success rate (highest first)
+    outcomesWithSuccessRates.sort((a, b) => b.successRate - a.successRate);
+    
+    // Generate a random number between 0 and 100
+    const roll = Math.floor(Math.random() * 100) + 1;
+    
+    // Select outcome based on roll and success rates
+    let selectedOutcome = outcomesWithSuccessRates[0].outcome; // Default to highest success rate
+    
+    // If there's only one outcome, use it
+    if (outcomesWithSuccessRates.length === 1) {
+      selectedOutcome = outcomesWithSuccessRates[0].outcome;
+    } else {
+      // If there are multiple outcomes, use weighted selection
+      // The higher the success rate, the more likely to be chosen
+      
+      // Calculate total success rate
+      const totalSuccessRate = outcomesWithSuccessRates.reduce(
+        (sum, item) => sum + item.successRate, 
+        0
+      );
+      
+      // Calculate cumulative probabilities
+      let cumulativeProbability = 0;
+      
+      for (const item of outcomesWithSuccessRates) {
+        // Calculate normalized probability (0-100)
+        const probability = (item.successRate / totalSuccessRate) * 100;
+        cumulativeProbability += probability;
+        
+        // If roll is less than or equal to cumulative probability, select this outcome
+        if (roll <= cumulativeProbability) {
+          selectedOutcome = item.outcome;
+          break;
+        }
+      }
+    }
+    
+    const outcome = selectedOutcome;
     
     // Calculate rewards
     const experienceGained = adventure.min_experience + outcome.experience_bonus;
@@ -257,6 +305,7 @@ export async function completeAdventure({
         .insert({
           character_id: characterId,
           adventure_id: adventureId,
+          decision_id: decisionId,
           outcome_id: outcome.id,
           monster_id: monsterId,
           is_completed: false,

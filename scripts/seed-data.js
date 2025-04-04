@@ -16,20 +16,27 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Helper function to get next ID for a table
-async function getNextId(tableName) {
-  const { data, error } = await supabase
+// Helper function to delete all rows from a table
+async function clearTable(tableName) {
+  console.log(`Clearing all rows from ${tableName}...`);
+  const { error } = await supabase
     .from(tableName)
-    .select('id')
-    .order('id', { ascending: false })
-    .limit(1);
+    .delete()
+    .neq('id', 0); // Delete all rows
   
   if (error) {
-    console.error(`Error getting next ID for ${tableName}:`, error);
-    return 1; // Default to 1 if error
+    console.error(`Error clearing table ${tableName}:`, error);
+    return false;
   }
   
-  return data && data.length > 0 ? data[0].id + 1 : 1;
+  console.log(`Table ${tableName} cleared successfully.`);
+  return true;
+}
+
+// Helper function to get next ID for a table
+async function getNextId(tableName) {
+  // After clearing the table, we always start with ID 1
+  return 1;
 }
 
 // Helper function to read JSON data
@@ -46,6 +53,10 @@ const readJsonFile = (filePath) => {
 // Seed items
 async function seedItems(filePath) {
   console.log('Seeding items...');
+  
+  // Clear the table first
+  await clearTable('items');
+  
   const items = readJsonFile(filePath);
   
   if (!items || !Array.isArray(items)) {
@@ -84,6 +95,12 @@ async function seedItems(filePath) {
 // Seed adventures
 async function seedAdventures(filePath) {
   console.log('Seeding adventures...');
+  
+  // Clear the tables first
+  await clearTable('adventure_outcomes');
+  await clearTable('adventure_decisions');
+  await clearTable('adventures');
+  
   const adventures = readJsonFile(filePath);
   
   if (!adventures || !Array.isArray(adventures)) {
@@ -121,24 +138,18 @@ async function seedAdventures(filePath) {
     
     // Insert decisions and outcomes
     if (decisions && Array.isArray(decisions)) {
-      let nextDecisionId = await getNextId('adventure_decisions');
+      // Reset decision ID counter for each adventure
+      let decisionId = 1;
       
       for (const decision of decisions) {
-        // Generate ID if not provided
-        if (!decision.id) {
-          decision.id = nextDecisionId++;
-        }
-        
-        // Add created_at if not provided
-        if (!decision.created_at) {
-          decision.created_at = new Date().toISOString();
-        }
-        
-        // Set adventure_id
-        decision.adventure_id = adventure.id;
-        
-        // Extract outcomes
-        const { outcomes, ...decisionData } = decision;
+        // Create a new object for the decision
+        const decisionData = {
+          id: decisionId, // Use a counter that resets for each adventure
+          adventure_id: adventure.id,
+          description: decision.description,
+          requirements: decision.requirements,
+          created_at: decision.created_at || new Date().toISOString()
+        };
         
         // Insert decision
         const { error: decisionError } = await supabase
@@ -150,39 +161,57 @@ async function seedAdventures(filePath) {
           continue;
         }
         
-        console.log(`Decision inserted for adventure ${adventure.title}: ${decision.description} with ID ${decision.id}`);
+        console.log(`Decision inserted for adventure ${adventure.title}: ${decisionData.description} with ID ${decisionData.id}`);
         
         // Insert outcomes
+        const outcomes = decision.outcomes;
         if (outcomes && Array.isArray(outcomes)) {
-          let nextOutcomeId = await getNextId('adventure_outcomes');
+          // Reset outcome ID counter for each decision
+          let outcomeId = 1;
           
           for (const outcome of outcomes) {
-            // Generate ID if not provided
-            if (!outcome.id) {
-              outcome.id = nextOutcomeId++;
-            }
+            // Create a new object for the outcome
+            const outcomeData = {
+              id: outcomeId++, // Use a counter that resets for each decision
+              decision_id: decisionData.id,
+              adventure_id: adventure.id, // Include the adventure_id for the foreign key reference
+              description: outcome.description,
+              experience_bonus: outcome.experience_bonus || 0,
+              gold_bonus: outcome.gold_bonus || 0,
+              hitpoints_change: outcome.hitpoints_change || 0,
+              energy_change: outcome.energy_change || 0,
+              stat_requirements: outcome.stat_requirements,
+              success_rate_formula: outcome.success_rate_formula,
+              has_combat: outcome.has_combat || false,
+              monster_ids: outcome.monster_ids,
+              created_at: outcome.created_at || new Date().toISOString()
+            };
             
-            // Add created_at if not provided
-            if (!outcome.created_at) {
-              outcome.created_at = new Date().toISOString();
+            // Convert item_reward_id to reward_table_id if needed
+            if (outcome.item_reward_id !== undefined && outcome.reward_table_id === undefined) {
+              outcomeData.reward_table_id = outcome.item_reward_id;
+            } else if (outcome.reward_table_id !== undefined) {
+              outcomeData.reward_table_id = outcome.reward_table_id;
             }
-            
-            // Set decision_id
-            outcome.decision_id = decision.id;
             
             // Insert outcome
             const { error: outcomeError } = await supabase
               .from('adventure_outcomes')
-              .insert(outcome);
+              .insert(outcomeData);
             
             if (outcomeError) {
-              console.error(`Error inserting outcome for decision ${decision.description}:`, outcomeError);
+              console.error(`Error inserting outcome for decision ${decisionData.description}:`, outcomeError);
+              console.error('Outcome data:', outcomeData);
+              console.error('Error details:', outcomeError);
               continue;
             }
             
-            console.log(`Outcome inserted for decision ${decision.description}: ${outcome.description.substring(0, 30)}... with ID ${outcome.id}`);
+            console.log(`Outcome inserted for decision ${decisionData.description}: ${outcomeData.description.substring(0, 30)}... with ID ${outcomeData.id}`);
           }
         }
+        
+        // Increment decision ID for the next decision
+        decisionId++;
       }
     }
   }
@@ -193,6 +222,10 @@ async function seedAdventures(filePath) {
 // Seed world boss
 async function seedWorldBoss(filePath) {
   console.log('Seeding world boss...');
+  
+  // Clear the table first
+  await clearTable('world_boss');
+  
   const bosses = readJsonFile(filePath);
   
   if (!bosses || !Array.isArray(bosses)) {
@@ -231,6 +264,10 @@ async function seedWorldBoss(filePath) {
 // Seed monsters
 async function seedMonsters(filePath) {
   console.log('Seeding monsters...');
+  
+  // Clear the table first
+  await clearTable('monsters');
+  
   const monsters = readJsonFile(filePath);
   
   if (!monsters || !Array.isArray(monsters)) {
@@ -269,6 +306,11 @@ async function seedMonsters(filePath) {
 // Seed reward tables
 async function seedRewardTables(filePath) {
   console.log('Seeding reward tables...');
+  
+  // Clear the tables first
+  await clearTable('reward_items');
+  await clearTable('reward_tables');
+  
   const rewardTables = readJsonFile(filePath);
   
   if (!rewardTables || !Array.isArray(rewardTables)) {
@@ -306,33 +348,30 @@ async function seedRewardTables(filePath) {
     
     // Insert reward items
     if (items && Array.isArray(items)) {
-      let nextRewardItemId = await getNextId('reward_items');
+      // Reset reward item ID counter for each reward table
+      let rewardItemId = 1;
       
       for (const item of items) {
-        // Generate ID if not provided
-        if (!item.id) {
-          item.id = nextRewardItemId++;
-        }
-        
-        // Add created_at if not provided
-        if (!item.created_at) {
-          item.created_at = new Date().toISOString();
-        }
-        
-        // Set reward_table_id
-        item.reward_table_id = rewardTable.id;
+        // Create a new object for the reward item
+        const rewardItem = {
+          id: rewardItemId++, // Use a counter that resets for each reward table
+          reward_table_id: rewardTable.id,
+          item_id: item.item_id,
+          chance: item.chance,
+          created_at: item.created_at || new Date().toISOString()
+        };
         
         // Insert reward item
         const { error: itemError } = await supabase
           .from('reward_items')
-          .insert(item);
+          .insert(rewardItem);
         
         if (itemError) {
           console.error(`Error inserting reward item for table ${rewardTable.name}:`, itemError);
           continue;
         }
         
-        console.log(`Reward item inserted for table ${rewardTable.name}: Item ID ${item.item_id} with ID ${item.id}`);
+        console.log(`Reward item inserted for table ${rewardTable.name}: Item ID ${rewardItem.item_id} with ID ${rewardItem.id}`);
       }
     }
   }
@@ -343,6 +382,10 @@ async function seedRewardTables(filePath) {
 // Seed skills
 async function seedSkills(filePath) {
   console.log('Seeding skills...');
+  
+  // Clear the table first
+  await clearTable('skills');
+  
   const skills = readJsonFile(filePath);
   
   if (!skills || !Array.isArray(skills)) {
@@ -437,12 +480,13 @@ Examples:
         break;
       case 'all':
         const directory = filePath;
+        // Seed in the correct order to avoid foreign key constraint violations
         await seedItems(path.join(directory, 'items.json'));
-        await seedAdventures(path.join(directory, 'adventures.json'));
-        await seedWorldBoss(path.join(directory, 'worldboss.json'));
         await seedMonsters(path.join(directory, 'monsters.json'));
         await seedRewardTables(path.join(directory, 'rewardtables.json'));
         await seedSkills(path.join(directory, 'skills.json'));
+        await seedAdventures(path.join(directory, 'adventures.json'));
+        await seedWorldBoss(path.join(directory, 'worldboss.json'));
         break;
       default:
         console.error(`Unknown command: ${command}`);

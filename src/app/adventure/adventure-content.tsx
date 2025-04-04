@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getCharacter } from '@/app/actions/character';
-import { getAdventure, completeAdventure } from '@/app/actions/adventure';
+import { getAdventure, completeAdventure } from '@/app/actions/adventure-updated';
 import { ROUTES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
-import { Character, Adventure, AdventureDecision, AdventureOutcome, Combat } from '@/lib/types';
+import type { Character, Adventure, AdventureDecision, AdventureOutcome, Combat } from '@/lib/types-updated';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import AdventureTracker from '@/components/adventure/adventure-tracker';
 import CharacterStats from '@/components/character/character-stats';
@@ -171,10 +171,10 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
 
   if (error) {
     return (
-      <div className="bg-red-900 border border-red-500 p-4 rounded-md text-center">
+      <div className="bg-red-900 border border-red-500 p-4 rounded-md text-center animate-fadeIn">
         <p className="text-xl mb-4">{error}</p>
         <button 
-          onClick={() => router.refresh()} 
+          onClick={() => setError(null)} 
           className="pixel-button"
         >
           Try Again
@@ -197,7 +197,7 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   // All adventures completed for the day
   if (character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
     return (
-      <div className="pixel-border bg-gray-900 bg-opacity-80 p-6 text-center animate-fadeIn">
+      <div className="bg-gray-900 bg-opacity-80 p-6 text-center animate-fadeIn">
         <h2 className="text-3xl mb-4 text-yellow-400">All Adventures Completed!</h2>
         <p className="text-xl mb-6">
           You've completed all {MAX_ADVENTURES_PER_DAY} adventures for today.
@@ -228,10 +228,18 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
 
   if (!adventure) {
     return (
-      <div className="text-center">
+      <div className="text-center animate-fadeIn">
         <p className="text-xl mb-4">No adventures available</p>
         <button 
-          onClick={() => router.refresh()} 
+          onClick={() => {
+            setLoading(true);
+            getAdventure(characterId).then(response => {
+              if (response.success && response.data) {
+                setAdventure(response.data);
+              }
+              setLoading(false);
+            });
+          }} 
           className="pixel-button"
         >
           Try Again
@@ -254,7 +262,7 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   // Show outcome if available
   if (outcome) {
     return (
-      <div className="pixel-border bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
+      <div className="bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
         <h2 className="text-3xl mb-4 text-green-400">Adventure Outcome</h2>
         
         <div className="mb-6">
@@ -309,7 +317,7 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
 
   // Show adventure and decisions
   return (
-    <div className="pixel-border bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
+    <div className="bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
       <div className="flex flex-col gap-4 mb-6">
         <div>
           <CharacterStats character={character} />

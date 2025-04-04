@@ -5,11 +5,14 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Todo
 -------------
-- Make a nice level up pop up screen with fade in animation and explanation of the gains
+- Stop refreshing the adventure page, instead be reactive to the data and just display what needs to be displayed. Update the displayed components by using fade in animations. For outcome rewards, fade in each row one at a time.
+- Make a nice level up animation come in with the outcome reward screen if the user's exp gain triggers a level up, and fade in animating the explanation of the gains. Each row item should fade in one at a time.
 - Add 'Area' as a data type, with json values. These should just have their ID (1->N), name, description, and image.
 - Add a column to Adventures to specify which 'area' they can be found in. This should be a number representing the Area ID.
 - Do not start the first adventure until the user selects an area to adventure in for the day. Create 8 areas: Forest, Caverns (Locked until Level 5), Steppes (Level 10),  Catacombs (Level 15), Drakkesh Fort (Level 20), Oomshru Kingdom (Level 25), Dragon's Peak (Level 30), The Abyss (Level 40)
 - Retroactively place existing Adventures into the area they should be in by ID. Place all of the existing adventures into the Forest for now, which should be ID 1. Make sure after the user selects the area that we have code that fetches adventures only from that area ID.
+- Better name generator, make sure names are unique.
+- all adventures complete page needs some work
 
 Game Design
 -----------------

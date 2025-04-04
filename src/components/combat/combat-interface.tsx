@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Combat, Monster, Character, Skill } from '@/lib/types';
-import { getCombat, startCombatTurn, getCharacterSkills } from '@/app/actions/combat';
+import type { Combat, Monster, Character, Skill } from '@/lib/types-updated';
+import { getCombat, startCombatTurn } from '@/app/actions/adventure-updated';
+import { getCharacterSkills } from '@/app/actions/combat';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 
 interface CombatInterfaceProps {
