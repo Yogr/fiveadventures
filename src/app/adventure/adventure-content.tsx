@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getCharacter } from '@/app/actions/character';
 import { getAdventure, completeAdventure } from '@/app/actions/adventure-updated';
+import { getActiveCharacterCombat } from '@/app/actions/combat';
 import { ROUTES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 import type { Character, Adventure, AdventureDecision, AdventureOutcome, Combat } from '@/lib/types-updated';
 import LoadingSpinner from '@/components/ui/loading-spinner';
@@ -43,6 +44,16 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
         }
         
         setCharacter(characterResponse.data);
+        
+        // Check if character is in active combat
+        const activeCombatResponse = await getActiveCharacterCombat(characterId);
+        if (activeCombatResponse.success && activeCombatResponse.data) {
+          // Character is in active combat, show combat interface
+          setCombatId(activeCombatResponse.data.id);
+          setShowCombat(true);
+          setLoading(false);
+          return;
+        }
         
         // Check if character has completed all adventures for the day
         if (characterResponse.data.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
@@ -115,8 +126,28 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   };
   
   // Handle combat end
-  const handleCombatEnd = (isVictory: boolean) => {
+  const handleCombatEnd = (result: { isVictory: boolean; ranAway: boolean; monsterName: string }) => {
     setShowCombat(false);
+    
+    // If the player ran away, show a different outcome
+    if (result.ranAway) {
+      setOutcome({
+        id: 0,
+        decision_id: 0,
+        description: `You ran away from the ${result.monsterName}!`,
+        experience_bonus: 0,
+        gold_bonus: 0,
+        hitpoints_change: 0,
+        energy_change: 0,
+        has_combat: false,
+        monster_ids: [],
+        stat_requirements: null,
+        reward_table_id: null,
+        success_rate_formula: null,
+        created_at: new Date().toISOString()
+      });
+    }
+    
     // Refresh character data after combat
     getCharacter(characterId).then(response => {
       if (response.success && response.data) {
@@ -226,6 +257,17 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
     );
   }
 
+  // Show combat if available
+  if (showCombat && combatId && character) {
+    return (
+      <CombatInterface 
+        combatId={combatId}
+        character={character}
+        onCombatEnd={handleCombatEnd}
+      />
+    );
+  }
+
   if (!adventure) {
     return (
       <div className="text-center animate-fadeIn">
@@ -248,22 +290,16 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
     );
   }
 
-  // Show combat if available
-  if (showCombat && combatId && character) {
-    return (
-      <CombatInterface 
-        combatId={combatId}
-        character={character}
-        onCombatEnd={handleCombatEnd}
-      />
-    );
-  }
-
   // Show outcome if available
   if (outcome) {
+    // Check if this is a "ran away" outcome
+    const ranAway = outcome.description.includes('ran away from');
+    
     return (
       <div className="bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
-        <h2 className="text-3xl mb-4 text-green-400">Adventure Outcome</h2>
+        <h2 className={`text-3xl mb-4 ${ranAway ? 'text-red-400' : 'text-green-400'}`}>
+          {ranAway ? 'Defeat!' : 'Adventure Outcome'}
+        </h2>
         
         <div className="mb-6">
           <AdventureTracker 
@@ -275,28 +311,30 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
         <div className="mb-6 p-4 bg-gray-800 rounded-md">
           <p className="text-xl mb-4">{outcome.description}</p>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div className="bg-gray-700 p-3 rounded-md">
-              <p className="text-green-400">+{outcome.experience_bonus} Experience</p>
-            </div>
-            <div className="bg-gray-700 p-3 rounded-md">
-              <p className="text-yellow-400">+{outcome.gold_bonus} Gold</p>
-            </div>
-            {outcome.hitpoints_change !== 0 && (
+          {!ranAway && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div className="bg-gray-700 p-3 rounded-md">
-                <p className={outcome.hitpoints_change > 0 ? "text-green-400" : "text-red-400"}>
-                  {outcome.hitpoints_change > 0 ? "+" : ""}{outcome.hitpoints_change} HP
-                </p>
+                <p className="text-green-400">+{outcome.experience_bonus} Experience</p>
               </div>
-            )}
-            {outcome.energy_change !== 0 && (
               <div className="bg-gray-700 p-3 rounded-md">
-                <p className={outcome.energy_change > 0 ? "text-green-400" : "text-red-400"}>
-                  {outcome.energy_change > 0 ? "+" : ""}{outcome.energy_change} Energy
-                </p>
+                <p className="text-yellow-400">+{outcome.gold_bonus} Gold</p>
               </div>
-            )}
-          </div>
+              {outcome.hitpoints_change !== 0 && (
+                <div className="bg-gray-700 p-3 rounded-md">
+                  <p className={outcome.hitpoints_change > 0 ? "text-green-400" : "text-red-400"}>
+                    {outcome.hitpoints_change > 0 ? "+" : ""}{outcome.hitpoints_change} HP
+                  </p>
+                </div>
+              )}
+              {outcome.energy_change !== 0 && (
+                <div className="bg-gray-700 p-3 rounded-md">
+                  <p className={outcome.energy_change > 0 ? "text-green-400" : "text-red-400"}>
+                    {outcome.energy_change > 0 ? "+" : ""}{outcome.energy_change} Energy
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
           
           {/* TODO: Show item reward if any */}
         </div>

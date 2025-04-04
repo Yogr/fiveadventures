@@ -1,5 +1,8 @@
 -- Five Adventures Database Schema
 
+-- Enable PostgreSQL UUID extension if not already enabled
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
   id uuid PRIMARY KEY,
@@ -11,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Characters table
 CREATE TABLE IF NOT EXISTS characters (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id uuid REFERENCES users(id),
   name TEXT NOT NULL,
   class TEXT NOT NULL,
@@ -50,7 +53,7 @@ CREATE TABLE IF NOT EXISTS items (
 
 -- Character Inventory table
 CREATE TABLE IF NOT EXISTS character_inventory (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   character_id uuid NOT NULL REFERENCES characters(id),
   item_id INTEGER NOT NULL REFERENCES items(id),
   quantity INTEGER NOT NULL DEFAULT 1,
@@ -59,7 +62,7 @@ CREATE TABLE IF NOT EXISTS character_inventory (
 
 -- Character Equipment table
 CREATE TABLE IF NOT EXISTS character_equipment (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   character_id uuid NOT NULL REFERENCES characters(id) UNIQUE,
   weapon_id INTEGER REFERENCES items(id),
   helmet_id INTEGER REFERENCES items(id),
@@ -114,7 +117,7 @@ CREATE TABLE IF NOT EXISTS skills (
 
 -- Character Skills table
 CREATE TABLE IF NOT EXISTS character_skills (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   character_id uuid NOT NULL REFERENCES characters(id),
   skill_id INTEGER NOT NULL REFERENCES skills(id),
   level INTEGER NOT NULL DEFAULT 1,
@@ -179,7 +182,7 @@ CREATE TABLE IF NOT EXISTS adventure_outcomes (
 
 -- Character Adventures table
 CREATE TABLE IF NOT EXISTS character_adventures (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   character_id uuid NOT NULL REFERENCES characters(id),
   adventure_id INTEGER NOT NULL REFERENCES adventures(id),
   decision_id INTEGER,
@@ -213,7 +216,7 @@ CREATE TABLE IF NOT EXISTS world_boss (
 
 -- Character Boss Progress table
 CREATE TABLE IF NOT EXISTS character_boss_progress (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   character_id uuid NOT NULL REFERENCES characters(id),
   boss_id INTEGER NOT NULL REFERENCES world_boss(id),
   week INTEGER NOT NULL,
@@ -227,7 +230,7 @@ CREATE TABLE IF NOT EXISTS character_boss_progress (
 
 -- Boss Rewards table
 CREATE TABLE IF NOT EXISTS boss_rewards (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   character_id uuid NOT NULL REFERENCES characters(id),
   boss_id INTEGER NOT NULL REFERENCES world_boss(id),
   week INTEGER NOT NULL,
@@ -240,7 +243,7 @@ CREATE TABLE IF NOT EXISTS boss_rewards (
 
 -- Combat table
 CREATE TABLE IF NOT EXISTS combat (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   character_id uuid NOT NULL REFERENCES characters(id),
   adventure_id INTEGER NOT NULL REFERENCES adventures(id),
   decision_id INTEGER NOT NULL,
@@ -258,7 +261,7 @@ CREATE TABLE IF NOT EXISTS combat (
 
 -- Combat Turns table
 CREATE TABLE IF NOT EXISTS combat_turns (
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   combat_id uuid NOT NULL REFERENCES combat(id),
   turn_number INTEGER NOT NULL,
   actor TEXT NOT NULL, -- 'character' or 'monster'

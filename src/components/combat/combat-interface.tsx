@@ -4,16 +4,18 @@ import { useState, useEffect } from 'react';
 import type { Combat, Monster, Character, Skill } from '@/lib/types-updated';
 import { getCombat, startCombatTurn } from '@/app/actions/adventure-updated';
 import { getCharacterSkills } from '@/app/actions/combat';
+import { getCharacter } from '@/app/actions/character';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 
 interface CombatInterfaceProps {
   combatId: string;
   character: Character;
-  onCombatEnd: (isVictory: boolean) => void;
+  onCombatEnd: (result: { isVictory: boolean; ranAway: boolean; monsterName: string }) => void;
 }
 
-export default function CombatInterface({ combatId, character, onCombatEnd }: CombatInterfaceProps) {
+export default function CombatInterface({ combatId, character: initialCharacter, onCombatEnd }: CombatInterfaceProps) {
   const [loading, setLoading] = useState(true);
+  const [character, setCharacter] = useState<Character>(initialCharacter);
   const [combat, setCombat] = useState<Combat | null>(null);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
@@ -58,9 +60,61 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
   // Check if combat is completed
   useEffect(() => {
     if (combat?.is_completed && combat.is_victory !== null) {
-      onCombatEnd(combat.is_victory);
+      // Check if this was a "run away" scenario
+      const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) => 
+        turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
+      );
+      
+      onCombatEnd({
+        isVictory: combat.is_victory,
+        ranAway: !!ranAway,
+        monsterName: combat.monster?.name || 'monster'
+      });
     }
   }, [combat, onCombatEnd]);
+
+  // Create a floating damage number
+  const createFloatingNumber = (target: 'character' | 'monster', value: number, type: 'damage' | 'heal' | 'effect' = 'damage', text?: string) => {
+    // Get the target element
+    const targetElement = document.querySelector(target === 'character' ? '.character-avatar' : '.monster-avatar');
+    if (!targetElement) return;
+    
+    // Create the floating number element
+    const floatingNumber = document.createElement('div');
+    floatingNumber.className = type === 'damage' ? 'damage-number' : type === 'heal' ? 'heal-number' : 'effect-text';
+    floatingNumber.textContent = text || `${value}`;
+    
+    // Position it over the target
+    const rect = targetElement.getBoundingClientRect();
+    const damageContainer = document.getElementById('damage-numbers');
+    if (!damageContainer) return;
+    
+    const containerRect = damageContainer.getBoundingClientRect();
+    
+    floatingNumber.style.left = `${rect.left - containerRect.left + rect.width / 2}px`;
+    floatingNumber.style.top = `${rect.top - containerRect.top}px`;
+    
+    // Add it to the DOM
+    damageContainer.appendChild(floatingNumber);
+    
+    // Remove it after animation completes
+    setTimeout(() => {
+      floatingNumber.remove();
+    }, 1000);
+  };
+  
+  // Add animation class to an element
+  const animateElement = (selector: string, className: string) => {
+    const element = document.querySelector(selector);
+    if (!element) return;
+    
+    element.classList.add(className);
+    
+    // Remove the class after animation completes
+    setTimeout(() => {
+      element.classList.remove(className);
+    }, 500);
+  };
 
   // Handle attack action
   const handleAttack = async () => {
@@ -69,6 +123,9 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
     setActionInProgress(true);
     
     try {
+      // Animate character attacking
+      animateElement('.character-avatar', 'attacking');
+      
       const result = await startCombatTurn(combatId, 'attack');
       
       if (!result.success || !result.data) {
@@ -77,19 +134,62 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
         return;
       }
       
-      setCombat(result.data);
-      addToCombatLog(`You attacked the ${combat.monster.name} for ${result.data.character_damage_dealt - combat.character_damage_dealt} damage!`);
+      // Calculate damage dealt
+      const damageDealt = result.data!.character_damage_dealt - combat.character_damage_dealt;
       
-      if (result.data.monster_damage_dealt > combat.monster_damage_dealt) {
-        addToCombatLog(`The ${combat.monster.name} attacked you for ${result.data.monster_damage_dealt - combat.monster_damage_dealt} damage!`);
+      // Show floating damage number on monster
+      createFloatingNumber('monster', damageDealt, 'damage');
+      
+      // Animate monster being hit
+      animateElement('.monster-avatar', 'hit');
+      
+      setCombat(result.data);
+      addToCombatLog(`You attacked the ${combat.monster.name} for ${damageDealt} damage!`);
+      
+      // If monster attacks back
+      if (result.data!.monster_damage_dealt > combat.monster_damage_dealt) {
+        // Short delay before monster attacks
+        setTimeout(() => {
+          const monsterDamage = result.data!.monster_damage_dealt - combat.monster_damage_dealt;
+          
+          // Animate monster attacking
+          animateElement('.monster-avatar', 'attacking');
+          
+          // Short delay for attack animation
+          setTimeout(() => {
+            // Animate character being hit
+            animateElement('.character-avatar', 'hit');
+            
+            // Show floating damage number on character
+            createFloatingNumber('character', monsterDamage, 'damage');
+          }, 250);
+          
+          addToCombatLog(`The ${combat.monster.name} attacked you for ${monsterDamage} damage!`);
+          
+          // Refresh character data to update HP
+          getCharacter(character.id).then(response => {
+            if (response.success && response.data) {
+              setCharacter(response.data);
+            }
+          });
+        }, 500);
       }
       
-      if (result.data.is_completed) {
-        if (result.data.is_victory) {
+      if (result.data!.is_completed) {
+        if (result.data!.is_victory) {
           addToCombatLog(`You defeated the ${combat.monster.name}!`);
+          createFloatingNumber('monster', 0, 'effect', 'Defeated!');
         } else {
           addToCombatLog(`You were defeated by the ${combat.monster.name}!`);
+          createFloatingNumber('character', 0, 'effect', 'Defeated!');
         }
+        
+        // Refresh character data after combat ends
+        getCharacter(character.id).then(response => {
+          if (response.success && response.data) {
+            setCharacter(response.data);
+          }
+        });
       }
       
       setActionInProgress(false);
@@ -107,6 +207,12 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
     setActionInProgress(true);
     
     try {
+      // Animate character using skill
+      animateElement('.character-avatar', 'attacking');
+      
+      // Show skill name as effect
+      createFloatingNumber('character', 0, 'effect', selectedSkill.name);
+      
       const result = await startCombatTurn(combatId, 'skill', selectedSkill.id);
       
       if (!result.success || !result.data) {
@@ -118,20 +224,63 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
       setCombat(result.data);
       addToCombatLog(`You used ${selectedSkill.name}!`);
       
-      if (result.data.character_damage_dealt > combat.character_damage_dealt) {
-        addToCombatLog(`You dealt ${result.data.character_damage_dealt - combat.character_damage_dealt} damage to the ${combat.monster.name}!`);
+      // If skill dealt damage
+      if (result.data!.character_damage_dealt > combat.character_damage_dealt) {
+        const damageDealt = result.data!.character_damage_dealt - combat.character_damage_dealt;
+        
+        // Show floating damage number on monster
+        createFloatingNumber('monster', damageDealt, 'damage');
+        
+        // Animate monster being hit
+        animateElement('.monster-avatar', 'hit');
+        
+        addToCombatLog(`You dealt ${damageDealt} damage to the ${combat.monster.name}!`);
       }
       
-      if (result.data.monster_damage_dealt > combat.monster_damage_dealt) {
-        addToCombatLog(`The ${combat.monster.name} attacked you for ${result.data.monster_damage_dealt - combat.monster_damage_dealt} damage!`);
+      // If monster attacks back
+      if (result.data!.monster_damage_dealt > combat.monster_damage_dealt) {
+        // Short delay before monster attacks
+        setTimeout(() => {
+          const monsterDamage = result.data!.monster_damage_dealt - combat.monster_damage_dealt;
+          
+          // Animate monster attacking
+          animateElement('.monster-avatar', 'attacking');
+          
+          // Short delay for attack animation
+          setTimeout(() => {
+            // Animate character being hit
+            animateElement('.character-avatar', 'hit');
+            
+            // Show floating damage number on character
+            createFloatingNumber('character', monsterDamage, 'damage');
+          }, 250);
+          
+          addToCombatLog(`The ${combat.monster.name} attacked you for ${monsterDamage} damage!`);
+          
+          // Refresh character data to update HP
+          getCharacter(character.id).then(response => {
+            if (response.success && response.data) {
+              setCharacter(response.data);
+            }
+          });
+        }, 500);
       }
       
-      if (result.data.is_completed) {
-        if (result.data.is_victory) {
+      if (result.data!.is_completed) {
+        if (result.data!.is_victory) {
           addToCombatLog(`You defeated the ${combat.monster.name}!`);
+          createFloatingNumber('monster', 0, 'effect', 'Defeated!');
         } else {
           addToCombatLog(`You were defeated by the ${combat.monster.name}!`);
+          createFloatingNumber('character', 0, 'effect', 'Defeated!');
         }
+        
+        // Refresh character data after combat ends
+        getCharacter(character.id).then(response => {
+          if (response.success && response.data) {
+            setCharacter(response.data);
+          }
+        });
       }
       
       setSelectedSkill(null);
@@ -150,6 +299,9 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
     setActionInProgress(true);
     
     try {
+      // Show running effect
+      createFloatingNumber('character', 0, 'effect', 'Running...');
+      
       const result = await startCombatTurn(combatId, 'run');
       
       if (!result.success || !result.data) {
@@ -160,13 +312,40 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
       
       setCombat(result.data);
       
-      if (result.data.is_completed) {
-        addToCombatLog('You successfully ran away from combat!');
+      if (result.data!.is_completed) {
+        addToCombatLog(`You successfully ran away from the ${combat.monster.name}!`);
+        createFloatingNumber('character', 0, 'effect', 'Escaped!');
       } else {
         addToCombatLog('You failed to run away!');
+        createFloatingNumber('character', 0, 'effect', 'Failed!');
         
-        if (result.data.monster_damage_dealt > combat.monster_damage_dealt) {
-          addToCombatLog(`The ${combat.monster.name} attacked you for ${result.data.monster_damage_dealt - combat.monster_damage_dealt} damage!`);
+        // If monster attacks after failed run
+        if (result.data!.monster_damage_dealt > combat.monster_damage_dealt) {
+          // Short delay before monster attacks
+          setTimeout(() => {
+            const monsterDamage = result.data!.monster_damage_dealt - combat.monster_damage_dealt;
+            
+            // Animate monster attacking
+            animateElement('.monster-avatar', 'attacking');
+            
+            // Short delay for attack animation
+            setTimeout(() => {
+              // Animate character being hit
+              animateElement('.character-avatar', 'hit');
+              
+              // Show floating damage number on character
+              createFloatingNumber('character', monsterDamage, 'damage');
+            }, 250);
+            
+            addToCombatLog(`The ${combat.monster.name} attacked you for ${monsterDamage} damage!`);
+            
+            // Refresh character data to update HP
+            getCharacter(character.id).then(response => {
+              if (response.success && response.data) {
+                setCharacter(response.data);
+              }
+            });
+          }, 500);
         }
       }
       
@@ -217,10 +396,15 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
     <div className="pixel-border bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
       <h2 className="text-3xl mb-4 text-red-400 text-center">Combat!</h2>
       
-      <div className="grid grid-cols-1 gap-4 mb-4">
-        {/* Character */}
-        <div className="bg-gray-800 p-4 rounded-md">
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* Character - Left Side */}
+        <div className="bg-gray-800 p-4 rounded-md relative">
           <h3 className="text-xl mb-2">{character.name}</h3>
+          
+          {/* Character Image Placeholder */}
+          <div className="w-24 h-24 mx-auto mb-3 bg-blue-900 rounded-full flex items-center justify-center character-avatar">
+            <span className="text-2xl">{character.class.charAt(0)}</span>
+          </div>
           
           <div className="mb-2">
             <div className="flex justify-between mb-1">
@@ -229,7 +413,7 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
             </div>
             <div className="w-full h-4 bg-gray-700 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-red-600" 
+                className="h-full bg-red-600 transition-all duration-300" 
                 style={{ width: `${characterHealthPercent}%` }}
               ></div>
             </div>
@@ -242,16 +426,21 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
             </div>
             <div className="w-full h-4 bg-gray-700 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-blue-600" 
+                className="h-full bg-blue-600 transition-all duration-300" 
                 style={{ width: `${(character.current_energy / character.max_energy) * 100}%` }}
               ></div>
             </div>
           </div>
         </div>
         
-        {/* Monster */}
-        <div className="bg-gray-800 p-4 rounded-md">
+        {/* Monster - Right Side */}
+        <div className="bg-gray-800 p-4 rounded-md relative">
           <h3 className="text-xl mb-2">{combat.monster.name}</h3>
+          
+          {/* Monster Image Placeholder */}
+          <div className="w-24 h-24 mx-auto mb-3 bg-red-900 rounded-full flex items-center justify-center monster-avatar">
+            <span className="text-2xl">{combat.monster.name.charAt(0)}</span>
+          </div>
           
           <div className="mb-2">
             <div className="flex justify-between mb-1">
@@ -260,7 +449,7 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
             </div>
             <div className="w-full h-4 bg-gray-700 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-red-600" 
+                className="h-full bg-red-600 transition-all duration-300" 
                 style={{ width: `${monsterHealthPercent}%` }}
               ></div>
             </div>
@@ -268,6 +457,11 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
           
           <p className="text-sm mt-2">{combat.monster.description}</p>
         </div>
+      </div>
+
+      {/* Floating Damage Numbers Container */}
+      <div id="damage-numbers" className="relative h-0">
+        {/* Damage numbers will be added dynamically via JavaScript */}
       </div>
       
       {/* Combat Log */}
@@ -283,57 +477,66 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
       
       {/* Actions */}
       {!combat.is_completed && (
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <button 
-            onClick={handleAttack}
-            disabled={actionInProgress}
-            className="pixel-button bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:opacity-50"
-          >
-            Attack
-          </button>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <button 
+              onClick={handleAttack}
+              disabled={actionInProgress}
+              className="pixel-button w-full bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:opacity-50 attack-button"
+            >
+              Attack
+            </button>
+          </div>
           
-          <button 
-            onClick={handleUseSkill}
-            disabled={actionInProgress || skills.length === 0 || !selectedSkill}
-            className="pixel-button bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50"
-          >
-            Use Skill
-          </button>
-          
-          <button 
-            onClick={handleRun}
-            disabled={actionInProgress}
-            className="pixel-button bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-700 disabled:opacity-50"
-          >
-            Run
-          </button>
+          <div>
+            <button 
+              onClick={handleRun}
+              disabled={actionInProgress}
+              className="pixel-button w-full bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-700 disabled:opacity-50"
+            >
+              Run Away
+            </button>
+          </div>
         </div>
       )}
       
       {/* Skills */}
       {!combat.is_completed && skills.length > 0 && (
-        <div className="bg-gray-800 p-4 rounded-md">
+        <div className="bg-gray-800 p-4 rounded-md mb-4">
           <h3 className="text-xl mb-2">Skills</h3>
           
-          <div className="grid grid-cols-1 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {skills.map((skill) => (
-              <div 
+              <button 
                 key={skill.id}
-                className={`p-2 border rounded-md cursor-pointer ${
+                className={`p-2 border rounded-md text-left ${
                   selectedSkill?.id === skill.id
                     ? 'border-blue-500 bg-blue-900 bg-opacity-30'
                     : 'border-gray-600 hover:border-gray-400'
-                }`}
-                onClick={() => setSelectedSkill(skill)}
+                } ${character.current_energy < skill.energy_cost ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                onClick={() => character.current_energy >= skill.energy_cost && setSelectedSkill(skill)}
+                disabled={character.current_energy < skill.energy_cost || actionInProgress}
               >
                 <div className="flex justify-between">
-                  <span>{skill.name}</span>
+                  <span className="font-bold">{skill.name}</span>
                   <span className="text-blue-400">{skill.energy_cost} Energy</span>
                 </div>
                 <p className="text-sm text-gray-300">{skill.description}</p>
-              </div>
+              </button>
             ))}
           </div>
+          
+          {selectedSkill && (
+            <div className="mt-3 text-center">
+              <button 
+                onClick={handleUseSkill}
+                disabled={actionInProgress}
+                className="pixel-button bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50"
+              >
+                Use {selectedSkill.name}
+              </button>
+            </div>
+          )}
         </div>
       )}
       
@@ -347,7 +550,18 @@ export default function CombatInterface({ combatId, character, onCombatEnd }: Co
           </h3>
           
           <button 
-            onClick={() => onCombatEnd(combat.is_victory || false)}
+            onClick={() => {
+              // Check if this was a "run away" scenario
+              const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) => 
+                turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
+              );
+              
+              onCombatEnd({
+                isVictory: combat.is_victory || false,
+                ranAway: !!ranAway,
+                monsterName: combat.monster?.name || 'monster'
+              });
+            }}
             className="pixel-button text-xl"
           >
             Continue

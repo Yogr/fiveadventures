@@ -1,6 +1,7 @@
 'use client';
 
-import { Character } from '@/lib/types';
+import { useState } from 'react';
+import type { Character } from '@/lib/types';
 import { getRequiredExperience, getLevelFromExperience } from '@/lib/utils';
 import { formatNumber } from '@/lib/utils';
 
@@ -9,6 +10,8 @@ interface CharacterStatsProps {
 }
 
 export default function CharacterStats({ character }: CharacterStatsProps) {
+  const [showDetailedStats, setShowDetailedStats] = useState(false);
+  
   const level = getLevelFromExperience(character.experience);
   const nextLevelExp = getRequiredExperience(level + 1);
   const currentLevelExp = getRequiredExperience(level);
@@ -20,7 +23,7 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
   const energyPercentage = (character.current_energy / character.max_energy) * 100;
   
   return (
-    <div className="bg-gray-800 p-2 sm:p-3 md:p-4 rounded-md">
+    <div className="bg-gray-800 p-2 sm:p-3 md:p-4 rounded-md relative">
       <div className="flex justify-between items-center mb-2 sm:mb-3">
         <h3 className="text-lg sm:text-xl md:text-2xl font-bold">{character.name}</h3>
         <div className="text-sm sm:text-base md:text-lg">
@@ -88,41 +91,86 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
         </div>
       </div>
       
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-1 sm:gap-2 mb-1 sm:mb-2 text-sm sm:text-base">
-        <div className="bg-gray-700 p-1 sm:p-2 rounded-md">
+      {/* Gold and Inventory Button */}
+      <div className="flex gap-2 items-center">
+        <div className="bg-gray-700 p-1 sm:p-2 rounded-md text-sm sm:text-base flex-grow">
           <div className="flex justify-between">
-            <span>STR</span>
-            <span className="text-red-400">{character.strength}</span>
+            <span>Gold</span>
+            <span className="text-yellow-400">{formatNumber(character.gold)}</span>
           </div>
         </div>
-        <div className="bg-gray-700 p-1 sm:p-2 rounded-md">
-          <div className="flex justify-between">
-            <span>INT</span>
-            <span className="text-blue-400">{character.intelligence}</span>
-          </div>
-        </div>
-        <div className="bg-gray-700 p-1 sm:p-2 rounded-md">
-          <div className="flex justify-between">
-            <span>AGI</span>
-            <span className="text-green-400">{character.agility}</span>
-          </div>
-        </div>
-        <div className="bg-gray-700 p-1 sm:p-2 rounded-md">
-          <div className="flex justify-between">
-            <span>LCK</span>
-            <span className="text-yellow-400">{character.luck}</span>
-          </div>
-        </div>
+        <button 
+          onClick={() => setShowDetailedStats(!showDetailedStats)}
+          className="pixel-button bg-yellow-800 hover:bg-yellow-700 active:bg-yellow-900 text-sm"
+        >
+          Inventory
+        </button>
       </div>
       
-      {/* Gold */}
-      <div className="bg-gray-700 p-1 sm:p-2 rounded-md text-sm sm:text-base">
-        <div className="flex justify-between">
-          <span>Gold</span>
-          <span className="text-yellow-400">{formatNumber(character.gold)}</span>
+      {/* Detailed Stats Popup */}
+      {showDetailedStats && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-4 rounded-md max-w-md w-full animate-fadeIn">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">Detailed Stats</h3>
+              <button 
+                onClick={() => setShowDetailedStats(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {/* Character Stats */}
+            <div className="mb-4">
+              <h4 className="text-lg mb-2">Attributes</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm sm:text-base">
+                <div className="bg-gray-700 p-2 rounded-md">
+                  <div className="flex justify-between">
+                    <span>STR</span>
+                    <span className="text-red-400">{character.strength}</span>
+                  </div>
+                </div>
+                <div className="bg-gray-700 p-2 rounded-md">
+                  <div className="flex justify-between">
+                    <span>INT</span>
+                    <span className="text-blue-400">{character.intelligence}</span>
+                  </div>
+                </div>
+                <div className="bg-gray-700 p-2 rounded-md">
+                  <div className="flex justify-between">
+                    <span>AGI</span>
+                    <span className="text-green-400">{character.agility}</span>
+                  </div>
+                </div>
+                <div className="bg-gray-700 p-2 rounded-md">
+                  <div className="flex justify-between">
+                    <span>LCK</span>
+                    <span className="text-yellow-400">{character.luck}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Inventory Placeholder */}
+            <div>
+              <h4 className="text-lg mb-2">Inventory</h4>
+              <div className="bg-gray-700 p-3 rounded-md text-center">
+                <p>Inventory items will be displayed here</p>
+              </div>
+            </div>
+            
+            <div className="mt-4 text-center">
+              <button 
+                onClick={() => setShowDetailedStats(false)}
+                className="pixel-button"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -6,7 +6,9 @@ import {
   generateAdventureSeed, 
   getCurrentGameDay,
   calculateSuccessRate,
-  getLevelFromExperience
+  getLevelFromExperience,
+  generateId,
+  getPrimaryStat
 } from '@/lib/utils';
 import { COOKIE_NAMES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 import type { 
@@ -48,8 +50,12 @@ export async function getAdventure(
     // Determine if we need a non-violent adventure (if character has 0 HP)
     const needsNonViolent = character.current_hitpoints <= 0;
     
-    // Generate a seed based on character ID and current day
-    const seed = generateAdventureSeed(characterId, character.last_played_day);
+    // Generate a seed based on character ID, current day, and adventure number
+    const seed = generateAdventureSeed(
+      characterId, 
+      character.last_played_day, 
+      character.daily_adventure_count + 1
+    );
     
     // Get all available adventures
     let query = supabase
@@ -245,6 +251,7 @@ export async function completeAdventure({
       const { data: newCombat, error: combatError } = await supabase
         .from('combat')
         .insert({
+          id: generateId(), // Generate UUID for the record
           character_id: characterId,
           adventure_id: adventureId,
           decision_id: decisionId,
@@ -340,6 +347,7 @@ export async function completeAdventure({
     const { error: historyError } = await supabase
       .from('character_adventures')
       .insert({
+        id: generateId(), // Generate UUID for the record
         character_id: characterId,
         adventure_id: adventureId,
         decision_id: decisionId,
@@ -362,6 +370,7 @@ export async function completeAdventure({
       const { error: inventoryError } = await supabase
         .from('character_inventory')
         .insert({
+          id: generateId(), // Generate UUID for the record
           character_id: characterId,
           item_id: itemRewardId,
           quantity: 1,
@@ -488,14 +497,17 @@ export async function startCombatTurn(
         .eq('character_id', character.id)
         .single();
       
+      // Get primary stat based on class
+      const primaryStat = getPrimaryStat(character);
+      
       if (!equipmentError && equipment && equipment.weapon) {
         const weapon = equipment.weapon;
         const baseDamage = weapon.base_damage || 5;
-        const strengthBonus = Math.floor(character.strength / 2);
-        characterDamageDealt = baseDamage + strengthBonus;
+        const statBonus = Math.floor(primaryStat / 2);
+        characterDamageDealt = baseDamage + statBonus;
       } else {
         // Unarmed attack
-        characterDamageDealt = 3 + Math.floor(character.strength / 3);
+        characterDamageDealt = 3 + Math.floor(primaryStat / 3);
       }
       
       // Apply monster defense
@@ -530,8 +542,8 @@ export async function startCombatTurn(
         if (effects.damage_multiplier) {
           // Damage skill
           const baseDamage = 5; // Base damage
-          const statBonus = character.class === 'Wizard' ? character.intelligence : character.strength;
-          characterDamageDealt = Math.floor(baseDamage * effects.damage_multiplier) + Math.floor(statBonus / 2);
+          const primaryStat = getPrimaryStat(character);
+          characterDamageDealt = Math.floor(baseDamage * effects.damage_multiplier) + Math.floor(primaryStat / 2);
           
           // Apply monster defense
           characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 3));
@@ -576,6 +588,7 @@ export async function startCombatTurn(
         await supabase
           .from('combat_turns')
           .insert({
+            id: generateId(), // Generate UUID for the record
             combat_id: combatId,
             turn_number: turnNumber,
             actor: 'character',
@@ -598,6 +611,7 @@ export async function startCombatTurn(
         await supabase
           .from('combat_turns')
           .insert({
+            id: generateId(), // Generate UUID for the record
             combat_id: combatId,
             turn_number: turnNumber,
             actor: 'character',
@@ -614,6 +628,7 @@ export async function startCombatTurn(
     await supabase
       .from('combat_turns')
       .insert({
+        id: generateId(), // Generate UUID for the record
         combat_id: combatId,
         turn_number: turnNumber,
         actor: 'character',
@@ -736,6 +751,7 @@ export async function startCombatTurn(
     await supabase
       .from('combat_turns')
       .insert({
+        id: generateId(), // Generate UUID for the record
         combat_id: combatId,
         turn_number: turnNumber,
         actor: 'monster',

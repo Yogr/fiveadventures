@@ -23,7 +23,7 @@ export default function GameNavigation({ activeTab }: GameNavigationProps) {
           href={ROUTES.SHOP}
           className={`rounded-full px-4 py-2 text-sm sm:text-base text-center text-white font-medium ${activeTab === 'shop' ? 'bg-yellow-700' : 'bg-yellow-600 hover:bg-yellow-500'}`}
         >
-          Shop & Inventory
+          Shop
         </Link>
         
         <div className="relative flex items-center">

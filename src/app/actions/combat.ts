@@ -1,8 +1,9 @@
 'use server';
 
 import { supabase } from '@/lib/supabase';
-import { ApiResponse, Combat, CombatTurn, Character, Monster } from '@/lib/types';
+import type { ApiResponse, Combat, CombatTurn, Character, Monster } from '@/lib/types';
 import { getCharacter } from './character';
+import { getPrimaryStat } from '@/lib/utils';
 
 // Get combat data
 export async function getCombat(
@@ -93,18 +94,25 @@ export async function startCombatTurn(
         .eq('character_id', character.id)
         .single();
       
+      // Get primary stat based on class
+      const primaryStat = getPrimaryStat(character);
+      
       if (!equipmentError && equipment && equipment.weapon) {
         const weapon = equipment.weapon;
         const baseDamage = weapon.base_damage || 5;
-        const strengthBonus = Math.floor(character.strength / 2);
-        characterDamageDealt = baseDamage + strengthBonus;
+        const statBonus = Math.floor(primaryStat / 2);
+        
+        // Base damage with randomness (±20%)
+        const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
+        characterDamageDealt = Math.floor((baseDamage + statBonus) * randomFactor);
       } else {
-        // Unarmed attack
-        characterDamageDealt = 3 + Math.floor(character.strength / 3);
+        // Unarmed attack with randomness
+        const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
+        characterDamageDealt = Math.floor((3 + Math.floor(primaryStat / 3)) * randomFactor);
       }
       
-      // Apply monster defense
-      characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 2));
+      // Apply monster defense (reduced impact)
+      characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 3));
     } else if (action === 'skill' && skillId) {
       // Skill attack
       const { data: skill, error: skillError } = await supabase
@@ -290,7 +298,9 @@ export async function startCombatTurn(
     }
     
     // Monster's turn
-    let monsterDamageDealt = monster.attack;
+    // Base damage with randomness (±20%)
+    const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
+    let monsterDamageDealt = Math.floor(monster.attack * randomFactor);
     let monsterEffects = null;
     
     // Apply character defense from equipment
@@ -311,7 +321,8 @@ export async function startCombatTurn(
         defense += equipment.helmet.base_defense || 0;
       }
       
-      monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(defense / 2));
+      // Reduced impact of defense
+      monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(defense / 3));
     }
     
     // Check for monster abilities
@@ -412,6 +423,53 @@ export async function startCombatTurn(
     };
   } catch (err) {
     console.error('Unexpected error in combat turn:', err);
+    return {
+      success: false,
+      error: 'An unexpected error occurred'
+    };
+  }
+}
+
+// Check if a character is in active combat
+export async function getActiveCharacterCombat(
+  characterId: string
+): Promise<ApiResponse<Combat | null>> {
+  try {
+    // Query for active combat for this character
+    const { data, error } = await supabase
+      .from('combat')
+      .select(`
+        *,
+        monster:monster_id(*)
+      `)
+      .eq('character_id', characterId)
+      .eq('is_completed', false)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (error) {
+      // If no data found, return null (not an error)
+      if (error.code === 'PGRST116') {
+        return {
+          success: true,
+          data: null
+        };
+      }
+      
+      console.error('Error checking for active combat:', error);
+      return {
+        success: false,
+        error: 'Failed to check for active combat'
+      };
+    }
+    
+    return {
+      success: true,
+      data: data as Combat
+    };
+  } catch (err) {
+    console.error('Unexpected error checking for active combat:', err);
     return {
       success: false,
       error: 'An unexpected error occurred'

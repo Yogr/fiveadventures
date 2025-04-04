@@ -136,12 +136,24 @@ export const generateRandomName = (): string => {
   return `${prefix} ${name}`;
 };
 
-// Generate a seed for daily adventures based on character ID and day
-export const generateAdventureSeed = (characterId: string, day: number): number => {
+// Generate a seed for daily adventures based on character ID, day, and adventure number
+export const generateAdventureSeed = (characterId: string, day: number, adventureNumber: number): number => {
   // Convert characterId to a number by summing character codes
   const charSum = characterId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  // Combine with day to create a deterministic but "random" seed
-  return charSum * 31 + day * 17;
+  // Combine with day and adventure number to create a deterministic but "random" seed
+  return charSum * 31 + day * 17 + adventureNumber * 7;
+};
+
+// Get primary stat based on character class
+export const getPrimaryStat = (character: { class: string, strength: number, intelligence: number, agility: number, luck: number }): number => {
+  switch(character.class) {
+    case 'Warrior': return character.strength;
+    case 'Wizard': return character.intelligence;
+    case 'Thief': return character.luck;
+    case 'Ranger': return character.agility;
+    case 'Cleric': return character.intelligence;
+    default: return character.strength; // Fallback
+  }
 };
 
 // Generate a seed for daily shop items based on day
