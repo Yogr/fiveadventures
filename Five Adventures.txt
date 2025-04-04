@@ -5,7 +5,10 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Todo
 -------------
-- Stop refreshing the adventure page, instead be reactive to the data and just display what needs to be displayed. Update the displayed components by using fade in animations. For outcome rewards, fade in each row one at a time.
+- Fix the outcome rewards
+- Can't win in combat, it doesn't end at 0 hp for the enemy.
+- All adventures complete seems out of place, it should appear instead of a 'Continue to next adventure' in the reward screen after showing the rewards.
+
 - Make a nice level up animation come in with the outcome reward screen if the user's exp gain triggers a level up, and fade in animating the explanation of the gains. Each row item should fade in one at a time.
 - Add 'Area' as a data type, with json values. These should just have their ID (1->N), name, description, and image.
 - Add a column to Adventures to specify which 'area' they can be found in. This should be a number representing the Area ID.
@@ -13,6 +16,7 @@ Todo
 - Retroactively place existing Adventures into the area they should be in by ID. Place all of the existing adventures into the Forest for now, which should be ID 1. Make sure after the user selects the area that we have code that fetches adventures only from that area ID.
 - Better name generator, make sure names are unique.
 - all adventures complete page needs some work
+- Combat text output needs to perma scroll to bottom. Move action buttons to above the combat window.
 
 Game Design
 -----------------

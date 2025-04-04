@@ -14,10 +14,10 @@
     "seed:all": "node scripts/seed-data.js all ./data"
   },
   "dependencies": {
-    "@supabase/auth-helpers-nextjs": "^0.9.0",
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.40.0",
     "dotenv": "^16.4.7",
-    "next": "14.2.0",
+    "next": "^15.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwindcss": "^3.4.0",
@@ -32,7 +32,7 @@
     "@types/uuid": "^9.0.7",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.56.0",
-    "eslint-config-next": "14.2.0",
+    "eslint-config-next": "^15.2.4",
     "postcss": "^8.4.32",
     "typescript": "^5.3.0"
   }

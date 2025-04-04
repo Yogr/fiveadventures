@@ -8,7 +8,7 @@ import {
   getCurrentGameDay 
 } from '@/lib/utils';
 import { COOKIE_NAMES } from '@/lib/constants';
-import { CharacterClass, ApiResponse, Character, CharacterEquipment } from '@/lib/types';
+import type { CharacterClass, ApiResponse, Character, CharacterEquipment } from '@/lib/types';
 
 // Create a new character
 export async function createCharacter({
@@ -72,7 +72,8 @@ export async function createCharacter({
     }
     
     // Store character ID in cookie
-    cookies().set(COOKIE_NAMES.CHARACTER_ID, characterId, {
+    const cookieStore = await cookies();
+    cookieStore.set(COOKIE_NAMES.CHARACTER_ID, characterId, {
       maxAge: 60 * 60 * 24 * 365, // 1 year
       path: '/',
       httpOnly: true,
@@ -264,7 +265,8 @@ export async function linkCharacterToUser(
 
 // Get character from cookie
 export async function getCharacterFromCookie(): Promise<ApiResponse<Character>> {
-  const characterId = cookies().get(COOKIE_NAMES.CHARACTER_ID)?.value;
+  const cookieStore = await cookies();
+  const characterId = cookieStore.get(COOKIE_NAMES.CHARACTER_ID)?.value;
   
   if (!characterId) {
     return {

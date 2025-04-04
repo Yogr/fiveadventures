@@ -12,6 +12,8 @@ import LoadingSpinner from '@/components/ui/loading-spinner';
 import AdventureTracker from '@/components/adventure/adventure-tracker';
 import CharacterStats from '@/components/character/character-stats';
 import CombatInterface from '@/components/combat/combat-interface';
+import AnimatedText from '@/components/ui/animated-text';
+import AnimatedReward from '@/components/ui/animated-reward';
 
 interface AdventureContentProps {
   characterId: string;
@@ -27,6 +29,14 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   const [error, setError] = useState<string | null>(null);
   const [combatId, setCombatId] = useState<string | null>(null);
   const [showCombat, setShowCombat] = useState(false);
+  const [textAnimationComplete, setTextAnimationComplete] = useState(false);
+
+  // Reset animation state when outcome changes
+  useEffect(() => {
+    if (outcome) {
+      setTextAnimationComplete(false);
+    }
+  }, [outcome]);
 
   // Load character and adventure data
   useEffect(() => {
@@ -309,34 +319,49 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
         </div>
         
         <div className="mb-6 p-4 bg-gray-800 rounded-md">
-          <p className="text-xl mb-4">{outcome.description}</p>
+          <AnimatedText 
+            text={outcome.description} 
+            className="text-xl mb-4"
+            speed={80}
+            onComplete={() => setTextAnimationComplete(true)}
+          />
           
-          {!ranAway && (
+          {!ranAway && textAnimationComplete && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <div className="bg-gray-700 p-3 rounded-md">
+              {/* Item reward would go here with isItem=true */}
+              {outcome.reward_table_id && (
+                <AnimatedReward delay={0} isItem={true} className="col-span-full">
+                  <div className="bg-purple-900 p-3 rounded-md text-center">
+                    <p className="text-purple-200">Item Reward Placeholder</p>
+                  </div>
+                </AnimatedReward>
+              )}
+              
+              <AnimatedReward delay={200} className="bg-gray-700 p-3 rounded-md">
                 <p className="text-green-400">+{outcome.experience_bonus} Experience</p>
-              </div>
-              <div className="bg-gray-700 p-3 rounded-md">
+              </AnimatedReward>
+              
+              <AnimatedReward delay={400} className="bg-gray-700 p-3 rounded-md">
                 <p className="text-yellow-400">+{outcome.gold_bonus} Gold</p>
-              </div>
+              </AnimatedReward>
+              
               {outcome.hitpoints_change !== 0 && (
-                <div className="bg-gray-700 p-3 rounded-md">
+                <AnimatedReward delay={600} className="bg-gray-700 p-3 rounded-md">
                   <p className={outcome.hitpoints_change > 0 ? "text-green-400" : "text-red-400"}>
                     {outcome.hitpoints_change > 0 ? "+" : ""}{outcome.hitpoints_change} HP
                   </p>
-                </div>
+                </AnimatedReward>
               )}
+              
               {outcome.energy_change !== 0 && (
-                <div className="bg-gray-700 p-3 rounded-md">
+                <AnimatedReward delay={800} className="bg-gray-700 p-3 rounded-md">
                   <p className={outcome.energy_change > 0 ? "text-green-400" : "text-red-400"}>
                     {outcome.energy_change > 0 ? "+" : ""}{outcome.energy_change} Energy
                   </p>
-                </div>
+                </AnimatedReward>
               )}
             </div>
           )}
-          
-          {/* TODO: Show item reward if any */}
         </div>
         
         <div className="flex justify-center">

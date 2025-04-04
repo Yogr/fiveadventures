@@ -266,8 +266,8 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         }, 500);
       }
       
-      if (result.data!.is_completed) {
-        if (result.data!.is_victory) {
+      if (result.data.is_completed) {
+        if (result.data.is_victory) {
           addToCombatLog(`You defeated the ${combat.monster.name}!`);
           createFloatingNumber('monster', 0, 'effect', 'Defeated!');
         } else {
