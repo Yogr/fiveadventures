@@ -4,55 +4,55 @@
     "name": "Enchanted Forest",
     "description": "A mystical forest filled with ancient trees, magical creatures, and hidden treasures.",
     "level_requirement": 1,
-    "image": "/images/areas/enchanted-forest.png"
+    "image": "enchanted-forest"
   },
   {
     "id": 2,
-    "name": "Misty Mountains",
-    "description": "Towering peaks shrouded in mist, home to hardy mountain creatures and valuable ore deposits.",
-    "level_requirement": 3,
-    "image": "/images/areas/misty-mountains.png"
+    "name": "Caverns",
+    "description": "A vast network of underground passages with glowing crystals, mysterious echoes, and creatures that have adapted to life without sunlight.",
+    "level_requirement": 5,
+    "image": "caverns"
   },
   {
     "id": 3,
-    "name": "Coastal Cliffs",
-    "description": "Dramatic cliffs overlooking a turbulent sea, with hidden caves and mysterious shipwrecks.",
-    "level_requirement": 5,
-    "image": "/images/areas/coastal-cliffs.png"
+    "name": "Catacombs",
+    "description": "Ancient burial chambers that wind deep beneath the earth, filled with forgotten history, restless spirits, and treasures left with the dead.",
+    "level_requirement": 10,
+    "image": "catacombs"
   },
   {
     "id": 4,
-    "name": "Desert Dunes",
-    "description": "A vast desert with shifting sands, ancient ruins, and dangerous heat. Beware of sandstorms!",
-    "level_requirement": 7,
-    "image": "/images/areas/desert-dunes.png"
-  },
-  {
-    "id": 5,
-    "name": "Frozen Tundra",
-    "description": "An icy wasteland where only the strongest survive. Rich in rare resources and fierce predators.",
-    "level_requirement": 10,
-    "image": "/images/areas/frozen-tundra.png"
-  },
-  {
-    "id": 6,
     "name": "Volcanic Wastes",
     "description": "A hellish landscape of lava flows and ash clouds. Extremely dangerous but rewarding for brave adventurers.",
     "level_requirement": 15,
-    "image": "/images/areas/volcanic-wastes.png"
+    "image": "volcanic-wastes"
+  },
+  {
+    "id": 5,
+    "name": "Drakkesh Fort",
+    "description": "A massive fortress built into the side of a mountain, once home to a mighty military force. Now overrun with bandits and mercenaries guarding stolen treasures.",
+    "level_requirement": 20,
+    "image": "drakkesh-fort"
+  },
+  {
+    "id": 6,
+    "name": "Oomshru Kingdom",
+    "description": "The hidden realm of the Oomshru, an ancient race with advanced magic and technology. Their cities are marvels of crystal and light, but they don't welcome outsiders.",
+    "level_requirement": 25,
+    "image": "oomshru-kingdom"
   },
   {
     "id": 7,
     "name": "Ancient Ruins",
     "description": "The remains of a once-great civilization, now overrun with traps and guardians protecting forgotten treasures.",
-    "level_requirement": 20,
-    "image": "/images/areas/ancient-ruins.png"
+    "level_requirement": 30,
+    "image": "ancient-ruins"
   },
   {
     "id": 8,
-    "name": "Celestial Realm",
-    "description": "A mystical plane where reality bends and powerful entities dwell. Only for the most experienced adventurers.",
-    "level_requirement": 25,
-    "image": "/images/areas/celestial-realm.png"
+    "name": "Abyssal Realm",
+    "description": "A twisted dimension where reality itself is warped. Strange creatures of immense power roam freely, and the laws of nature don't apply. Only the most powerful adventurers dare enter.",
+    "level_requirement": 40,
+    "image": "abyssal-realm"
   }
 ]

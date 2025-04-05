@@ -19,18 +19,43 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 // Helper function to delete all rows from a table
 async function clearTable(tableName) {
   console.log(`Clearing all rows from ${tableName}...`);
-  const { error } = await supabase
-    .from(tableName)
-    .delete()
-    .neq('id', 0); // Delete all rows
   
-  if (error) {
-    console.error(`Error clearing table ${tableName}:`, error);
-    return false;
+  // For tables with UUID primary keys, we need a different approach
+  const uuidTables = ['character_adventures', 'combat', 'combat_turns', 'character_inventory', 'character_equipment'];
+  
+  if (uuidTables.includes(tableName)) {
+    // For UUID tables, just delete all rows without a condition
+    const { error } = await supabase
+      .from(tableName)
+      .delete()
+      .gte('id', '00000000-0000-0000-0000-000000000000'); // Match all UUIDs
+    
+    if (error) {
+      console.error(`Error clearing table ${tableName}:`, error);
+      return false;
+    }
+  } else {
+    // For numeric ID tables, use the original approach
+    const { error } = await supabase
+      .from(tableName)
+      .delete()
+      .neq('id', 0); // Delete all rows
+    
+    if (error) {
+      console.error(`Error clearing table ${tableName}:`, error);
+      return false;
+    }
   }
   
   console.log(`Table ${tableName} cleared successfully.`);
   return true;
+}
+
+// Helper function to clear tables in the correct order
+async function clearTables(tables) {
+  for (const table of tables) {
+    await clearTable(table);
+  }
 }
 
 // Helper function to get next ID for a table
@@ -50,12 +75,40 @@ const readJsonFile = (filePath) => {
   }
 };
 
+// Function to clear all tables in the correct order
+async function clearAllTables() {
+  console.log('Clearing all tables...');
+  
+  // Clear tables in the correct order to respect foreign key constraints
+  // First clear tables with UUID primary keys
+  await clearTables([
+    'character_adventures', 
+    'combat_turns', 
+    'combat', 
+    'character_inventory', 
+    'character_equipment'
+  ]);
+  
+  // Then clear tables with numeric primary keys in the correct order
+  await clearTables([
+    'adventure_outcomes',
+    'adventure_decisions',
+    'reward_items',
+    'adventures',
+    'reward_tables',
+    'areas',
+    'monsters',
+    'items',
+    'skills',
+    'world_boss'
+  ]);
+  
+  console.log('All tables cleared successfully.');
+}
+
 // Seed items
 async function seedItems(filePath) {
   console.log('Seeding items...');
-  
-  // Clear the table first
-  await clearTable('items');
   
   const items = readJsonFile(filePath);
   
@@ -95,11 +148,6 @@ async function seedItems(filePath) {
 // Seed adventures
 async function seedAdventures(filePath) {
   console.log('Seeding adventures...');
-  
-  // Clear the tables first
-  await clearTable('adventure_outcomes');
-  await clearTable('adventure_decisions');
-  await clearTable('adventures');
   
   const adventures = readJsonFile(filePath);
   
@@ -223,9 +271,6 @@ async function seedAdventures(filePath) {
 async function seedWorldBoss(filePath) {
   console.log('Seeding world boss...');
   
-  // Clear the table first
-  await clearTable('world_boss');
-  
   const bosses = readJsonFile(filePath);
   
   if (!bosses || !Array.isArray(bosses)) {
@@ -265,9 +310,6 @@ async function seedWorldBoss(filePath) {
 async function seedMonsters(filePath) {
   console.log('Seeding monsters...');
   
-  // Clear the table first
-  await clearTable('monsters');
-  
   const monsters = readJsonFile(filePath);
   
   if (!monsters || !Array.isArray(monsters)) {
@@ -306,10 +348,6 @@ async function seedMonsters(filePath) {
 // Seed reward tables
 async function seedRewardTables(filePath) {
   console.log('Seeding reward tables...');
-  
-  // Clear the tables first
-  await clearTable('reward_items');
-  await clearTable('reward_tables');
   
   const rewardTables = readJsonFile(filePath);
   
@@ -379,12 +417,48 @@ async function seedRewardTables(filePath) {
   console.log('Reward tables seeding completed.');
 }
 
+// Seed areas
+async function seedAreas(filePath) {
+  console.log('Seeding areas...');
+  
+  const areas = readJsonFile(filePath);
+  
+  if (!areas || !Array.isArray(areas)) {
+    console.error('Invalid areas data format. Expected an array of areas.');
+    return;
+  }
+  
+  let nextAreaId = await getNextId('areas');
+  
+  for (const area of areas) {
+    // Generate ID if not provided
+    if (!area.id) {
+      area.id = nextAreaId++;
+    }
+    
+    // Add created_at if not provided
+    if (!area.created_at) {
+      area.created_at = new Date().toISOString();
+    }
+    
+    // Insert area
+    const { error } = await supabase
+      .from('areas')
+      .insert(area);
+    
+    if (error) {
+      console.error(`Error inserting area ${area.name}:`, error);
+    } else {
+      console.log(`Area inserted: ${area.name} with ID ${area.id}`);
+    }
+  }
+  
+  console.log('Areas seeding completed.');
+}
+
 // Seed skills
 async function seedSkills(filePath) {
   console.log('Seeding skills...');
-  
-  // Clear the table first
-  await clearTable('skills');
   
   const skills = readJsonFile(filePath);
   
@@ -436,7 +510,8 @@ Commands:
   monsters <file>      - Seed monsters from JSON file
   rewardtables <file>  - Seed reward tables from JSON file
   skills <file>        - Seed skills from JSON file
-  all <directory>      - Seed all data from directory (looks for items.json, adventures.json, worldboss.json, monsters.json, rewardtables.json, skills.json)
+  areas <file>         - Seed areas from JSON file
+  all <directory>      - Seed all data from directory (looks for items.json, adventures.json, worldboss.json, monsters.json, rewardtables.json, skills.json, areas.json)
 
 Examples:
   node seed-data.js items ./data/items.json
@@ -445,6 +520,7 @@ Examples:
   node seed-data.js monsters ./data/monsters.json
   node seed-data.js rewardtables ./data/rewardtables.json
   node seed-data.js skills ./data/skills.json
+  node seed-data.js areas ./data/areas.json
   node seed-data.js all ./data
     `);
     return;
@@ -461,30 +537,45 @@ Examples:
   try {
     switch (command) {
       case 'items':
+        await clearAllTables();
         await seedItems(filePath);
         break;
       case 'adventures':
+        await clearAllTables();
         await seedAdventures(filePath);
         break;
       case 'worldboss':
+        await clearAllTables();
         await seedWorldBoss(filePath);
         break;
       case 'monsters':
+        await clearAllTables();
         await seedMonsters(filePath);
         break;
       case 'rewardtables':
+        await clearAllTables();
         await seedRewardTables(filePath);
         break;
       case 'skills':
+        await clearAllTables();
         await seedSkills(filePath);
+        break;
+      case 'areas':
+        await clearAllTables();
+        await seedAreas(filePath);
         break;
       case 'all':
         const directory = filePath;
+        
+        // Clear all tables before seeding
+        await clearAllTables();
+        
         // Seed in the correct order to avoid foreign key constraint violations
         await seedItems(path.join(directory, 'items.json'));
         await seedMonsters(path.join(directory, 'monsters.json'));
         await seedRewardTables(path.join(directory, 'rewardtables.json'));
         await seedSkills(path.join(directory, 'skills.json'));
+        await seedAreas(path.join(directory, 'areas.json'));
         await seedAdventures(path.join(directory, 'adventures.json'));
         await seedWorldBoss(path.join(directory, 'worldboss.json'));
         break;

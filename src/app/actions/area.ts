@@ -48,13 +48,23 @@ export async function getSelectedArea(characterId: string) {
       };
     }
     
-    // For development, always return that no area has been selected
+    // For development, return the Forest area (ID: 1) as the default selected area
+    // This ensures that existing adventures are placed in the Forest area by default
+    const defaultArea = areas.data.find(area => area.id === 1); // Forest area
+    
+    if (!defaultArea) {
+      return {
+        success: false,
+        error: 'Default area not found'
+      };
+    }
+    
     return {
       success: true,
       data: {
-        areaId: null,
-        area: null,
-        hasSelected: false
+        areaId: 1, // Forest area ID
+        area: defaultArea,
+        hasSelected: true
       }
     };
   } catch (error) {

@@ -6,16 +6,13 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 Todo
 -------------
 - Fix the outcome rewards
-- Can't win in combat, it doesn't end at 0 hp for the enemy.
-- All adventures complete seems out of place, it should appear instead of a 'Continue to next adventure' in the reward screen after showing the rewards.
 
-- Make a nice level up animation come in with the outcome reward screen if the user's exp gain triggers a level up, and fade in animating the explanation of the gains. Each row item should fade in one at a time.
-- Add 'Area' as a data type, with json values. These should just have their ID (1->N), name, description, and image.
-- Add a column to Adventures to specify which 'area' they can be found in. This should be a number representing the Area ID.
-- Do not start the first adventure until the user selects an area to adventure in for the day. Create 8 areas: Forest, Caverns (Locked until Level 5), Steppes (Level 10),  Catacombs (Level 15), Drakkesh Fort (Level 20), Oomshru Kingdom (Level 25), Dragon's Peak (Level 30), The Abyss (Level 40)
-- Retroactively place existing Adventures into the area they should be in by ID. Place all of the existing adventures into the Forest for now, which should be ID 1. Make sure after the user selects the area that we have code that fetches adventures only from that area ID.
-- Better name generator, make sure names are unique.
-- all adventures complete page needs some work
+
+
+- Make a Better name generator, such as only having a single name and doing little partial word tokens and combining them. There should be some tokens that are good for the start of the name and some tokens good for the end of the name, like 'Ar', 'Ro', 'Tyr', 'Seb', 'La', 'Kor', 'Mei', etc. for start and 'ion', 'yll', 'beard', 'dion', 'dan', 'tan', 'imar', 'omar', etc for ending tokens. Maybe even throw in a random middle name token. And also make sure names are unique when creating a character, if not unique we need to tell the user and focus back onto the name input field so they can change it.
+
+- Fix skills. They should show up and be usable in combat. They probably are not being granted to the user during character creation, we need to add the skills to be inserted in the initial character creation based on their class.
+
 - Combat text output needs to perma scroll to bottom. Move action buttons to above the combat window.
 - Make 'elite' encounters and always have any encounter > 4 fetch an 'elite' encounter. These encounters always feature an encounter with an 'elite' enemy, such as a Goblin King or Minotaur Captain or a Lich or some other more fearsome enemy, but similar to other enemies in the same area.
 
