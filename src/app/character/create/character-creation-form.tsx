@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { CHARACTER_CLASSES, ROUTES } from '@/lib/constants';
@@ -55,11 +55,15 @@ export default function CharacterCreationForm() {
     setName(generateRandomName());
   };
 
+  // Reference to the name input field
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!name.trim()) {
       setError('Please enter a character name');
+      nameInputRef.current?.focus();
       return;
     }
     
@@ -82,6 +86,11 @@ export default function CharacterCreationForm() {
       } else {
         setError(result.error || 'Failed to create character');
         setIsCreating(false);
+        
+        // If the error is about name already taken, focus the name input
+        if (result.error?.includes('name already taken')) {
+          nameInputRef.current?.focus();
+        }
       }
     } catch (err) {
       console.error('Error creating character:', err);
@@ -101,6 +110,7 @@ export default function CharacterCreationForm() {
           <input
             type="text"
             id="name"
+            ref={nameInputRef}
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full px-2 sm:px-3 md:px-4 py-1 sm:py-2 bg-gray-800 border-2 border-gray-600 rounded-md text-base sm:text-lg md:text-xl"

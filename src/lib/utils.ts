@@ -120,20 +120,43 @@ export const getLevelFromExperience = (experience: number): number => {
 
 // Generate a random name for a character
 export const generateRandomName = (): string => {
-  const prefixes = [
-    'Brave', 'Mighty', 'Wise', 'Swift', 'Cunning', 'Mystic', 'Shadow', 'Wild',
-    'Iron', 'Golden', 'Silver', 'Crimson', 'Azure', 'Emerald', 'Obsidian'
+  // Tokens for the start of names
+  const startTokens = [
+    'Ar', 'Ro', 'Tyr', 'Seb', 'La', 'Kor', 'Mei', 'Bel', 'Zor', 'Gan',
+    'Dra', 'Fen', 'Gar', 'Hal', 'Jor', 'Kha', 'Lun', 'Mor', 'Nar', 'Pal',
+    'Qar', 'Sar', 'Tho', 'Var', 'Wex', 'Xan', 'Yor', 'Zan', 'Eth', 'Fro'
   ];
   
-  const names = [
-    'Warrior', 'Mage', 'Rogue', 'Hunter', 'Knight', 'Wizard', 'Thief', 'Ranger',
-    'Blade', 'Caster', 'Shadow', 'Arrow', 'Shield', 'Staff', 'Dagger', 'Bow'
+  // Optional middle tokens
+  const middleTokens = [
+    'an', 'or', 'in', 'ar', 'en', 'ir', 'on', 'un', 'am', 'em',
+    'im', 'om', 'um', 'ad', 'ed', 'id', 'od', 'ud', 'al', 'el'
   ];
   
-  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-  const name = names[Math.floor(Math.random() * names.length)];
+  // Tokens for the end of names
+  const endTokens = [
+    'ion', 'yll', 'beard', 'dion', 'dan', 'tan', 'imar', 'omar', 'ius', 'ath',
+    'eth', 'oth', 'uth', 'ax', 'ex', 'ix', 'ox', 'ux', 'an', 'en',
+    'in', 'on', 'un', 'ar', 'er', 'ir', 'or', 'ur', 'ack', 'ick'
+  ];
   
-  return `${prefix} ${name}`;
+  // Randomly select tokens (with non-null assertions since arrays are not empty)
+  const startToken = startTokens[Math.floor(Math.random() * startTokens.length)]!;
+  const endToken = endTokens[Math.floor(Math.random() * endTokens.length)]!;
+  
+  // 40% chance to include a middle token
+  const includeMiddle = Math.random() < 0.4;
+  let name = '';
+  
+  if (includeMiddle) {
+    const middleToken = middleTokens[Math.floor(Math.random() * middleTokens.length)]!;
+    name = startToken + middleToken + endToken;
+  } else {
+    name = startToken + endToken;
+  }
+  
+  // Capitalize the first letter
+  return name.charAt(0).toUpperCase() + name.slice(1);
 };
 
 // Generate a seed for daily adventures based on character ID, day, and adventure number

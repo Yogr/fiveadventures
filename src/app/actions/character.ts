@@ -19,6 +19,28 @@ export async function createCharacter({
   characterClass: CharacterClass;
 }): Promise<ApiResponse<{ characterId: string }>> {
   try {
+    // Check if name is already taken
+    const { data: existingCharacter, error: checkError } = await supabase
+      .from('characters')
+      .select('id')
+      .eq('name', name)
+      .maybeSingle();
+    
+    if (checkError) {
+      console.error('Error checking character name:', checkError);
+      return {
+        success: false,
+        error: 'Failed to check character name'
+      };
+    }
+    
+    if (existingCharacter) {
+      return {
+        success: false,
+        error: 'Character name already taken. Please choose a different name.'
+      };
+    }
+    
     const characterId = generateId();
     const currentDay = getCurrentGameDay();
     

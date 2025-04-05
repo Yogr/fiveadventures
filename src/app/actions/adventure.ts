@@ -44,8 +44,9 @@ export async function getAdventure(
     // Determine if we need a non-violent adventure (if character has 0 HP)
     const needsNonViolent = character.current_hitpoints <= 0;
     
-    // Generate a seed based on character ID and current day
-    const seed = generateAdventureSeed(characterId, character.last_played_day);
+    // Generate a seed based on character ID, current day, and adventure count
+    // Use adventure count + 1 for the next adventure
+    const seed = generateAdventureSeed(characterId, character.last_played_day, character.daily_adventure_count + 1);
     
     // Get all available adventures
     let query = supabase
@@ -183,8 +184,13 @@ export async function completeAdventure({
     
     // Calculate success rates for each outcome
     const outcomesWithSuccessRates = outcomes.map(outcome => {
-      const successRate = outcome.stat_requirements 
-        ? calculateSuccessRate(characterStats, outcome.stat_requirements)
+      // Ensure stat_requirements is of the correct type or use an empty object
+      const statRequirements = outcome.stat_requirements 
+        ? (typeof outcome.stat_requirements === 'object' ? outcome.stat_requirements as { [key: string]: number } : {})
+        : {};
+      
+      const successRate = Object.keys(statRequirements).length > 0
+        ? calculateSuccessRate(characterStats, statRequirements)
         : 100; // Default to 100% if no requirements
       
       return {
@@ -200,12 +206,24 @@ export async function completeAdventure({
     // Generate a random number between 0 and 100
     const roll = Math.floor(Math.random() * 100) + 1;
     
+    // Make sure we have at least one outcome
+    if (outcomesWithSuccessRates.length === 0) {
+      return {
+        success: false,
+        error: 'No valid outcomes available for this decision'
+      };
+    }
+    
+    // We know we have at least one outcome at this point
+    // Use non-null assertion since we've already checked length > 0
+    const firstOutcome = outcomesWithSuccessRates[0]!;
+    
     // Select outcome based on roll and success rates
-    let selectedOutcome = outcomesWithSuccessRates[0].outcome; // Default to highest success rate
+    let selectedOutcome = firstOutcome.outcome; // Default to highest success rate
     
     // If there's only one outcome, use it
     if (outcomesWithSuccessRates.length === 1) {
-      selectedOutcome = outcomesWithSuccessRates[0].outcome;
+      selectedOutcome = firstOutcome.outcome;
     } else {
       // If there are multiple outcomes, use weighted selection
       // The higher the success rate, the more likely to be chosen
@@ -299,30 +317,38 @@ export async function completeAdventure({
       const randomIndex = Math.floor(Math.random() * outcome.monster_ids.length);
       const monsterId = outcome.monster_ids[randomIndex];
       
-      // Create a combat encounter
-      const { data: combat, error: combatError } = await supabase
-        .from('combat')
-        .insert({
-          character_id: characterId,
-          adventure_id: adventureId,
-          decision_id: decisionId,
-          outcome_id: outcome.id,
-          monster_id: monsterId,
-          is_completed: false,
-          turns: 0,
-          character_damage_dealt: 0,
-          monster_damage_dealt: 0,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-      
-      if (combatError) {
-        console.error('Error creating combat encounter:', combatError);
-      } else if (combat) {
-        combatData = {
-          id: combat.id
-        };
+      // Make sure we have a valid monster ID
+      if (typeof monsterId === 'number') {
+        try {
+          // Create a combat encounter
+          const { data: combat, error: combatError } = await supabase
+            .from('combat')
+            .insert({
+              character_id: characterId,
+              adventure_id: adventureId,
+              decision_id: decisionId,
+              outcome_id: outcome.id,
+              monster_id: monsterId,
+              is_completed: false,
+              turns: 0,
+              character_damage_dealt: 0,
+              monster_damage_dealt: 0,
+              created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+          
+          if (combatError) {
+            console.error('Error creating combat encounter:', combatError);
+          } else if (combat) {
+            combatData = {
+              id: combat.id
+            };
+          }
+        } catch (combatErr) {
+          console.error('Unexpected error in combat creation:', combatErr);
+          // Continue anyway, this isn't critical
+        }
       }
     }
     
