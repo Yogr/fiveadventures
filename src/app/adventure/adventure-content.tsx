@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getCharacter } from '@/app/actions/character';
@@ -30,24 +30,13 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   const [error, setError] = useState<string | null>(null);
   const [combatId, setCombatId] = useState<string | null>(null);
   const [showCombat, setShowCombat] = useState(false);
-  // Simple flag to track if text animation is complete
-  const [textAnimationComplete, setTextAnimationComplete] = useState(false);
-
-  // Handle animation initialization when outcome changes
+  // Use a state to control when rewards should be shown
+  const [showRewards, setShowRewards] = useState(false);
+  
+  // Reset animation state when outcome changes
   useEffect(() => {
-    // Only reset animation state when outcome is set
     if (outcome) {
-      // Reset animation state immediately when outcome changes
-      setTextAnimationComplete(false);
-      
-      // Use a small delay to ensure the component is fully mounted before animation starts
-      const timer = setTimeout(() => {
-        // This is just to trigger a re-render after the component has fully mounted
-        // It doesn't actually change any state
-        setTextAnimationComplete(false);
-      }, 50);
-      
-      return () => clearTimeout(timer);
+      setShowRewards(false);
     }
   }, [outcome]);
 
@@ -346,10 +335,10 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
             text={outcome.description} 
             className="text-xl mb-4"
             speed={80}
-            onComplete={() => setTextAnimationComplete(true)}
+            onComplete={() => setShowRewards(true)}
           />
           
-          {!ranAway && textAnimationComplete && (
+          {!ranAway && showRewards && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               {/* Item reward */}
               {outcome.reward_table_id && (

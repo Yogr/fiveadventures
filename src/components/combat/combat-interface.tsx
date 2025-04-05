@@ -59,14 +59,25 @@ export default function CombatInterface({ combatId, character: initialCharacter,
 
   // Check if combat is completed
   useEffect(() => {
-    if (combat?.is_completed && combat.is_victory !== null) {
+    if (!combat) return;
+    
+    // Check if monster is defeated (HP <= 0)
+    const monsterCurrentHP = combat.monster.hitpoints - combat.character_damage_dealt;
+    const monsterDefeated = monsterCurrentHP <= 0;
+    
+    // End combat if server says it's completed or if monster HP is 0 or less
+    if ((combat.is_completed && combat.is_victory !== null) || monsterDefeated) {
+      // If monster is defeated but combat not marked as completed, force victory
+      // Ensure isVictory is always a boolean, not null
+      const isVictory = monsterDefeated ? true : (combat.is_victory === true);
+      
       // Check if this was a "run away" scenario
       const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) => 
         turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
       );
       
       onCombatEnd({
-        isVictory: combat.is_victory,
+        isVictory: isVictory,
         ranAway: !!ranAway,
         monsterName: combat.monster?.name || 'monster'
       });
@@ -557,7 +568,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
               );
               
               onCombatEnd({
-                isVictory: combat.is_victory || false,
+                isVictory: combat.is_victory === true,
                 ranAway: !!ranAway,
                 monsterName: combat.monster?.name || 'monster'
               });
