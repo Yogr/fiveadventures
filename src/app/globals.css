@@ -198,23 +198,29 @@ body {
 .damage-number {
   position: absolute;
   font-weight: bold;
+  font-size: 1.25rem;
   color: #ff4d4d;
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .heal-number {
   position: absolute;
   font-weight: bold;
+  font-size: 1.25rem;
   color: #4dff4d;
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .effect-text {
   position: absolute;
   font-weight: bold;
+  font-size: 1.25rem;
   color: #ffff4d;
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }

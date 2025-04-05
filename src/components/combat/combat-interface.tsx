@@ -102,7 +102,10 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     
     const containerRect = damageContainer.getBoundingClientRect();
     
-    floatingNumber.style.left = `${rect.left - containerRect.left + rect.width / 2}px`;
+    // Adjust position based on target (move character effects right, monster effects left)
+    const horizontalOffset = target === 'character' ? 20 : -20; // 20px offset
+    
+    floatingNumber.style.left = `${rect.left - containerRect.left + rect.width / 2 + horizontalOffset}px`;
     floatingNumber.style.top = `${rect.top - containerRect.top}px`;
     
     // Add it to the DOM
@@ -373,6 +376,14 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     setCombatLog(prevLog => [...prevLog, message]);
   };
 
+  // Auto-scroll combat log to bottom when new messages are added
+  useEffect(() => {
+    const combatLogElement = document.getElementById('combat-log');
+    if (combatLogElement) {
+      combatLogElement.scrollTop = combatLogElement.scrollHeight;
+    }
+  }, [combatLog]);
+
   if (loading) {
     return <LoadingSpinner size="lg" />;
   }
@@ -404,17 +415,17 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   const monsterHealthPercent = Math.max(0, Math.min(100, ((combat.monster.hitpoints - combat.character_damage_dealt) / combat.monster.hitpoints) * 100));
   
   return (
-    <div className="pixel-border bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
-      <h2 className="text-3xl mb-4 text-red-400 text-center">Combat!</h2>
+    <div className="bg-gray-900 bg-opacity-80 p-4 pt-2 pb-3 animate-fadeIn rounded-lg">
+      <h2 className="text-xl mb-2 text-red-400 text-center">Battle!</h2>
       
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-2 gap-3 mb-3">
         {/* Character - Left Side */}
-        <div className="bg-gray-800 p-4 rounded-md relative">
-          <h3 className="text-xl mb-2">{character.name}</h3>
+        <div className="bg-gray-800 p-3 rounded-md relative">
+          <h3 className="text-lg mb-1">{character.name}</h3>
           
           {/* Character Image Placeholder */}
-          <div className="w-24 h-24 mx-auto mb-3 bg-blue-900 rounded-full flex items-center justify-center character-avatar">
-            <span className="text-2xl">{character.class.charAt(0)}</span>
+          <div className="w-16 h-16 mx-auto mb-2 bg-blue-900 rounded-full flex items-center justify-center character-avatar">
+            <span className="text-xl">{character.class.charAt(0)}</span>
           </div>
           
           <div className="mb-2">
@@ -445,12 +456,12 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         </div>
         
         {/* Monster - Right Side */}
-        <div className="bg-gray-800 p-4 rounded-md relative">
-          <h3 className="text-xl mb-2">{combat.monster.name}</h3>
+        <div className="bg-gray-800 p-3 rounded-md relative">
+          <h3 className="text-lg mb-1">{combat.monster.name}</h3>
           
           {/* Monster Image Placeholder */}
-          <div className="w-24 h-24 mx-auto mb-3 bg-red-900 rounded-full flex items-center justify-center monster-avatar">
-            <span className="text-2xl">{combat.monster.name.charAt(0)}</span>
+          <div className="w-16 h-16 mx-auto mb-2 bg-red-900 rounded-full flex items-center justify-center monster-avatar">
+            <span className="text-xl">{combat.monster.name.charAt(0)}</span>
           </div>
           
           <div className="mb-2">
@@ -475,25 +486,14 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         {/* Damage numbers will be added dynamically via JavaScript */}
       </div>
       
-      {/* Combat Log */}
-      <div className="bg-gray-800 p-4 rounded-md mb-6 h-40 overflow-y-auto">
-        {combatLog.length === 0 ? (
-          <p className="text-gray-400">Combat has begun! Choose your action...</p>
-        ) : (
-          combatLog.map((message, index) => (
-            <p key={index} className="mb-1">{message}</p>
-          ))
-        )}
-      </div>
-      
-      {/* Actions */}
+      {/* Actions - Moved above combat log */}
       {!combat.is_completed && (
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-2 mb-2">
           <div>
             <button 
               onClick={handleAttack}
               disabled={actionInProgress}
-              className="pixel-button w-full bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:opacity-50 attack-button"
+              className="pixel-button w-full py-1 bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:opacity-50 attack-button"
             >
               Attack
             </button>
@@ -503,7 +503,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
             <button 
               onClick={handleRun}
               disabled={actionInProgress}
-              className="pixel-button w-full bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-700 disabled:opacity-50"
+              className="pixel-button w-full py-1 bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-700 disabled:opacity-50"
             >
               Run Away
             </button>
@@ -511,16 +511,16 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         </div>
       )}
       
-      {/* Skills */}
+      {/* Skills - Also moved above combat log */}
       {!combat.is_completed && skills.length > 0 && (
-        <div className="bg-gray-800 p-4 rounded-md mb-4">
-          <h3 className="text-xl mb-2">Skills</h3>
+        <div className="bg-gray-800 p-2 rounded-md mb-2">
+          <h3 className="text-lg mb-1">Skills</h3>
           
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1">
             {skills.map((skill) => (
               <button 
                 key={skill.id}
-                className={`p-2 border rounded-md text-left ${
+                className={`p-1 border rounded-md text-left text-sm ${
                   selectedSkill?.id === skill.id
                     ? 'border-blue-500 bg-blue-900 bg-opacity-30'
                     : 'border-gray-600 hover:border-gray-400'
@@ -530,19 +530,19 @@ export default function CombatInterface({ combatId, character: initialCharacter,
               >
                 <div className="flex justify-between">
                   <span className="font-bold">{skill.name}</span>
-                  <span className="text-blue-400">{skill.energy_cost} Energy</span>
+                  <span className="text-blue-400">{skill.energy_cost}</span>
                 </div>
-                <p className="text-sm text-gray-300">{skill.description}</p>
+                <p className="text-xs text-gray-300 truncate">{skill.description}</p>
               </button>
             ))}
           </div>
           
           {selectedSkill && (
-            <div className="mt-3 text-center">
+            <div className="mt-2 text-center">
               <button 
                 onClick={handleUseSkill}
                 disabled={actionInProgress}
-                className="pixel-button bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50"
+                className="pixel-button py-1 text-sm bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50"
               >
                 Use {selectedSkill.name}
               </button>
@@ -550,6 +550,17 @@ export default function CombatInterface({ combatId, character: initialCharacter,
           )}
         </div>
       )}
+      
+      {/* Combat Log - Now below action buttons and skills */}
+      <div id="combat-log" className="bg-gray-800 p-2 rounded-md mb-3 h-32 overflow-y-auto text-sm">
+        {combatLog.length === 0 ? (
+          <p className="text-gray-400">Battle has begun! Choose your action...</p>
+        ) : (
+          combatLog.map((message, index) => (
+            <p key={index} className="mb-0.5">{message}</p>
+          ))
+        )}
+      </div>
       
       {/* Combat Completed */}
       {combat.is_completed && (

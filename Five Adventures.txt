@@ -9,12 +9,14 @@ Todo
 
 
 
-- Make a Better name generator, such as only having a single name and doing little partial word tokens and combining them. There should be some tokens that are good for the start of the name and some tokens good for the end of the name, like 'Ar', 'Ro', 'Tyr', 'Seb', 'La', 'Kor', 'Mei', etc. for start and 'ion', 'yll', 'beard', 'dion', 'dan', 'tan', 'imar', 'omar', etc for ending tokens. Maybe even throw in a random middle name token. And also make sure names are unique when creating a character, if not unique we need to tell the user and focus back onto the name input field so they can change it.
+
 
 - Fix skills. They should show up and be usable in combat. They probably are not being granted to the user during character creation, we need to add the skills to be inserted in the initial character creation based on their class.
 
-- Combat text output needs to perma scroll to bottom. Move action buttons to above the combat window.
+
 - Make 'elite' encounters and always have any encounter > 4 fetch an 'elite' encounter. These encounters always feature an encounter with an 'elite' enemy, such as a Goblin King or Minotaur Captain or a Lich or some other more fearsome enemy, but similar to other enemies in the same area.
+
+- Have a random NPC come from the side of the screen to give quests or updates about the game. He will have a question mark or exclamation point over his head and you can click him to make him speak in a pop-up.
 
 Game Design
 -----------------
