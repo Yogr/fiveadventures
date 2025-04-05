@@ -139,6 +139,8 @@ CREATE TABLE IF NOT EXISTS monsters (
   attack_type TEXT NOT NULL,
   abilities JSONB,
   image_url TEXT,
+  is_elite BOOLEAN DEFAULT FALSE,
+  base_monster_id INTEGER,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

@@ -367,6 +367,8 @@ export interface Database {
           attack_type: string
           abilities: Json | null
           image_url: string | null
+          is_elite?: boolean
+          base_monster_id?: number | null
           created_at: string
         }
         Insert: {
@@ -382,6 +384,8 @@ export interface Database {
           attack_type: string
           abilities?: Json | null
           image_url?: string | null
+          is_elite?: boolean
+          base_monster_id?: number | null
           created_at?: string
         }
         Update: {
@@ -397,6 +401,8 @@ export interface Database {
           attack_type?: string
           abilities?: Json | null
           image_url?: string | null
+          is_elite?: boolean
+          base_monster_id?: number | null
           created_at?: string
         }
         Relationships: []

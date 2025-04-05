@@ -1,0 +1,295 @@
+[
+  {
+    "id": 101,
+    "name": "Alpha Wolf",
+    "description": "A massive wolf with gleaming eyes and battle scars. The leader of its pack.",
+    "hitpoints": 80,
+    "attack": 12,
+    "defense": 5,
+    "experience_reward": 40,
+    "gold_reward": 25,
+    "difficulty": 2,
+    "attack_type": "Physical",
+    "abilities": {
+      "bite": {
+        "damage": 15,
+        "chance": 30,
+        "description": "A powerful bite that deals extra damage"
+      },
+      "howl": {
+        "defense_boost": 3,
+        "chance": 25,
+        "description": "A chilling howl that boosts its defense"
+      }
+    },
+    "image_url": "alpha_wolf",
+    "is_elite": true,
+    "base_monster_id": 1
+  },
+  {
+    "id": 102,
+    "name": "Goblin Chief",
+    "description": "A cunning goblin leader adorned with stolen jewelry and wielding a well-crafted sword.",
+    "hitpoints": 65,
+    "attack": 10,
+    "defense": 4,
+    "experience_reward": 35,
+    "gold_reward": 35,
+    "difficulty": 2,
+    "attack_type": "Physical",
+    "abilities": {
+      "sneak_attack": {
+        "damage": 18,
+        "chance": 25,
+        "description": "A surprise attack that deals extra damage"
+      },
+      "rally": {
+        "attack_boost": 2,
+        "chance": 20,
+        "description": "Rallies its strength for a more powerful attack"
+      }
+    },
+    "image_url": "goblin_chief",
+    "is_elite": true,
+    "base_monster_id": 2
+  },
+  {
+    "id": 103,
+    "name": "Skeleton Knight",
+    "description": "A towering skeleton clad in ancient, rusted armor and wielding a massive greatsword.",
+    "hitpoints": 90,
+    "attack": 11,
+    "defense": 8,
+    "experience_reward": 45,
+    "gold_reward": 20,
+    "difficulty": 3,
+    "attack_type": "Physical",
+    "abilities": {
+      "bone_shield": {
+        "defense_boost": 5,
+        "chance": 35,
+        "description": "Raises its defense temporarily"
+      },
+      "cleave": {
+        "damage": 20,
+        "chance": 20,
+        "description": "A powerful sweeping attack"
+      }
+    },
+    "image_url": "skeleton_knight",
+    "is_elite": true,
+    "base_monster_id": 3
+  },
+  {
+    "id": 104,
+    "name": "Flame Demon",
+    "description": "A larger, more menacing creature of living flame with a core of molten rock.",
+    "hitpoints": 60,
+    "attack": 15,
+    "defense": 3,
+    "experience_reward": 50,
+    "gold_reward": 40,
+    "difficulty": 3,
+    "attack_type": "Magical",
+    "abilities": {
+      "flame_burst": {
+        "damage": 22,
+        "chance": 30,
+        "description": "Erupts in flames, dealing fire damage"
+      },
+      "heat_wave": {
+        "damage_over_time": 5,
+        "duration": 3,
+        "chance": 25,
+        "description": "Creates a wave of heat that causes damage over time"
+      }
+    },
+    "image_url": "flame_demon",
+    "is_elite": true,
+    "base_monster_id": 4
+  },
+  {
+    "id": 105,
+    "name": "Troll Berserker",
+    "description": "An enormous troll with bulging muscles and a perpetual rage. It wields a massive club made from a tree trunk.",
+    "hitpoints": 150,
+    "attack": 18,
+    "defense": 10,
+    "experience_reward": 75,
+    "gold_reward": 60,
+    "difficulty": 4,
+    "attack_type": "Physical",
+    "abilities": {
+      "smash": {
+        "damage": 30,
+        "chance": 25,
+        "description": "A powerful smash that deals heavy damage"
+      },
+      "rage": {
+        "attack_boost": 5,
+        "defense_reduction": 2,
+        "chance": 20,
+        "description": "Enters a rage, increasing attack but lowering defense"
+      }
+    },
+    "image_url": "troll_berserker",
+    "is_elite": true,
+    "base_monster_id": 5
+  },
+  {
+    "id": 106,
+    "name": "Archmage",
+    "description": "A powerful human mage with mastery over multiple schools of magic. Dark energy crackles around them.",
+    "hitpoints": 100,
+    "attack": 22,
+    "defense": 6,
+    "experience_reward": 85,
+    "gold_reward": 75,
+    "difficulty": 4,
+    "attack_type": "Magical",
+    "abilities": {
+      "shadow_bolt": {
+        "damage": 25,
+        "chance": 35,
+        "description": "Fires a bolt of shadow energy"
+      },
+      "arcane_barrier": {
+        "defense_boost": 8,
+        "chance": 30,
+        "description": "Creates a magical barrier that increases defense"
+      },
+      "mana_drain": {
+        "energy_reduction": 15,
+        "chance": 20,
+        "description": "Drains the target's energy"
+      }
+    },
+    "image_url": "archmage",
+    "is_elite": true,
+    "base_monster_id": 6
+  },
+  {
+    "id": 107,
+    "name": "Broodmother Spider",
+    "description": "An enormous spider with glowing eyes and dripping venom. Smaller spiders crawl around it.",
+    "hitpoints": 120,
+    "attack": 14,
+    "defense": 9,
+    "experience_reward": 60,
+    "gold_reward": 45,
+    "difficulty": 3,
+    "attack_type": "Physical",
+    "abilities": {
+      "web": {
+        "immobilize": 2,
+        "chance": 30,
+        "description": "Traps you in a sticky web, preventing movement"
+      },
+      "poison": {
+        "damage_over_time": 5,
+        "duration": 4,
+        "chance": 25,
+        "description": "Injects potent venom that causes damage over time"
+      },
+      "summon_spiderlings": {
+        "attack_boost": 3,
+        "chance": 20,
+        "description": "Summons small spiders to aid in the attack"
+      }
+    },
+    "image_url": "broodmother_spider",
+    "is_elite": true,
+    "base_monster_id": 7
+  },
+  {
+    "id": 108,
+    "name": "Bandit Warlord",
+    "description": "A legendary bandit leader known for ruthless tactics and unmatched combat skills. Wears trophies from fallen enemies.",
+    "hitpoints": 130,
+    "attack": 16,
+    "defense": 10,
+    "experience_reward": 70,
+    "gold_reward": 90,
+    "difficulty": 4,
+    "attack_type": "Physical",
+    "abilities": {
+      "precise_strike": {
+        "damage": 24,
+        "ignore_defense": true,
+        "chance": 25,
+        "description": "A precise attack that ignores defense"
+      },
+      "battle_command": {
+        "attack_boost": 4,
+        "defense_boost": 2,
+        "chance": 20,
+        "description": "Uses tactical knowledge to improve combat effectiveness"
+      }
+    },
+    "image_url": "bandit_warlord",
+    "is_elite": true,
+    "base_monster_id": 8
+  },
+  {
+    "id": 109,
+    "name": "Ancient Golem",
+    "description": "A colossal golem crafted by a forgotten civilization. Runes of power glow across its stone body.",
+    "hitpoints": 180,
+    "attack": 20,
+    "defense": 15,
+    "experience_reward": 100,
+    "gold_reward": 55,
+    "difficulty": 5,
+    "attack_type": "Physical",
+    "abilities": {
+      "earthquake": {
+        "damage": 35,
+        "chance": 20,
+        "description": "Slams the ground, causing a devastating earthquake"
+      },
+      "stone_skin": {
+        "defense_boost": 10,
+        "chance": 30,
+        "description": "Hardens its stone body, greatly increasing defense"
+      }
+    },
+    "image_url": "ancient_golem",
+    "is_elite": true,
+    "base_monster_id": 9
+  },
+  {
+    "id": 110,
+    "name": "Lich Lord",
+    "description": "A supremely powerful undead sorcerer who has transcended death. Dark magic swirls around its skeletal form.",
+    "hitpoints": 150,
+    "attack": 25,
+    "defense": 8,
+    "experience_reward": 120,
+    "gold_reward": 100,
+    "difficulty": 5,
+    "attack_type": "Magical",
+    "abilities": {
+      "soul_drain": {
+        "damage": 30,
+        "life_steal": true,
+        "chance": 30,
+        "description": "Drains your life force to heal itself"
+      },
+      "frost_nova": {
+        "damage": 22,
+        "slow": 3,
+        "chance": 25,
+        "description": "Releases a burst of frost that damages and slows"
+      },
+      "death_curse": {
+        "damage_over_time": 8,
+        "duration": 3,
+        "chance": 20,
+        "description": "Places a curse that causes increasing damage over time"
+      }
+    },
+    "image_url": "lich_lord",
+    "is_elite": true,
+    "base_monster_id": 10
+  }
+]

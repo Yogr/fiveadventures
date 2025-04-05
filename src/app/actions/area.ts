@@ -5,6 +5,10 @@ import { unstable_cache } from 'next/cache';
 import type { Area } from '@/lib/types-updated';
 import areasData from '../../../data/areas.json';
 
+// Module-level variable to store selected areas
+// This will be reset when the server restarts
+const selectedAreasMap = new Map<string, number>();
+
 // Get all areas
 export async function getAreas() {
   try {
@@ -48,23 +52,32 @@ export async function getSelectedArea(characterId: string) {
       };
     }
     
-    // For development, return the Forest area (ID: 1) as the default selected area
-    // This ensures that existing adventures are placed in the Forest area by default
-    const defaultArea = areas.data.find(area => area.id === 1); // Forest area
+    // Check if the character has selected an area
+    const selectedAreaId = selectedAreasMap.get(characterId);
     
-    if (!defaultArea) {
-      return {
-        success: false,
-        error: 'Default area not found'
-      };
+    if (selectedAreaId) {
+      // Find the area in the areas list
+      const selectedArea = areas.data.find(area => area.id === selectedAreaId);
+      
+      if (selectedArea) {
+        return {
+          success: true,
+          data: {
+            areaId: selectedAreaId,
+            area: selectedArea,
+            hasSelected: true
+          }
+        };
+      }
     }
     
+    // If no area is selected, return hasSelected: false
     return {
       success: true,
       data: {
-        areaId: 1, // Forest area ID
-        area: defaultArea,
-        hasSelected: true
+        areaId: null,
+        area: null,
+        hasSelected: false
       }
     };
   } catch (error) {
@@ -79,10 +92,6 @@ export async function getSelectedArea(characterId: string) {
 // Select an area for a character
 export async function selectArea(characterId: string, areaId: number) {
   try {
-    // For now, since we're still developing and the database schema hasn't been updated yet,
-    // we'll simulate the area selection by returning the selected area
-    // In a real implementation, this would be stored in the database
-    
     // Get the selected area
     const areas = await getCachedAreas();
     if (!areas.success || !areas.data) {
@@ -93,6 +102,21 @@ export async function selectArea(characterId: string, areaId: number) {
     }
     
     const selectedArea = areas.data.find(area => area.id === areaId);
+    if (!selectedArea) {
+      return {
+        success: false,
+        error: 'Area not found'
+      };
+    }
+    
+    // In a production implementation, we would store the selected area in the database
+    // For now, we'll just return the selected area
+    
+    // Store the selected area in memory for this session
+    // This is a temporary solution until we implement the database table
+    // We'll use a module-level variable to store the selected areas
+    // This will be reset when the server restarts
+    selectedAreasMap.set(characterId, areaId);
     
     return {
       success: true,

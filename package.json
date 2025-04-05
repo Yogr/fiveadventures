@@ -11,7 +11,10 @@
     "seed:items": "node scripts/seed-data.js items ./data/items.json",
     "seed:adventures": "node scripts/seed-data.js adventures ./data/adventures.json",
     "seed:worldboss": "node scripts/seed-data.js worldboss ./data/worldboss.json",
-    "seed:all": "node scripts/seed-data.js all ./data"
+    "seed:monsters": "node scripts/seed-data.js monsters ./data/monsters.json",
+    "seed:elite-monsters": "node scripts/seed-data.js monsters ./data/monsters.json ./data/elite-monsters.json",
+    "seed:all": "node scripts/seed-data.js all ./data",
+    "db:update-monsters": "node scripts/update-monsters-table.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",

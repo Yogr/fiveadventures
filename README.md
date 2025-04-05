@@ -9,6 +9,7 @@ Five Adventures is a web-based RPG where players can embark on five unique adven
 Key features:
 - Character creation and progression
 - Daily adventures with multiple decision paths
+- Elite encounters on the 5th adventure of each day
 - Item collection and equipment management
 - Shop system for buying and selling items with dynamic pricing
 - Weekly world boss battles with tiered rewards
@@ -154,6 +155,16 @@ node scripts/seed-data.js items ./path/to/your/items.json
 ### Adventures
 
 Players can complete up to five adventures per day. Each adventure presents a scenario with multiple decision paths. The outcome of each decision is influenced by the character's stats, class, and equipment.
+
+### Elite Encounters
+
+On the 5th adventure of each day, players will face elite versions of monsters. These elite encounters are more challenging but offer greater rewards:
+
+- Elite monsters have enhanced stats and abilities
+- Elite monsters are visually distinguished with a special "ELITE" tag
+- Elite monsters provide increased experience and gold rewards
+
+For more details, see the [Elite Encounters documentation](docs/elite-encounters.md).
 
 ### Items and Equipment
 

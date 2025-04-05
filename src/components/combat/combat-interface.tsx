@@ -457,10 +457,18 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         
         {/* Monster - Right Side */}
         <div className="bg-gray-800 p-3 rounded-md relative">
-          <h3 className="text-lg mb-1">{combat.monster.name}</h3>
+          <h3 className="text-lg mb-1">
+            {combat.monster.name}
+            {/* Elite monster indicator */}
+            {combat.monster.is_elite && (
+              <span className="ml-2 text-xs text-yellow-400 font-bold border border-yellow-400 rounded-md px-1 py-0.5">
+                ELITE
+              </span>
+            )}
+          </h3>
           
           {/* Monster Image Placeholder */}
-          <div className="w-16 h-16 mx-auto mb-2 bg-red-900 rounded-full flex items-center justify-center monster-avatar">
+          <div className={`w-16 h-16 mx-auto mb-2 ${combat.monster.is_elite ? 'bg-yellow-900' : 'bg-red-900'} rounded-full flex items-center justify-center monster-avatar ${combat.monster.is_elite ? 'border-2 border-yellow-400' : ''}`}>
             <span className="text-xl">{combat.monster.name.charAt(0)}</span>
           </div>
           

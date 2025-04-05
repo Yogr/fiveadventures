@@ -307,7 +307,7 @@ async function seedWorldBoss(filePath) {
 }
 
 // Seed monsters
-async function seedMonsters(filePath) {
+async function seedMonsters(filePath, eliteFilePath = null) {
   console.log('Seeding monsters...');
   
   const monsters = readJsonFile(filePath);
@@ -339,6 +339,41 @@ async function seedMonsters(filePath) {
       console.error(`Error inserting monster ${monster.name}:`, error);
     } else {
       console.log(`Monster inserted: ${monster.name} with ID ${monster.id}`);
+    }
+  }
+  
+  // Seed elite monsters if provided
+  if (eliteFilePath) {
+    console.log('Seeding elite monsters...');
+    
+    const eliteMonsters = readJsonFile(eliteFilePath);
+    
+    if (!eliteMonsters || !Array.isArray(eliteMonsters)) {
+      console.error('Invalid elite monsters data format. Expected an array of monsters.');
+      return;
+    }
+    
+    for (const monster of eliteMonsters) {
+      // Generate ID if not provided
+      if (!monster.id) {
+        monster.id = nextMonsterId++;
+      }
+      
+      // Add created_at if not provided
+      if (!monster.created_at) {
+        monster.created_at = new Date().toISOString();
+      }
+      
+      // Insert elite monster
+      const { error } = await supabase
+        .from('monsters')
+        .insert(monster);
+      
+      if (error) {
+        console.error(`Error inserting elite monster ${monster.name}:`, error);
+      } else {
+        console.log(`Elite monster inserted: ${monster.name} with ID ${monster.id}`);
+      }
     }
   }
   
@@ -572,7 +607,10 @@ Examples:
         
         // Seed in the correct order to avoid foreign key constraint violations
         await seedItems(path.join(directory, 'items.json'));
-        await seedMonsters(path.join(directory, 'monsters.json'));
+        await seedMonsters(
+          path.join(directory, 'monsters.json'),
+          path.join(directory, 'elite-monsters.json')
+        );
         await seedRewardTables(path.join(directory, 'rewardtables.json'));
         await seedSkills(path.join(directory, 'skills.json'));
         await seedAreas(path.join(directory, 'areas.json'));

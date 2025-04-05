@@ -52,7 +52,10 @@ export type SkillEffect = {
 };
 
 // Monster Types
-export type Monster = Database['public']['Tables']['monsters']['Row'];
+export type Monster = Database['public']['Tables']['monsters']['Row'] & {
+  is_elite?: boolean;
+  base_monster_id?: number | null;
+};
 
 export type MonsterAbility = {
   name: string;
@@ -65,7 +68,7 @@ export type MonsterAbility = {
 // Combat Types
 export type Combat = Database['public']['Tables']['combat']['Row'] & {
   monster: Monster;
-  turns: CombatTurn[];
+  turns?: CombatTurn[] | number;
 };
 
 export type CombatTurn = Database['public']['Tables']['combat_turns']['Row'] & {

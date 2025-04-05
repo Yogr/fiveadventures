@@ -65,10 +65,14 @@ export async function getAdventure(
       };
     }
     
-    const areaId = selectedAreaResponse.data.areaId;
+    // Use a default area ID (1) if areaId is null
+    const areaId = selectedAreaResponse.data.areaId || 1;
     
     // Determine if we need a non-violent adventure (if character has 0 HP)
     const needsNonViolent = character.current_hitpoints <= 0;
+    
+    // Determine if this should be an elite encounter (5th adventure or greater)
+    const isEliteEncounter = character.daily_adventure_count >= 4;
     
     // Generate a seed based on character ID, current day, and adventure number
     const seed = generateAdventureSeed(
@@ -266,9 +270,19 @@ export async function completeAdventure({
     // Check if this outcome has combat
     let combat = null;
     if (outcome.has_combat && outcome.monster_ids && outcome.monster_ids.length > 0) {
+      // Determine if this should be an elite encounter (5th adventure)
+      const isEliteEncounter = character.daily_adventure_count >= 4;
+      
       // Select a random monster from the monster_ids array
       const randomIndex = Math.floor(Math.random() * outcome.monster_ids.length);
-      const monsterId = outcome.monster_ids[randomIndex];
+      let monsterId = outcome.monster_ids[randomIndex];
+      
+      // If this is an elite encounter, use the elite version of the monster
+      if (isEliteEncounter) {
+        // Elite monster IDs are 100 + the regular monster ID
+        // For example, if the regular monster ID is 1, the elite version is 101
+        monsterId = monsterId + 100;
+      }
       
       // Create a new combat record
       const { data: newCombat, error: combatError } = await supabase
