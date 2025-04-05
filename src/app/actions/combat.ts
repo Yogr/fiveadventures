@@ -28,12 +28,27 @@ export async function getCombat(
       };
     }
     
+    // Create a new object with all the properties we need
+    const combatData = {
+      id: data.id,
+      character_id: data.character_id,
+      monster_id: data.monster_id,
+      adventure_id: data.adventure_id,
+      outcome_id: data.outcome_id || 0,
+      is_completed: data.is_completed,
+      is_victory: data.is_victory,
+      turns: data.turns,
+      character_damage_dealt: data.character_damage_dealt,
+      monster_damage_dealt: data.monster_damage_dealt,
+      created_at: data.created_at,
+      completed_at: data.completed_at,
+      monster: data.monster,
+      turns_data: data.turns
+    };
+    
     return {
       success: true,
-      data: {
-        ...data,
-        turns_data: data.turns
-      } as Combat
+      data: combatData as Combat
     };
   } catch (err) {
     console.error('Unexpected error getting combat:', err);
@@ -90,21 +105,33 @@ export async function startCombatTurn(
       // Get character's weapon
       const { data: equipment, error: equipmentError } = await supabase
         .from('character_equipment')
-        .select('*, weapon:weapon_id(*)')
+        .select('weapon_id')
         .eq('character_id', character.id)
         .single();
       
       // Get primary stat based on class
       const primaryStat = getPrimaryStat(character);
       
-      if (!equipmentError && equipment && equipment.weapon) {
-        const weapon = equipment.weapon;
-        const baseDamage = weapon.base_damage || 5;
-        const statBonus = Math.floor(primaryStat / 2);
+      if (!equipmentError && equipment && equipment.weapon_id) {
+        // Get the weapon details
+        const { data: weapon, error: weaponError } = await supabase
+          .from('items')
+          .select('*')
+          .eq('id', equipment.weapon_id)
+          .single();
         
-        // Base damage with randomness (±20%)
-        const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
-        characterDamageDealt = Math.floor((baseDamage + statBonus) * randomFactor);
+        if (!weaponError && weapon) {
+          const baseDamage = weapon.base_damage || 5;
+          const statBonus = Math.floor(primaryStat / 2);
+          
+          // Base damage with randomness (±20%)
+          const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
+          characterDamageDealt = Math.floor((baseDamage + statBonus) * randomFactor);
+        } else {
+          // Fallback to unarmed attack
+          const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
+          characterDamageDealt = Math.floor((3 + Math.floor(primaryStat / 3)) * randomFactor);
+        }
       } else {
         // Unarmed attack with randomness
         const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
@@ -196,14 +223,27 @@ export async function startCombatTurn(
             effects: { success: true }
           });
         
+        // Create a new object with all the properties we need
+        const updatedCombat = {
+          id: combat.id,
+          character_id: combat.character_id,
+          monster_id: combat.monster_id,
+          adventure_id: combat.adventure_id,
+          outcome_id: combat.outcome_id || 0,
+          is_completed: true,
+          is_victory: false,
+          turns: turnNumber,
+          character_damage_dealt: combat.character_damage_dealt,
+          monster_damage_dealt: combat.monster_damage_dealt,
+          created_at: combat.created_at,
+          completed_at: new Date().toISOString(),
+          monster: combat.monster,
+          turns_data: []
+        };
+        
         return {
           success: true,
-          data: {
-            ...combat,
-            is_completed: true,
-            is_victory: false,
-            turns: turnNumber
-          } as any
+          data: updatedCombat as any
         };
       } else {
         // Failed to run
@@ -288,12 +328,27 @@ export async function startCombatTurn(
         };
       }
       
+      // Create a new object with all the properties we need
+      const finalCombat = {
+        id: updatedCombat.id,
+        character_id: updatedCombat.character_id,
+        monster_id: updatedCombat.monster_id,
+        adventure_id: updatedCombat.adventure_id,
+        outcome_id: updatedCombat.outcome_id || 0,
+        is_completed: updatedCombat.is_completed,
+        is_victory: updatedCombat.is_victory,
+        turns: updatedCombat.turns,
+        character_damage_dealt: updatedCombat.character_damage_dealt,
+        monster_damage_dealt: updatedCombat.monster_damage_dealt,
+        created_at: updatedCombat.created_at,
+        completed_at: updatedCombat.completed_at,
+        monster: updatedCombat.monster,
+        turns_data: updatedCombat.turns
+      };
+      
       return {
         success: true,
-        data: {
-          ...updatedCombat,
-          turns_data: updatedCombat.turns
-        } as Combat
+        data: finalCombat as Combat
       };
     }
     
@@ -304,21 +359,39 @@ export async function startCombatTurn(
     let monsterEffects = null;
     
     // Apply character defense from equipment
-    const { data: equipment, error: equipmentError } = await supabase
+    const { data: armorEquipment, error: armorEquipmentError } = await supabase
       .from('character_equipment')
-      .select('*, armor:armor_id(*), helmet:helmet_id(*)')
+      .select('armor_id, helmet_id')
       .eq('character_id', character.id)
       .single();
     
-    if (!equipmentError && equipment) {
+    if (!armorEquipmentError && armorEquipment) {
       let defense = 0;
       
-      if (equipment.armor) {
-        defense += equipment.armor.base_defense || 0;
+      if (armorEquipment.armor_id) {
+        // Get armor details
+        const { data: armor, error: armorError } = await supabase
+          .from('items')
+          .select('*')
+          .eq('id', armorEquipment.armor_id)
+          .single();
+        
+        if (!armorError && armor) {
+          defense += armor.base_defense || 0;
+        }
       }
       
-      if (equipment.helmet) {
-        defense += equipment.helmet.base_defense || 0;
+      if (armorEquipment.helmet_id) {
+        // Get helmet details
+        const { data: helmet, error: helmetError } = await supabase
+          .from('items')
+          .select('*')
+          .eq('id', armorEquipment.helmet_id)
+          .single();
+        
+        if (!helmetError && helmet) {
+          defense += helmet.base_defense || 0;
+        }
       }
       
       // Reduced impact of defense
@@ -342,9 +415,14 @@ export async function startCombatTurn(
           
           if ((ability as any).defense_boost || (ability as any).immobilize || (ability as any).damage_over_time) {
             // Status effect ability
+            // Create a new object without using spread operator
             monsterEffects = {
               ability: abilityName,
-              ...ability
+              defense_boost: (ability as any).defense_boost,
+              immobilize: (ability as any).immobilize,
+              damage_over_time: (ability as any).damage_over_time,
+              chance: (ability as any).chance,
+              value: (ability as any).value
             };
           }
         }
@@ -414,12 +492,27 @@ export async function startCombatTurn(
       };
     }
     
+    // Create a new object with all the properties we need
+    const finalCombatData = {
+      id: updatedCombat.id,
+      character_id: updatedCombat.character_id,
+      monster_id: updatedCombat.monster_id,
+      adventure_id: updatedCombat.adventure_id,
+      outcome_id: updatedCombat.outcome_id || 0,
+      is_completed: updatedCombat.is_completed,
+      is_victory: updatedCombat.is_victory,
+      turns: updatedCombat.turns,
+      character_damage_dealt: updatedCombat.character_damage_dealt,
+      monster_damage_dealt: updatedCombat.monster_damage_dealt,
+      created_at: updatedCombat.created_at,
+      completed_at: updatedCombat.completed_at,
+      monster: updatedCombat.monster,
+      turns_data: updatedCombat.turns
+    };
+    
     return {
       success: true,
-      data: {
-        ...updatedCombat,
-        turns_data: updatedCombat.turns
-      } as Combat
+      data: finalCombatData as Combat
     };
   } catch (err) {
     console.error('Unexpected error in combat turn:', err);

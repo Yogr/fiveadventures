@@ -1,4 +1,4 @@
-import { Database } from './database.types';
+import type { Database } from './database.types';
 
 // Character Types
 export type CharacterClass = 'Warrior' | 'Wizard' | 'Thief' | 'Ranger' | 'Cleric';
