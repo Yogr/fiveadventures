@@ -459,6 +459,64 @@ export interface Database {
           }
         ]
       }
+      areas: {
+        Row: {
+          id: number
+          name: string
+          description: string
+          image: string
+          level_requirement: number
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          name: string
+          description: string
+          image: string
+          level_requirement?: number
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          name?: string
+          description?: string
+          image?: string
+          level_requirement?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      character_selected_area: {
+        Row: {
+          id: string
+          character_id: string
+          area_id: number
+          day: number
+          selected_at: string
+        }
+        Insert: {
+          id?: string
+          character_id: string
+          area_id: number
+          day: number
+          selected_at?: string
+        }
+        Update: {
+          id?: string
+          character_id?: string
+          area_id?: number
+          day?: number
+          selected_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_selected_area_character_id_fkey"
+            columns: ["character_id"]
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       adventures: {
         Row: {
           id: number
@@ -468,6 +526,7 @@ export interface Database {
           min_gold: number
           is_violent: boolean
           has_combat: boolean
+          area_ids: number[] | null
           image_url: string | null
           created_at: string
         }
@@ -479,6 +538,7 @@ export interface Database {
           min_gold: number
           is_violent: boolean
           has_combat?: boolean
+          area_ids?: number[] | null
           image_url?: string | null
           created_at?: string
         }
@@ -490,6 +550,7 @@ export interface Database {
           min_gold?: number
           is_violent?: boolean
           has_combat?: boolean
+          area_ids?: number[] | null
           image_url?: string | null
           created_at?: string
         }

@@ -47,6 +47,26 @@ export async function getAdventure(
       };
     }
     
+    // For now, since we're still developing and the database schema hasn't been updated yet,
+    // we'll use a simpler approach for area selection
+    // In a real implementation, this would be stored in the database
+    
+    // Import the getSelectedArea function from area.ts
+    const { getSelectedArea } = await import('./area');
+    
+    // Get the selected area for the character
+    const selectedAreaResponse = await getSelectedArea(characterId);
+    
+    // If no area is selected, return an error
+    if (!selectedAreaResponse.success || !selectedAreaResponse.data?.hasSelected) {
+      return {
+        success: false,
+        error: 'No area selected for today'
+      };
+    }
+    
+    const areaId = selectedAreaResponse.data.areaId;
+    
     // Determine if we need a non-violent adventure (if character has 0 HP)
     const needsNonViolent = character.current_hitpoints <= 0;
     
@@ -72,6 +92,9 @@ export async function getAdventure(
     if (needsNonViolent) {
       query = query.eq('is_violent', false);
     }
+    
+    // Filter by area
+    query = query.eq('area_id', areaId);
     
     const { data, error } = await query;
     

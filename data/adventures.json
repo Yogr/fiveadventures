@@ -6,6 +6,7 @@
     "min_gold": 10,
     "is_violent": true,
     "image_url": null,
+    "area_id": 1,
     "decisions": [
       {
         "description": "Follow the path deeper into the forest",
@@ -50,6 +51,7 @@
     "min_gold": 15,
     "is_violent": true,
     "image_url": null,
+    "area_id": 7,
     "decisions": [
       {
         "description": "Enter the temple and explore its depths",
@@ -114,6 +116,7 @@
     "min_gold": 20,
     "is_violent": true,
     "image_url": null,
+    "area_id": 1,
     "decisions": [
       {
         "description": "Confront the bandits directly",
@@ -180,6 +183,7 @@
     "min_gold": 5,
     "is_violent": false,
     "image_url": null,
+    "area_id": 1,
     "decisions": [
       {
         "description": "Gather magical herbs and plants",
@@ -240,6 +244,7 @@
     "min_gold": 15,
     "is_violent": true,
     "image_url": null,
+    "area_id": 2,
     "decisions": [
       {
         "description": "Climb the steep cliff face for a shortcut",
@@ -305,6 +310,7 @@
     "min_gold": 25,
     "is_violent": true,
     "image_url": null,
+    "area_id": 3,
     "decisions": [
       {
         "description": "Enter the manor and investigate the haunting",
@@ -369,6 +375,7 @@
     "min_gold": 20,
     "is_violent": true,
     "image_url": null,
+    "area_id": 3,
     "decisions": [
       {
         "description": "Track down the bandits and recover the stolen goods",
@@ -434,6 +441,7 @@
     "min_gold": 20,
     "is_violent": true,
     "image_url": null,
+    "area_id": 2,
     "decisions": [
       {
         "description": "Enter the cave and investigate the source of the light",
@@ -502,6 +510,7 @@
     "min_gold": 5,
     "is_violent": false,
     "image_url": null,
+    "area_id": 1,
     "decisions": [
       {
         "description": "Drink from the spring",
@@ -562,6 +571,7 @@
     "min_gold": 30,
     "is_violent": true,
     "image_url": null,
+    "area_id": 8,
     "decisions": [
       {
         "description": "Knock on the door and request an audience with the wizard",

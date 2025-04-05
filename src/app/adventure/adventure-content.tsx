@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import { getCharacter } from '@/app/actions/character';
 import { getAdventure, completeAdventure } from '@/app/actions/adventure-updated';
 import { getActiveCharacterCombat } from '@/app/actions/combat';
+import { getAreas, getSelectedArea, selectArea } from '@/app/actions/area';
 import { ROUTES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
-import type { Character, Adventure, AdventureDecision, AdventureOutcome, Combat } from '@/lib/types-updated';
+import type { Character, Adventure, AdventureDecision, AdventureOutcome, Combat, Area } from '@/lib/types-updated';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import AdventureTracker from '@/components/adventure/adventure-tracker';
 import CharacterStats from '@/components/character/character-stats';
@@ -15,6 +16,8 @@ import CombatInterface from '@/components/combat/combat-interface';
 import AnimatedText from '@/components/ui/animated-text';
 import AnimatedReward from '@/components/ui/animated-reward';
 import ItemReward from '@/components/ui/item-reward';
+import LevelUpAnimation from '@/components/ui/level-up-animation';
+import AreaSelection from '@/components/area/area-selection';
 
 interface AdventureContentProps {
   characterId: string;
@@ -32,66 +35,156 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   const [showCombat, setShowCombat] = useState(false);
   // Use a state to control when rewards should be shown
   const [showRewards, setShowRewards] = useState(false);
+  // Track old experience for level up animation
+  const [oldExperience, setOldExperience] = useState(0);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  // Area selection states
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [selectedArea, setSelectedArea] = useState<Area | null>(null);
+  const [hasSelectedArea, setHasSelectedArea] = useState(false);
+  const [loadingAreas, setLoadingAreas] = useState(false);
   
   // Reset animation state when outcome changes
   useEffect(() => {
     if (outcome) {
       setShowRewards(false);
+      setShowLevelUp(false);
     }
   }, [outcome]);
 
-  // Load character and adventure data
+  // Load areas data
   useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      setError(null);
+    async function loadAreas() {
+      setLoadingAreas(true);
       
       try {
-        // Get character data
-        const characterResponse = await getCharacter(characterId);
-        if (!characterResponse.success || !characterResponse.data) {
-          setError('Failed to load character data');
-          setLoading(false);
+        // Get all areas
+        const areasResponse = await getAreas();
+        if (!areasResponse.success || !areasResponse.data) {
+          console.error('Failed to load areas');
+          setLoadingAreas(false);
           return;
         }
         
-        setCharacter(characterResponse.data);
+        setAreas(areasResponse.data);
         
-        // Check if character is in active combat
-        const activeCombatResponse = await getActiveCharacterCombat(characterId);
-        if (activeCombatResponse.success && activeCombatResponse.data) {
-          // Character is in active combat, show combat interface
-          setCombatId(activeCombatResponse.data.id);
-          setShowCombat(true);
-          setLoading(false);
+        // Check if character has selected an area for today
+        const selectedAreaResponse = await getSelectedArea(characterId);
+        if (!selectedAreaResponse.success) {
+          console.error('Failed to check selected area');
+          setLoadingAreas(false);
           return;
         }
         
-        // Check if character has completed all adventures for the day
-        if (characterResponse.data.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
-          setLoading(false);
-          return;
+        if (selectedAreaResponse.data?.hasSelected && selectedAreaResponse.data.area) {
+          // Use type assertion to ensure TypeScript knows this is an Area
+          const area: Area = selectedAreaResponse.data.area as Area;
+          setSelectedArea(area);
+          setHasSelectedArea(true);
+        } else {
+          setSelectedArea(null);
+          setHasSelectedArea(false);
         }
         
-        // Get next adventure
-        const adventureResponse = await getAdventure(characterId);
-        if (!adventureResponse.success || !adventureResponse.data) {
-          setError('Failed to load adventure data');
-          setLoading(false);
-          return;
-        }
-        
-        setAdventure(adventureResponse.data);
-        setLoading(false);
+        setLoadingAreas(false);
       } catch (err) {
-        console.error('Error loading adventure data:', err);
-        setError('An unexpected error occurred');
-        setLoading(false);
+        console.error('Error loading areas:', err);
+        setLoadingAreas(false);
       }
     }
     
-    loadData();
+    if (characterId) {
+      loadAreas();
+    }
   }, [characterId]);
+  
+  // Handle area selection
+  const handleAreaSelect = async (areaId: number) => {
+    setLoadingAreas(true);
+    
+    try {
+      const result = await selectArea(characterId, areaId);
+      if (!result.success || !result.data) {
+        console.error('Failed to select area');
+        setLoadingAreas(false);
+        return;
+      }
+      
+      if (result.data.area) {
+        // Use type assertion to ensure TypeScript knows this is an Area
+        const area: Area = result.data.area as Area;
+        setSelectedArea(area);
+        setHasSelectedArea(true);
+      } else {
+        setSelectedArea(null);
+        setHasSelectedArea(false);
+      }
+      
+      // Load adventure data after area selection
+      loadAdventureData();
+    } catch (err) {
+      console.error('Error selecting area:', err);
+      setLoadingAreas(false);
+    }
+  };
+  
+  // Load character and adventure data
+  const loadAdventureData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Get character data
+      const characterResponse = await getCharacter(characterId);
+      if (!characterResponse.success || !characterResponse.data) {
+        setError('Failed to load character data');
+        setLoading(false);
+        return;
+      }
+      
+      setCharacter(characterResponse.data);
+      
+      // Check if character is in active combat
+      const activeCombatResponse = await getActiveCharacterCombat(characterId);
+      if (activeCombatResponse.success && activeCombatResponse.data) {
+        // Character is in active combat, show combat interface
+        setCombatId(activeCombatResponse.data.id);
+        setShowCombat(true);
+        setLoading(false);
+        return;
+      }
+      
+      // Check if character has completed all adventures for the day
+      if (characterResponse.data.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
+        // Set character and stop loading - don't try to get an adventure
+        setCharacter(characterResponse.data);
+        setLoading(false);
+        return;
+      }
+      
+      // Only get next adventure if the character hasn't completed all adventures
+      const adventureResponse = await getAdventure(characterId);
+      if (!adventureResponse.success || !adventureResponse.data) {
+        setError('Failed to load adventure data');
+        setLoading(false);
+        return;
+      }
+      
+      setAdventure(adventureResponse.data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error loading adventure data:', err);
+      setError('An unexpected error occurred');
+      setLoading(false);
+    }
+  };
+  
+  // Load adventure data when component mounts
+  useEffect(() => {
+    if (characterId && hasSelectedArea) {
+      loadAdventureData();
+    }
+  }, [characterId, hasSelectedArea]);
 
   // Handle decision selection
   const handleDecisionSelect = (decision: AdventureDecision) => {
@@ -121,6 +214,11 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
       
       // Make sure result.data exists
       if (result.data) {
+        // Save old experience for level up check
+        if (character) {
+          setOldExperience(character.experience);
+        }
+        
         // Update character first
         setCharacter(result.data.character);
         
@@ -133,10 +231,13 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
         // Set loading to false before setting outcome
         setLoading(false);
         
-        // Set outcome after a small delay to ensure clean rendering
-        setTimeout(() => {
-          setOutcome(result.data!.outcome);
-        }, 10);
+        // Set outcome
+        setOutcome(result.data!.outcome);
+        
+        // Show level up animation if experience increased enough to level up
+        if (character && result.data.character.experience > character.experience) {
+          setShowLevelUp(true);
+        }
       } else {
         setLoading(false);
       }
@@ -193,15 +294,17 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
         return;
       }
       
+      // Update character state
       setCharacter(characterResponse.data);
       
       // Check if character has completed all adventures for the day
       if (characterResponse.data.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
+        // Just stop loading - don't try to get an adventure
         setLoading(false);
         return;
       }
       
-      // Get next adventure
+      // Only get next adventure if the character hasn't completed all adventures
       const adventureResponse = await getAdventure(characterId);
       if (!adventureResponse.success || !adventureResponse.data) {
         setError('Failed to load adventure data');
@@ -290,6 +393,21 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
     );
   }
 
+  // Show area selection if no area has been selected
+  if (!hasSelectedArea && character) {
+    if (loadingAreas) {
+      return <LoadingSpinner size="lg" />;
+    }
+    
+    return (
+      <AreaSelection 
+        areas={areas}
+        character={character}
+        onSelectArea={handleAreaSelect}
+      />
+    );
+  }
+
   if (!adventure) {
     return (
       <div className="text-center animate-fadeIn">
@@ -316,9 +434,20 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   if (outcome) {
     // Check if this is a "ran away" outcome
     const ranAway = outcome.description.includes('ran away from');
+    // Check if this was the final adventure (5th adventure)
+    // We need to check if the character has completed 4 adventures and is now completing the 5th one
+    const isFinalAdventure = character.daily_adventure_count === MAX_ADVENTURES_PER_DAY - 1;
     
     return (
       <div className="bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
+        {/* Level Up Animation */}
+        {showLevelUp && character && (
+          <LevelUpAnimation 
+            oldExperience={oldExperience}
+            newExperience={character.experience}
+            onComplete={() => setShowLevelUp(false)}
+          />
+        )}
         <h2 className={`text-3xl mb-4 ${ranAway ? 'text-red-400' : 'text-green-400'}`}>
           {ranAway ? 'Defeat!' : 'Adventure Outcome'}
         </h2>
@@ -385,16 +514,40 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
           )}
         </div>
         
-        <div className="flex justify-center">
-          <button 
-            onClick={handleContinue} 
-            className="pixel-button text-xl"
-          >
-            {character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY 
-              ? "View Summary" 
-              : "Continue to Next Adventure"}
-          </button>
-        </div>
+        {/* Show "All Adventures Completed" content if this was the final adventure */}
+        {isFinalAdventure && showRewards && (
+          <div className="mt-8 text-center animate-fadeIn">
+            <h2 className="text-3xl mb-4 text-yellow-400">All Adventures Completed!</h2>
+            <p className="text-xl mb-6">
+              You've completed all {MAX_ADVENTURES_PER_DAY} adventures for today.
+              Return tomorrow for new adventures!
+            </p>
+            
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mt-6">
+              <Link href={ROUTES.WORLD_BOSS} className="pixel-button bg-red-600 hover:bg-red-500 active:bg-red-700">
+                Fight World Boss
+              </Link>
+              <Link href={ROUTES.INVENTORY} className="pixel-button bg-blue-600 hover:bg-blue-500 active:bg-blue-700">
+                Inventory
+              </Link>
+              <Link href={ROUTES.SHOP} className="pixel-button bg-green-600 hover:bg-green-500 active:bg-green-700">
+                Shop
+              </Link>
+            </div>
+          </div>
+        )}
+        
+        {/* Only show continue button if not the final adventure */}
+        {(!isFinalAdventure || !showRewards) && (
+          <div className="flex justify-center">
+            <button 
+              onClick={handleContinue} 
+              className="pixel-button text-xl"
+            >
+              Continue to Next Adventure
+            </button>
+          </div>
+        )}
       </div>
     );
   }

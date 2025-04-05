@@ -1,0 +1,58 @@
+[
+  {
+    "id": 1,
+    "name": "Enchanted Forest",
+    "description": "A mystical forest filled with ancient trees, magical creatures, and hidden treasures.",
+    "level_requirement": 1,
+    "image": "/images/areas/enchanted-forest.png"
+  },
+  {
+    "id": 2,
+    "name": "Misty Mountains",
+    "description": "Towering peaks shrouded in mist, home to hardy mountain creatures and valuable ore deposits.",
+    "level_requirement": 3,
+    "image": "/images/areas/misty-mountains.png"
+  },
+  {
+    "id": 3,
+    "name": "Coastal Cliffs",
+    "description": "Dramatic cliffs overlooking a turbulent sea, with hidden caves and mysterious shipwrecks.",
+    "level_requirement": 5,
+    "image": "/images/areas/coastal-cliffs.png"
+  },
+  {
+    "id": 4,
+    "name": "Desert Dunes",
+    "description": "A vast desert with shifting sands, ancient ruins, and dangerous heat. Beware of sandstorms!",
+    "level_requirement": 7,
+    "image": "/images/areas/desert-dunes.png"
+  },
+  {
+    "id": 5,
+    "name": "Frozen Tundra",
+    "description": "An icy wasteland where only the strongest survive. Rich in rare resources and fierce predators.",
+    "level_requirement": 10,
+    "image": "/images/areas/frozen-tundra.png"
+  },
+  {
+    "id": 6,
+    "name": "Volcanic Wastes",
+    "description": "A hellish landscape of lava flows and ash clouds. Extremely dangerous but rewarding for brave adventurers.",
+    "level_requirement": 15,
+    "image": "/images/areas/volcanic-wastes.png"
+  },
+  {
+    "id": 7,
+    "name": "Ancient Ruins",
+    "description": "The remains of a once-great civilization, now overrun with traps and guardians protecting forgotten treasures.",
+    "level_requirement": 20,
+    "image": "/images/areas/ancient-ruins.png"
+  },
+  {
+    "id": 8,
+    "name": "Celestial Realm",
+    "description": "A mystical plane where reality bends and powerful entities dwell. Only for the most experienced adventurers.",
+    "level_requirement": 25,
+    "image": "/images/areas/celestial-realm.png"
+  }
+]

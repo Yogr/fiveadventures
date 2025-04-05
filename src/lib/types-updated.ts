@@ -1,4 +1,4 @@
-import { Database } from './database-types-updated';
+import type { Database } from './database-types-updated';
 
 // Character Types
 export type CharacterClass = 'Warrior' | 'Wizard' | 'Thief' | 'Ranger' | 'Cleric';
@@ -83,9 +83,19 @@ export type RewardItem = Database['public']['Tables']['reward_items']['Row'] & {
   item: Item;
 };
 
+// Area Types
+export type Area = {
+  id: number;
+  name: string;
+  description: string;
+  image?: string;
+  level_requirement: number;
+};
+
 // Adventure Types
 export type Adventure = Database['public']['Tables']['adventures']['Row'] & {
   decisions?: AdventureDecision[];
+  area_ids?: number[]; // Array of area IDs where this adventure can be found
 };
 
 export type AdventureDecision = Database['public']['Tables']['adventure_decisions']['Row'] & {

@@ -30,11 +30,17 @@ const config = {
         float: 'float 3s ease-in-out infinite',
         pulse: 'pulse 2s ease-in-out infinite',
         shake: 'shake 0.5s ease-in-out',
+        scaleIn: 'scaleIn 0.5s ease-in-out',
       },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
+        },
+        scaleIn: {
+          '0%': { transform: 'scale(0)', opacity: '0' },
+          '80%': { transform: 'scale(1.1)', opacity: '1' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
         },
         float: {
           '0%': { transform: 'translateY(0px)' },
