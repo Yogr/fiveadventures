@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import type { Combat, Monster, Character, Skill } from '@/lib/types';
 import { getCombat, startCombatTurn } from '@/app/actions/adventure-updated';
 import { getCharacterSkills } from '@/app/actions/combat';
-import { getCharacter } from '@/app/actions/character';
+import { getCharacterById } from '@/app/actions/character';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 
 interface CombatInterfaceProps {
@@ -181,7 +181,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
           addToCombatLog(`The ${combat.monster.name} attacked you for ${monsterDamage} damage!`);
           
           // Refresh character data to update HP
-          getCharacter(character.id).then(response => {
+          getCharacterById(character.id).then(response => {
             if (response.success && response.data) {
               setCharacter(response.data);
             }
@@ -199,7 +199,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         }
         
         // Refresh character data after combat ends
-        getCharacter(character.id).then(response => {
+        getCharacterById(character.id).then(response => {
           if (response.success && response.data) {
             setCharacter(response.data);
           }
@@ -272,7 +272,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
           addToCombatLog(`The ${combat.monster.name} attacked you for ${monsterDamage} damage!`);
           
           // Refresh character data to update HP
-          getCharacter(character.id).then(response => {
+          getCharacterById(character.id).then(response => {
             if (response.success && response.data) {
               setCharacter(response.data);
             }
@@ -290,7 +290,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         }
         
         // Refresh character data after combat ends
-        getCharacter(character.id).then(response => {
+        getCharacterById(character.id).then(response => {
           if (response.success && response.data) {
             setCharacter(response.data);
           }
@@ -354,7 +354,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
             addToCombatLog(`The ${combat.monster.name} attacked you for ${monsterDamage} damage!`);
             
             // Refresh character data to update HP
-            getCharacter(character.id).then(response => {
+            getCharacterById(character.id).then(response => {
               if (response.success && response.data) {
                 setCharacter(response.data);
               }

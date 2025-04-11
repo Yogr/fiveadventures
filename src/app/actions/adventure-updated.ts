@@ -18,7 +18,7 @@ import type {
   CharacterAdventure,
   Item
 } from '@/lib/types';
-import { getCharacter } from './character';
+import { getCharacterById } from './character';
 import { createClient } from '@/lib/supabase/server';
 
 // Get a random adventure for a character
@@ -29,7 +29,7 @@ export async function getAdventure(
     const supabase = await createClient();
     
     // Get character data to check if they need a non-violent adventure
-    const characterResponse = await getCharacter(characterId);
+    const characterResponse = await getCharacterById(characterId);
     if (!characterResponse.success || !characterResponse.data) {
       return {
         success: false,
@@ -146,7 +146,7 @@ export async function completeAdventure({
     const supabase = await createClient();
 
     // Get character data
-    const characterResponse = await getCharacter(characterId);
+    const characterResponse = await getCharacterById(characterId);
     if (!characterResponse.success || !characterResponse.data) {
       return {
         success: false,

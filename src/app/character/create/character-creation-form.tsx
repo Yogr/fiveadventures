@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { CHARACTER_CLASSES, ROUTES } from '@/lib/constants';
 import { generateRandomName } from '@/lib/utils';
-import { createCharacter } from '@/app/actions/character';
+import { createCharacter, setCharacterIdCookie } from '@/app/actions/character';
 import CharacterClassCard from '@/components/character/character-class-card';
 import CharacterClassInfoModal from '@/components/character/character-class-info-modal';
 
@@ -47,9 +47,13 @@ export default function CharacterCreationForm() {
       });
       
       if (result.success && result.data?.characterId) {
-        // Add the characterId to the URL as a query parameter
-        // The middleware will pick this up and set it as a cookie
-        router.push(`${ROUTES.ADVENTURE}?characterId=${result.data.characterId}`);
+        // Character created successfully, now set the cookie and redirect
+        console.log('Character created successfully:', result.data.characterId);
+
+        // Add character ID to cookies using server action
+        await setCharacterIdCookie(result.data.characterId);
+
+        router.push(ROUTES.ADVENTURE);
       } else {
         setError(result.error || 'Failed to create character');
         setIsCreating(false);

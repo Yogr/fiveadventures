@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCharacterFromCookie } from '@/app/actions/character';
+import { getCharacterForUser } from '@/app/actions/character';
 import { ROUTES } from '@/lib/constants';
 import GameNavigation from '@/components/navigation/game-navigation';
 import ShopContainer from '@/components/shop/shop-container';
@@ -20,7 +20,7 @@ export default async function ShopPage({
   const characterId = _searchParams.characterId;
   
   // Check if user has a character
-  const characterResponse = await getCharacterFromCookie(characterId);
+  const characterResponse = await getCharacterForUser(characterId);
   
   if (!characterResponse.success || !characterResponse.data) {
     // Redirect to character creation if no character found

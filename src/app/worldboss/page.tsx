@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCharacterFromCookie } from '@/app/actions/character';
+import { getCharacterForUser } from '@/app/actions/character';
 import { ROUTES } from '@/lib/constants';
 import GameNavigation from '@/components/navigation/game-navigation';
 import { getCurrentGameDay } from '@/lib/utils';
@@ -8,17 +8,10 @@ import { createClient } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function WorldBossPage({
-  searchParams
-}: {
-  searchParams: Promise<{ characterId?: string }>
-}) {
-  // Get character ID from URL search params (if available)
-  const _searchParams = await searchParams;
-  const characterId = _searchParams.characterId;
+export default async function WorldBossPage() {
   
   // Check if user has a character
-  const characterResponse = await getCharacterFromCookie(characterId);
+  const characterResponse = await getCharacterForUser();
   
   if (!characterResponse.success || !characterResponse.data) {
     // Redirect to character creation if no character found

@@ -7,14 +7,29 @@ import {
   getCurrentGameDay 
 } from '@/lib/utils';
 import type { CharacterClass, ApiResponse, Character, CharacterEquipment } from '@/lib/types';
+import { cookies } from 'next/headers';
+import { COOKIE_NAMES } from '@/lib/constants';
+
+// Set character ID cookie (server action)
+export async function setCharacterIdCookie(characterId: string): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_NAMES.CHARACTER_ID, characterId, {
+    maxAge: 60 * 60 * 24 * 365, // 1 year
+    path: '/',
+    httpOnly: true,
+    sameSite: 'strict'
+  });
+}
 
 // Create a new character
 export async function createCharacter({
   name,
-  characterClass
+  characterClass,
+  userId,
 }: {
   name: string;
   characterClass: CharacterClass;
+  userId?: string;
 }): Promise<ApiResponse<{ characterId: string }>> {
   try {
     const supabase = await createClient();
@@ -46,12 +61,15 @@ export async function createCharacter({
     
     // Get base stats for the selected class
     const baseStats = CLASS_BASE_STATS[characterClass];
+
+    const status = userId ? 'active' : 'unlinked';
     
     // Create character record
     const { error } = await supabase
       .from('characters')
       .insert({
         id: characterId,
+        user_id: userId || null,
         name,
         class: characterClass,
         level: 1,
@@ -67,7 +85,7 @@ export async function createCharacter({
         current_energy: baseStats.energy,
         daily_adventure_count: 0,
         last_played_day: currentDay,
-        status: 'unlinked',
+        status: status,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
@@ -93,9 +111,8 @@ export async function createCharacter({
       // Continue anyway, this isn't critical
     }
     
-    // Note: In a server action, we can't directly set cookies
-    // The cookie will be set in the middleware or on the client side
-    // For now, we'll just return the character ID and let the calling code handle cookie setting
+    // We'll return the character ID, and the calling code will use the setCharacterIdCookie
+    // server action to set the cookie
     
     return {
       success: true,
@@ -111,7 +128,7 @@ export async function createCharacter({
 }
 
 // Get character by ID
-export async function getCharacter(characterId: string): Promise<ApiResponse<Character>> {
+export async function getCharacterById(characterId: string): Promise<ApiResponse<Character>> {
   try {
     const supabase = await createClient();
 
@@ -304,7 +321,7 @@ export async function getCharacterByUserId(userId: string): Promise<ApiResponse<
     }
     
     // Get full character data
-    return getCharacter(character.id);
+    return getCharacterById(character.id);
   } catch (err) {
     console.error('Unexpected error getting character by user ID:', err);
     return {
@@ -315,7 +332,7 @@ export async function getCharacterByUserId(userId: string): Promise<ApiResponse<
 }
 
 // Get character from cookie or auth session
-export async function getCharacterFromCookie(characterId?: string): Promise<ApiResponse<Character>> {
+export async function getCharacterForUser(): Promise<ApiResponse<Character>> {
   try {
     // First check if user is authenticated
     const supabaseClient = await createClient();
@@ -334,10 +351,14 @@ export async function getCharacterFromCookie(characterId?: string): Promise<ApiR
     // If we get here, either:
     // 1. User is not authenticated, or
     // 2. User is authenticated but doesn't have a character
+
+    // Fetch character from cookies
+    const cookieStore = await cookies();
+    const characterId = cookieStore.get(COOKIE_NAMES.CHARACTER_ID)?.value;
     
-    // Try to get character from the provided ID (from middleware)
+    // Try to get character from the cookie
     if (characterId) {
-      return getCharacter(characterId);
+      return getCharacterById(characterId);
     }
     
     // No character ID provided

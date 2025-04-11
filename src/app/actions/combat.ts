@@ -8,7 +8,7 @@ import type {
   Item,
   Skill
 } from '@/lib/types';
-import { getCharacter } from './character';
+import { getCharacterById } from './character';
 import { getPrimaryStat, generateId } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/server';
 
@@ -507,7 +507,7 @@ export async function getCharacterSkills(
     const supabase = await createClient();
 
     // Get character data to check class
-    const characterResponse = await getCharacter(characterId);
+    const characterResponse = await getCharacterById(characterId);
     if (!characterResponse.success || !characterResponse.data) {
       return {
         success: false,

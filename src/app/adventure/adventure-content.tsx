@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getCharacter } from '@/app/actions/character';
+import { getCharacterById } from '@/app/actions/character';
 import { getAdventure, completeAdventure } from '@/app/actions/adventure-updated';
 import { getActiveCharacterCombat } from '@/app/actions/combat';
 import { getAreas, getSelectedArea, selectArea } from '@/app/actions/area';
@@ -134,7 +134,7 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
     
     try {
       // Get character data
-      const characterResponse = await getCharacter(characterId);
+      const characterResponse = await getCharacterById(characterId);
       if (!characterResponse.success || !characterResponse.data) {
         setError('Failed to load character data');
         setLoading(false);
@@ -271,7 +271,7 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
     }
     
     // Refresh character data after combat
-    getCharacter(characterId).then(response => {
+    getCharacterById(characterId).then(response => {
       if (response.success && response.data) {
         setCharacter(response.data);
       }
@@ -286,7 +286,7 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
     
     try {
       // Get character data
-      const characterResponse = await getCharacter(characterId);
+      const characterResponse = await getCharacterById(characterId);
       if (!characterResponse.success || !characterResponse.data) {
         setError('Failed to load character data');
         setLoading(false);

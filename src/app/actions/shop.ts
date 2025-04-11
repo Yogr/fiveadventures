@@ -2,7 +2,7 @@
 
 import { MAX_SHOP_ITEMS } from '@/lib/constants';
 import type { Item, ItemRarity, ApiResponse } from '@/lib/types';
-import { getCharacterFromCookie } from './character';
+import { getCharacterForUser } from './character';
 import { revalidatePath } from 'next/cache';
 import { getCurrentGameDay, generateShopSeed, getRandomShopItems, generateId } from '@/lib/utils';
 import itemsData from '../../../data/items.json';
@@ -75,7 +75,7 @@ export async function buyItem(itemId: string): Promise<ApiResponse<{ message: st
     const supabase = await createClient();
 
     // Get character from cookie
-    const characterResponse = await getCharacterFromCookie();
+    const characterResponse = await getCharacterForUser();
     if (!characterResponse.success || !characterResponse.data) {
       return { success: false, error: 'Character not found' };
     }
@@ -151,7 +151,7 @@ export async function sellItem(inventoryItemId: string): Promise<ApiResponse<{ m
     const supabase = await createClient();
 
     // Get character from cookie
-    const characterResponse = await getCharacterFromCookie();
+    const characterResponse = await getCharacterForUser();
     if (!characterResponse.success || !characterResponse.data) {
       return { success: false, error: 'Character not found' };
     }
@@ -245,7 +245,7 @@ export async function getInventory(): Promise<ApiResponse<any[]>> {
     const supabase = await createClient();
 
     // Get character from cookie
-    const characterResponse = await getCharacterFromCookie();
+    const characterResponse = await getCharacterForUser();
     if (!characterResponse.success || !characterResponse.data) {
       return { success: false, error: 'Character not found' };
     }

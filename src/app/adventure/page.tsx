@@ -1,28 +1,19 @@
 import { redirect } from 'next/navigation';
-import { getCharacterFromCookie } from '@/app/actions/character';
+import { getCharacterForUser } from '@/app/actions/character';
 import { ROUTES } from '@/lib/constants';
 import AdventureContent from '@/app/adventure/adventure-content';
 import GameNavigation from '@/components/navigation/game-navigation';
 import { getCurrentGameDay } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/server';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-export default async function AdventurePage({
-  searchParams
-}: {
-  searchParams: Promise<{ characterId?: string }>
-}) {
-  // Get character ID from URL search params (if available)
-  const _params = await searchParams;
-  const characterId = _params.characterId;
+export default async function AdventurePage() {
   
   // Check if user has a character
-  const characterResponse = await getCharacterFromCookie(characterId);
+  const characterResponse = await getCharacterForUser();
   
   if (!characterResponse.success || !characterResponse.data) {
     // Redirect to character creation if no character found
+    console.log('No character found, redirecting to character creation...');
     redirect(ROUTES.CHARACTER_CREATE);
   }
   
