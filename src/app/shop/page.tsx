@@ -5,18 +5,31 @@ import GameNavigation from '@/components/navigation/game-navigation';
 import ShopContainer from '@/components/shop/shop-container';
 import CharacterStats from '@/components/character/character-stats';
 import { getCurrentGameDay } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function ShopPage() {
+export default async function ShopPage({
+  searchParams
+}: {
+  searchParams: { characterId?: string }
+}) {
+  // Get character ID from URL search params (if available)
+  const characterId = searchParams.characterId;
+  
   // Check if user has a character
-  const characterResponse = await getCharacterFromCookie();
+  const characterResponse = await getCharacterFromCookie(characterId);
   
   if (!characterResponse.success || !characterResponse.data) {
     // Redirect to character creation if no character found
     redirect(ROUTES.CHARACTER_CREATE);
   }
+  
+  // Get user session
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user || null;
   
   const character = characterResponse.data;
   const currentDay = getCurrentGameDay();
@@ -24,7 +37,11 @@ export default async function ShopPage() {
   return (
     <div className="min-h-screen p-4">
       <div className="w-full max-w-lg mx-auto">
-        <GameNavigation activeTab="shop" currentDay={currentDay} />
+        <GameNavigation 
+          activeTab="shop" 
+          currentDay={currentDay} 
+          user={user ? { email: user.email || '' } : null}
+        />
         
         {/* Character stats */}
         <div className="mb-4">

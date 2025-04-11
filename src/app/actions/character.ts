@@ -1,7 +1,7 @@
 'use server';
 
-import { cookies } from 'next/headers';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { 
   CLASS_BASE_STATS, 
   generateId, 
@@ -93,14 +93,9 @@ export async function createCharacter({
       // Continue anyway, this isn't critical
     }
     
-    // Store character ID in cookie
-    const cookieStore = await cookies();
-    cookieStore.set(COOKIE_NAMES.CHARACTER_ID, characterId, {
-      maxAge: 60 * 60 * 24 * 365, // 1 year
-      path: '/',
-      httpOnly: true,
-      sameSite: 'strict'
-    });
+    // Note: In a server action, we can't directly set cookies
+    // The cookie will be set in the middleware or on the client side
+    // For now, we'll just return the character ID and let the calling code handle cookie setting
     
     return {
       success: true,
@@ -285,17 +280,70 @@ export async function linkCharacterToUser(
   }
 }
 
-// Get character from cookie
-export async function getCharacterFromCookie(): Promise<ApiResponse<Character>> {
-  const cookieStore = await cookies();
-  const characterId = cookieStore.get(COOKIE_NAMES.CHARACTER_ID)?.value;
-  
-  if (!characterId) {
+// Get character by user ID
+export async function getCharacterByUserId(userId: string): Promise<ApiResponse<Character>> {
+  try {
+    // Get character data
+    const { data: character, error } = await supabase
+      .from('characters')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error || !character) {
+      return {
+        success: false,
+        error: 'Character not found for this user'
+      };
+    }
+    
+    // Get full character data
+    return getCharacter(character.id);
+  } catch (err) {
+    console.error('Unexpected error getting character by user ID:', err);
+    return {
+      success: false,
+      error: 'An unexpected error occurred'
+    };
+  }
+}
+
+// Get character from cookie or auth session
+export async function getCharacterFromCookie(characterId?: string): Promise<ApiResponse<Character>> {
+  try {
+    // First check if user is authenticated
+    const supabaseClient = createClient();
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    
+    if (session?.user?.id) {
+      // Try to get character by user ID
+      const userCharacterResponse = await getCharacterByUserId(session.user.id);
+      
+      if (userCharacterResponse.success) {
+        // User has a character, return it
+        return userCharacterResponse;
+      }
+    }
+    
+    // If we get here, either:
+    // 1. User is not authenticated, or
+    // 2. User is authenticated but doesn't have a character
+    
+    // Try to get character from the provided ID (from middleware)
+    if (characterId) {
+      return getCharacter(characterId);
+    }
+    
+    // No character ID provided
     return {
       success: false,
       error: 'No character found'
     };
+  } catch (err) {
+    console.error('Unexpected error getting character from cookie:', err);
+    return {
+      success: false,
+      error: 'An unexpected error occurred'
+    };
   }
-  
-  return getCharacter(characterId);
 }

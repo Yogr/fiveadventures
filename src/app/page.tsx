@@ -1,6 +1,4 @@
 import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
-import { ROUTES } from '@/lib/constants';
 import CharacterCreationForm from './character/create/character-creation-form';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import WelcomePopup from '@/components/welcome/welcome-popup';

@@ -3,18 +3,31 @@ import { getCharacterFromCookie } from '@/app/actions/character';
 import { ROUTES } from '@/lib/constants';
 import GameNavigation from '@/components/navigation/game-navigation';
 import { getCurrentGameDay } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function WorldBossPage() {
+export default async function WorldBossPage({
+  searchParams
+}: {
+  searchParams: { characterId?: string }
+}) {
+  // Get character ID from URL search params (if available)
+  const characterId = searchParams.characterId;
+  
   // Check if user has a character
-  const characterResponse = await getCharacterFromCookie();
+  const characterResponse = await getCharacterFromCookie(characterId);
   
   if (!characterResponse.success || !characterResponse.data) {
     // Redirect to character creation if no character found
     redirect(ROUTES.CHARACTER_CREATE);
   }
+  
+  // Get user session
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user || null;
   
   const character = characterResponse.data;
   const currentDay = getCurrentGameDay();
@@ -22,7 +35,11 @@ export default async function WorldBossPage() {
   return (
     <div className="min-h-screen p-4">
       <div className="w-full max-w-lg mx-auto">
-        <GameNavigation activeTab="worldboss" currentDay={currentDay} />
+        <GameNavigation 
+          activeTab="worldboss" 
+          currentDay={currentDay} 
+          user={user ? { email: user.email || '' } : null}
+        />
         
         <div className="bg-gray-800 p-4 rounded-md">
           <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center">World Boss</h2>
