@@ -1,13 +1,11 @@
 'use server';
 
-import { supabase } from '@/lib/supabase';
 import { createClient } from '@/lib/supabase/server';
 import { 
   CLASS_BASE_STATS, 
   generateId, 
   getCurrentGameDay 
 } from '@/lib/utils';
-import { COOKIE_NAMES } from '@/lib/constants';
 import type { CharacterClass, ApiResponse, Character, CharacterEquipment } from '@/lib/types';
 
 // Create a new character
@@ -19,6 +17,8 @@ export async function createCharacter({
   characterClass: CharacterClass;
 }): Promise<ApiResponse<{ characterId: string }>> {
   try {
+    const supabase = await createClient();
+
     // Check if name is already taken
     const { data: existingCharacter, error: checkError } = await supabase
       .from('characters')
@@ -113,6 +113,8 @@ export async function createCharacter({
 // Get character by ID
 export async function getCharacter(characterId: string): Promise<ApiResponse<Character>> {
   try {
+    const supabase = await createClient();
+
     // Get character data
     const { data: character, error } = await supabase
       .from('characters')
@@ -234,6 +236,8 @@ export async function linkCharacterToUser(
   userId: string
 ): Promise<ApiResponse<null>> {
   try {
+    const supabase = await createClient();
+
     // Check if character exists and is unlinked
     const { data: character, error: characterError } = await supabase
       .from('characters')
@@ -283,6 +287,8 @@ export async function linkCharacterToUser(
 // Get character by user ID
 export async function getCharacterByUserId(userId: string): Promise<ApiResponse<Character>> {
   try {
+    const supabase = await createClient();
+
     // Get character data
     const { data: character, error } = await supabase
       .from('characters')
@@ -312,7 +318,7 @@ export async function getCharacterByUserId(userId: string): Promise<ApiResponse<
 export async function getCharacterFromCookie(characterId?: string): Promise<ApiResponse<Character>> {
   try {
     // First check if user is authenticated
-    const supabaseClient = createClient();
+    const supabaseClient = await createClient();
     const { data: { session } } = await supabaseClient.auth.getSession();
     
     if (session?.user?.id) {

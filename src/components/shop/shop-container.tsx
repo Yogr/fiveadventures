@@ -6,7 +6,6 @@ import type { ShopItemSimple } from '@/app/actions/shop';
 import ShopItem from './shop-item';
 import InventoryItem from './inventory-item';
 import LoadingSpinner from '@/components/ui/loading-spinner';
-import type { Item } from '@/lib/types';
 
 interface ShopContainerProps {
   initialGold: number;
@@ -43,11 +42,11 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
     
     try {
       // Load shop items
-      const shopResult = await getShopItems();
-      if (shopResult.success && shopResult.data) {
-        setShopItems(shopResult.data);
+      const shopItems = await getShopItems();
+      if (shopItems) {
+        setShopItems(shopItems);
       } else {
-        setError(shopResult.error || 'Failed to load shop items');
+        setError('Failed to load shop items');
       }
       
       // Load inventory

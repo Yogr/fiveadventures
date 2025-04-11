@@ -11,10 +11,11 @@ export const revalidate = 0;
 export default async function WorldBossPage({
   searchParams
 }: {
-  searchParams: { characterId?: string }
+  searchParams: Promise<{ characterId?: string }>
 }) {
   // Get character ID from URL search params (if available)
-  const characterId = searchParams.characterId;
+  const _searchParams = await searchParams;
+  const characterId = _searchParams.characterId;
   
   // Check if user has a character
   const characterResponse = await getCharacterFromCookie(characterId);
@@ -25,7 +26,7 @@ export default async function WorldBossPage({
   }
   
   // Get user session
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user || null;
   

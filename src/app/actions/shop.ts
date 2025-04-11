@@ -1,6 +1,5 @@
 'use server';
 
-import { supabase } from '@/lib/supabase';
 import { MAX_SHOP_ITEMS } from '@/lib/constants';
 import type { Item, ItemRarity, ApiResponse } from '@/lib/types';
 import { getCharacterFromCookie } from './character';
@@ -8,6 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { getCurrentGameDay, generateShopSeed, getRandomShopItems, generateId } from '@/lib/utils';
 import itemsData from '../../../data/items.json';
 import { unstable_cache } from 'next/cache';
+import { createClient } from '@/lib/supabase/server';
 
 // Define a custom shop item type that doesn't rely on the database schema
 export type ShopItemSimple = {
@@ -55,26 +55,25 @@ const getShopItemsCached = unstable_cache(
 );
 
 // Get shop items for the current day
-export async function getShopItems(): Promise<ApiResponse<ShopItemSimple[]>> {
+export async function getShopItems(): Promise<ShopItemSimple[]> {
   try {
     const currentDay = getCurrentGameDay();
     
     // Get the cached shop items for the current day
     const shopItems = await getShopItemsCached(currentDay);
     
-    return { 
-      success: true, 
-      data: shopItems
-    };
+    return shopItems
   } catch (err) {
     console.error('Error in getShopItems:', err);
-    return { success: false, error: 'An unexpected error occurred' };
+    return [];
   }
 }
 
 // Buy an item from the shop
 export async function buyItem(itemId: string): Promise<ApiResponse<{ message: string; item: Item }>> {
   try {
+    const supabase = await createClient();
+
     // Get character from cookie
     const characterResponse = await getCharacterFromCookie();
     if (!characterResponse.success || !characterResponse.data) {
@@ -84,13 +83,10 @@ export async function buyItem(itemId: string): Promise<ApiResponse<{ message: st
     const character = characterResponse.data;
     
     // Get current shop items
-    const shopItemsResponse = await getShopItems();
-    if (!shopItemsResponse.success || !shopItemsResponse.data) {
-      return { success: false, error: 'Failed to get shop items' };
-    }
-    
+    const shopItems = await getShopItems();
+
     // Find the item in the shop
-    const shopItem = shopItemsResponse.data.find(item => item.id === itemId);
+    const shopItem = shopItems.find(item => item.id === itemId);
     if (!shopItem) {
       return { success: false, error: 'Item not found in shop' };
     }
@@ -152,6 +148,8 @@ export async function buyItem(itemId: string): Promise<ApiResponse<{ message: st
 // Sell an item from inventory
 export async function sellItem(inventoryItemId: string): Promise<ApiResponse<{ message: string; gold: number }>> {
   try {
+    const supabase = await createClient();
+
     // Get character from cookie
     const characterResponse = await getCharacterFromCookie();
     if (!characterResponse.success || !characterResponse.data) {
@@ -244,6 +242,8 @@ export async function sellItem(inventoryItemId: string): Promise<ApiResponse<{ m
 // Get character inventory
 export async function getInventory(): Promise<ApiResponse<any[]>> {
   try {
+    const supabase = await createClient();
+
     // Get character from cookie
     const characterResponse = await getCharacterFromCookie();
     if (!characterResponse.success || !characterResponse.data) {

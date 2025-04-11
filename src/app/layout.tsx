@@ -1,6 +1,5 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
   title: 'Five Adventures',
@@ -12,8 +11,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
 
   return (
     <html lang="en">

@@ -1,16 +1,13 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { supabase } from '@/lib/supabase';
 import { 
-  generateAdventureSeed, 
-  getCurrentGameDay,
+  generateAdventureSeed,
   calculateSuccessRate,
   getLevelFromExperience,
   generateId,
   getPrimaryStat
 } from '@/lib/utils';
-import { COOKIE_NAMES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
+import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 import type { 
   ApiResponse, 
   Adventure, 
@@ -18,16 +15,19 @@ import type {
   Character,
   Combat,
   Monster,
-  RewardTable,
-  RewardItem
-} from '@/lib/types-updated';
+  CharacterAdventure,
+  Item
+} from '@/lib/types';
 import { getCharacter } from './character';
+import { createClient } from '@/lib/supabase/server';
 
 // Get a random adventure for a character
 export async function getAdventure(
   characterId: string
 ): Promise<ApiResponse<Adventure>> {
   try {
+    const supabase = await createClient();
+    
     // Get character data to check if they need a non-violent adventure
     const characterResponse = await getCharacter(characterId);
     if (!characterResponse.success || !characterResponse.data) {
@@ -143,6 +143,8 @@ export async function completeAdventure({
   combat?: Combat | null;
 }>> {
   try {
+    const supabase = await createClient();
+
     // Get character data
     const characterResponse = await getCharacter(characterId);
     if (!characterResponse.success || !characterResponse.data) {
@@ -216,9 +218,21 @@ export async function completeAdventure({
     
     // Calculate success rates for each outcome
     const outcomesWithSuccessRates = outcomes.map(outcome => {
-      const successRate = outcome.stat_requirements 
-        ? calculateSuccessRate(characterStats, outcome.stat_requirements)
-        : 100; // Default to 100% if no requirements
+      let successRate = 100; // Default to 100% if no requirements
+      
+      if (outcome.stat_requirements && typeof outcome.stat_requirements === 'object') {
+        // Convert stat_requirements to the expected format for calculateSuccessRate
+        const statRequirements: { [key: string]: number } = {};
+        
+        // Safely extract stat requirements
+        for (const [key, value] of Object.entries(outcome.stat_requirements)) {
+          if (typeof value === 'number') {
+            statRequirements[key] = value;
+          }
+        }
+        
+        successRate = calculateSuccessRate(characterStats, statRequirements);
+      }
       
       return {
         outcome,
@@ -234,11 +248,19 @@ export async function completeAdventure({
     const roll = Math.floor(Math.random() * 100) + 1;
     
     // Select outcome based on roll and success rates
-    let selectedOutcome = outcomesWithSuccessRates[0].outcome; // Default to highest success rate
+    const firstOutcomeSuccessRate = outcomesWithSuccessRates[0];
+    if (!firstOutcomeSuccessRate) {
+      return {
+        success: false,
+        error: 'No valid outcomes found'
+      };
+    }
+
+    let selectedOutcome = firstOutcomeSuccessRate.outcome; // Default to highest success rate
     
     // If there's only one outcome, use it
     if (outcomesWithSuccessRates.length === 1) {
-      selectedOutcome = outcomesWithSuccessRates[0].outcome;
+      selectedOutcome = firstOutcomeSuccessRate.outcome;
     } else {
       // If there are multiple outcomes, use weighted selection
       // The higher the success rate, the more likely to be chosen
@@ -249,18 +271,20 @@ export async function completeAdventure({
         0
       );
       
-      // Calculate cumulative probabilities
-      let cumulativeProbability = 0;
-      
-      for (const item of outcomesWithSuccessRates) {
-        // Calculate normalized probability (0-100)
-        const probability = (item.successRate / totalSuccessRate) * 100;
-        cumulativeProbability += probability;
+      if (totalSuccessRate > 0) {
+        // Calculate cumulative probabilities
+        let cumulativeProbability = 0;
         
-        // If roll is less than or equal to cumulative probability, select this outcome
-        if (roll <= cumulativeProbability) {
-          selectedOutcome = item.outcome;
-          break;
+        for (const item of outcomesWithSuccessRates) {
+          // Calculate normalized probability (0-100)
+          const probability = (item.successRate / totalSuccessRate) * 100;
+          cumulativeProbability += probability;
+          
+          // If roll is less than or equal to cumulative probability, select this outcome
+          if (roll <= cumulativeProbability) {
+            selectedOutcome = item.outcome;
+            break;
+          }
         }
       }
     }
@@ -275,14 +299,24 @@ export async function completeAdventure({
       
       // Select a random monster from the monster_ids array
       const randomIndex = Math.floor(Math.random() * outcome.monster_ids.length);
-      let monsterId = outcome.monster_ids[randomIndex];
+      const selectedMonsterId = outcome.monster_ids[randomIndex];
+      
+      if (selectedMonsterId === undefined) {
+        console.error('No monster ID found at index', randomIndex);
+        return {
+          success: false,
+          error: 'Failed to select monster'
+        };
+      }
       
       // If this is an elite encounter, use the elite version of the monster
-      if (isEliteEncounter) {
-        // Elite monster IDs are 100 + the regular monster ID
-        // For example, if the regular monster ID is 1, the elite version is 101
-        monsterId = monsterId + 100;
-      }
+      // Elite monster IDs are 100 + the regular monster ID
+      // For example, if the regular monster ID is 1, the elite version is 101
+      const monsterId = isEliteEncounter 
+        ? (typeof selectedMonsterId === 'string' 
+            ? parseInt(selectedMonsterId, 10) + 100 
+            : selectedMonsterId + 100)
+        : selectedMonsterId;
       
       // Create a new combat record
       const { data: newCombat, error: combatError } = await supabase
@@ -293,7 +327,7 @@ export async function completeAdventure({
           adventure_id: adventureId,
           decision_id: decisionId,
           outcome_id: outcome.id,
-          monster_id: monsterId,
+          monster_id: monsterId as number, // Ensure it's treated as a number
           is_completed: false,
           turns: 0,
           character_damage_dealt: 0,
@@ -349,14 +383,14 @@ export async function completeAdventure({
     }
     
     // Calculate rewards
-    const experienceGained = adventure.min_experience + outcome.experience_bonus;
-    const goldGained = adventure.min_gold + outcome.gold_bonus;
+    const experienceGained = adventure.min_experience + (outcome.experience_bonus || 0);
+    const goldGained = adventure.min_gold + (outcome.gold_bonus || 0);
     
     // Update character stats
     const newExperience = character.experience + experienceGained;
     const newGold = character.gold + goldGained;
-    const newHitpoints = Math.max(0, Math.min(character.max_hitpoints, character.current_hitpoints + outcome.hitpoints_change));
-    const newEnergy = Math.max(0, Math.min(character.max_energy, character.current_energy + outcome.energy_change));
+    const newHitpoints = Math.max(0, Math.min(character.max_hitpoints, character.current_hitpoints + (outcome.hitpoints_change || 0)));
+    const newEnergy = Math.max(0, Math.min(character.max_energy, character.current_energy + (outcome.energy_change || 0)));
     const newAdventureCount = character.daily_adventure_count + 1;
     
     // Update character in database
@@ -447,8 +481,10 @@ export async function completeAdventure({
 // Get adventure history for a character
 export async function getAdventureHistory(
   characterId: string
-): Promise<ApiResponse<any[]>> {
+): Promise<ApiResponse<CharacterAdventure[]>> {
   try {
+    const supabase = await createClient();
+
     const { data, error } = await supabase
       .from('character_adventures')
       .select(`
@@ -471,7 +507,7 @@ export async function getAdventureHistory(
     
     return {
       success: true,
-      data: data || []
+      data: data as CharacterAdventure[] || []
     };
   } catch (err) {
     console.error('Unexpected error getting adventure history:', err);
@@ -491,6 +527,8 @@ export async function startCombatTurn(
   skillId?: number
 ): Promise<ApiResponse<Combat>> {
   try {
+    const supabase = await createClient();
+
     // Get the combat data
     const { data: combat, error: combatError } = await supabase
       .from('combat')
@@ -528,7 +566,7 @@ export async function startCombatTurn(
     if (action === 'attack') {
       // Basic attack
       // Get character's weapon
-      const { data: equipment, error: equipmentError } = await supabase
+      const { data: weaponEquipment, error: equipmentError } = await supabase
         .from('character_equipment')
         .select('*, weapon:weapon_id(*)')
         .eq('character_id', character.id)
@@ -537,9 +575,15 @@ export async function startCombatTurn(
       // Get primary stat based on class
       const primaryStat = getPrimaryStat(character);
       
-      if (!equipmentError && equipment && equipment.weapon) {
-        const weapon = equipment.weapon;
-        const baseDamage = weapon.base_damage || 5;
+      let baseDamage = 5; // Default base damage
+      
+      if (!equipmentError && weaponEquipment && weaponEquipment.weapon) {
+        // Check if weapon is an Item object with base_damage property
+        const weapon = weaponEquipment.weapon as unknown as Item;
+        if (weapon && typeof weapon === 'object' && 'base_damage' in weapon) {
+          baseDamage = weapon.base_damage || 5;
+        }
+        
         const statBonus = Math.floor(primaryStat / 2);
         characterDamageDealt = baseDamage + statBonus;
       } else {
@@ -640,7 +684,7 @@ export async function startCombatTurn(
             is_completed: true,
             is_victory: false,
             turns: turnNumber
-          } as any
+          } as Combat
         };
       } else {
         // Failed to run
@@ -729,7 +773,7 @@ export async function startCombatTurn(
       
       return {
         success: true,
-        data: updatedCombat as any
+        data: updatedCombat as Combat
       };
     }
     
@@ -738,21 +782,29 @@ export async function startCombatTurn(
     let monsterEffects = null;
     
     // Apply character defense from equipment
-    const { data: equipment, error: equipmentError } = await supabase
+    const { data: defenseEquipment, error: defenseEquipmentError } = await supabase
       .from('character_equipment')
       .select('*, armor:armor_id(*), helmet:helmet_id(*)')
       .eq('character_id', character.id)
       .single();
     
-    if (!equipmentError && equipment) {
+    if (!defenseEquipmentError && defenseEquipment) {
       let defense = 0;
       
-      if (equipment.armor) {
-        defense += equipment.armor.base_defense || 0;
+      // Check if armor is an Item object with base_defense property
+      if (defenseEquipment.armor) {
+        const armor = defenseEquipment.armor as unknown as Item;
+        if (armor && typeof armor === 'object' && 'base_defense' in armor) {
+          defense += armor.base_defense || 0;
+        }
       }
       
-      if (equipment.helmet) {
-        defense += equipment.helmet.base_defense || 0;
+      // Check if helmet is an Item object with base_defense property
+      if (defenseEquipment.helmet) {
+        const helmet = defenseEquipment.helmet as unknown as Item;
+        if (helmet && typeof helmet === 'object' && 'base_defense' in helmet) {
+          defense += helmet.base_defense || 0;
+        }
       }
       
       monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(defense / 2));
@@ -765,19 +817,20 @@ export async function startCombatTurn(
       // Roll for each ability
       for (const [abilityName, ability] of Object.entries(abilities)) {
         const roll = Math.floor(Math.random() * 100) + 1;
+        const typedAbility = ability as any;
         
-        if (roll <= (ability as any).chance) {
+        if (roll <= typedAbility.chance) {
           // Ability triggers
-          if ((ability as any).damage) {
+          if (typedAbility.damage) {
             // Damage ability
-            monsterDamageDealt += (ability as any).damage;
+            monsterDamageDealt += typedAbility.damage;
           }
           
-          if ((ability as any).defense_boost || (ability as any).immobilize || (ability as any).damage_over_time) {
+          if (typedAbility.defense_boost || typedAbility.immobilize || typedAbility.damage_over_time) {
             // Status effect ability
             monsterEffects = {
               ability: abilityName,
-              ...ability
+              ...typedAbility
             };
           }
         }
@@ -850,7 +903,7 @@ export async function startCombatTurn(
     
     return {
       success: true,
-      data: updatedCombat as any
+      data: updatedCombat as Combat
     };
   } catch (err) {
     console.error('Unexpected error in combat turn:', err);
@@ -866,6 +919,8 @@ export async function getCombat(
   combatId: string
 ): Promise<ApiResponse<Combat>> {
   try {
+    const supabase = await createClient();
+
     const { data, error } = await supabase
       .from('combat')
       .select(`

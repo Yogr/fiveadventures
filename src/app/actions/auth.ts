@@ -1,10 +1,9 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 
 export async function signIn(formData: FormData) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // type-cast to avoid errors
   const data = {
@@ -22,7 +21,7 @@ export async function signIn(formData: FormData) {
 }
 
 export async function signUp(formData: FormData) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // type-cast to avoid errors
   const data = {
@@ -40,13 +39,13 @@ export async function signUp(formData: FormData) {
 }
 
 export async function signOut() {
-  const supabase = createClient()
+  const supabase = await createClient()
   await supabase.auth.signOut()
   return { success: true }
 }
 
 export async function getSession() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   return session
 }

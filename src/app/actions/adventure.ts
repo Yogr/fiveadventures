@@ -1,14 +1,11 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { supabase } from '@/lib/supabase';
 import { 
   generateAdventureSeed, 
-  getCurrentGameDay,
   calculateSuccessRate,
   getLevelFromExperience
 } from '@/lib/utils';
-import { COOKIE_NAMES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
+import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 import type {
   ApiResponse,
   Adventure,
@@ -16,12 +13,15 @@ import type {
   Character
 } from '@/lib/types';
 import { getCharacter } from './character';
+import { createClient } from '@/lib/supabase/server';
 
 // Get a random adventure for a character
 export async function getAdventure(
   characterId: string
 ): Promise<ApiResponse<Adventure>> {
   try {
+    const supabase = await createClient();
+    
     // Get character data to check if they need a non-violent adventure
     const characterResponse = await getCharacter(characterId);
     if (!characterResponse.success || !characterResponse.data) {
@@ -109,6 +109,8 @@ export async function completeAdventure({
   };
 }>> {
   try {
+    const supabase = await createClient();
+
     // Get character data
     const characterResponse = await getCharacter(characterId);
     if (!characterResponse.success || !characterResponse.data) {
@@ -382,6 +384,8 @@ export async function getAdventureHistory(
   characterId: string
 ): Promise<ApiResponse<any[]>> {
   try {
+    const supabase = await createClient();
+
     const { data, error } = await supabase
       .from('character_adventures')
       .select(`

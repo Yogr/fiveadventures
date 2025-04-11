@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import AuthForm from '@/components/auth/auth-form'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'Login - Five Adventures',
@@ -11,7 +10,7 @@ export const metadata: Metadata = {
 
 export default async function LoginPage() {
   // Check if user is already logged in
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   
   return (

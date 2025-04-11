@@ -1,15 +1,24 @@
 'use server';
 
-import { supabase } from '@/lib/supabase';
-import type { ApiResponse, Combat, CombatTurn, Character, Monster } from '@/lib/types';
+import type { 
+  ApiResponse, 
+  Combat,
+  Character, 
+  Monster,
+  Item,
+  Skill
+} from '@/lib/types';
 import { getCharacter } from './character';
-import { getPrimaryStat } from '@/lib/utils';
+import { getPrimaryStat, generateId } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/server';
 
 // Get combat data
 export async function getCombat(
   combatId: string
 ): Promise<ApiResponse<Combat>> {
   try {
+    const supabase = await createClient();
+    
     const { data, error } = await supabase
       .from('combat')
       .select(`
@@ -30,10 +39,7 @@ export async function getCombat(
     
     return {
       success: true,
-      data: {
-        ...data,
-        turns_data: data.turns
-      } as Combat
+      data: data as Combat
     };
   } catch (err) {
     console.error('Unexpected error getting combat:', err);
@@ -51,6 +57,8 @@ export async function startCombatTurn(
   skillId?: number
 ): Promise<ApiResponse<Combat>> {
   try {
+    const supabase = await createClient();
+
     // Get the combat data
     const { data: combat, error: combatError } = await supabase
       .from('combat')
@@ -88,7 +96,7 @@ export async function startCombatTurn(
     if (action === 'attack') {
       // Basic attack
       // Get character's weapon
-      const { data: equipment, error: equipmentError } = await supabase
+      const { data: weaponEquipment, error: equipmentError } = await supabase
         .from('character_equipment')
         .select('*, weapon:weapon_id(*)')
         .eq('character_id', character.id)
@@ -97,10 +105,15 @@ export async function startCombatTurn(
       // Get primary stat based on class
       const primaryStat = getPrimaryStat(character);
       
-      if (!equipmentError && equipment && equipment.weapon) {
-        const weapon = equipment.weapon;
-        const baseDamage = weapon.base_damage || 5;
-        const statBonus = Math.floor(primaryStat / 2);
+      let baseDamage = 5; // Default base damage
+      let statBonus = Math.floor(primaryStat / 2);
+      
+      if (!equipmentError && weaponEquipment && weaponEquipment.weapon) {
+        // Check if weapon is an Item object with base_damage property
+        const weapon = weaponEquipment.weapon as unknown as Item;
+        if (weapon && typeof weapon === 'object' && 'base_damage' in weapon) {
+          baseDamage = weapon.base_damage || 5;
+        }
         
         // Base damage with randomness (±20%)
         const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
@@ -138,7 +151,7 @@ export async function startCombatTurn(
       
       // Process skill effects
       if (skill.effects) {
-        const effects = skill.effects as any;
+        const effects = skill.effects as Record<string, any>;
         
         if (effects.damage_multiplier) {
           // Damage skill
@@ -189,6 +202,7 @@ export async function startCombatTurn(
         await supabase
           .from('combat_turns')
           .insert({
+            id: generateId(), // Generate UUID for the record
             combat_id: combatId,
             turn_number: turnNumber,
             actor: 'character',
@@ -203,7 +217,7 @@ export async function startCombatTurn(
             is_completed: true,
             is_victory: false,
             turns: turnNumber
-          } as any
+          } as Combat
         };
       } else {
         // Failed to run
@@ -211,6 +225,7 @@ export async function startCombatTurn(
         await supabase
           .from('combat_turns')
           .insert({
+            id: generateId(), // Generate UUID for the record
             combat_id: combatId,
             turn_number: turnNumber,
             actor: 'character',
@@ -227,6 +242,7 @@ export async function startCombatTurn(
     await supabase
       .from('combat_turns')
       .insert({
+        id: generateId(), // Generate UUID for the record
         combat_id: combatId,
         turn_number: turnNumber,
         actor: 'character',
@@ -290,10 +306,7 @@ export async function startCombatTurn(
       
       return {
         success: true,
-        data: {
-          ...updatedCombat,
-          turns_data: updatedCombat.turns
-        } as Combat
+        data: updatedCombat as Combat
       };
     }
     
@@ -304,21 +317,29 @@ export async function startCombatTurn(
     let monsterEffects = null;
     
     // Apply character defense from equipment
-    const { data: equipment, error: equipmentError } = await supabase
+    const { data: defenseEquipment, error: defenseEquipmentError } = await supabase
       .from('character_equipment')
       .select('*, armor:armor_id(*), helmet:helmet_id(*)')
       .eq('character_id', character.id)
       .single();
     
-    if (!equipmentError && equipment) {
+    if (!defenseEquipmentError && defenseEquipment) {
       let defense = 0;
       
-      if (equipment.armor) {
-        defense += equipment.armor.base_defense || 0;
+      // Check if armor is an Item object with base_defense property
+      if (defenseEquipment.armor) {
+        const armor = defenseEquipment.armor as unknown as Item;
+        if (armor && typeof armor === 'object' && 'base_defense' in armor) {
+          defense += armor.base_defense || 0;
+        }
       }
       
-      if (equipment.helmet) {
-        defense += equipment.helmet.base_defense || 0;
+      // Check if helmet is an Item object with base_defense property
+      if (defenseEquipment.helmet) {
+        const helmet = defenseEquipment.helmet as unknown as Item;
+        if (helmet && typeof helmet === 'object' && 'base_defense' in helmet) {
+          defense += helmet.base_defense || 0;
+        }
       }
       
       // Reduced impact of defense
@@ -327,24 +348,25 @@ export async function startCombatTurn(
     
     // Check for monster abilities
     if (monster.abilities) {
-      const abilities = monster.abilities as any;
+      const abilities = monster.abilities as Record<string, any>;
       
       // Roll for each ability
       for (const [abilityName, ability] of Object.entries(abilities)) {
         const roll = Math.floor(Math.random() * 100) + 1;
+        const typedAbility = ability as Record<string, any>;
         
-        if (roll <= (ability as any).chance) {
+        if (roll <= typedAbility.chance) {
           // Ability triggers
-          if ((ability as any).damage) {
+          if (typedAbility.damage) {
             // Damage ability
-            monsterDamageDealt += (ability as any).damage;
+            monsterDamageDealt += typedAbility.damage;
           }
           
-          if ((ability as any).defense_boost || (ability as any).immobilize || (ability as any).damage_over_time) {
+          if (typedAbility.defense_boost || typedAbility.immobilize || typedAbility.damage_over_time) {
             // Status effect ability
             monsterEffects = {
               ability: abilityName,
-              ...ability
+              ...typedAbility
             };
           }
         }
@@ -355,6 +377,7 @@ export async function startCombatTurn(
     await supabase
       .from('combat_turns')
       .insert({
+        id: generateId(), // Generate UUID for the record
         combat_id: combatId,
         turn_number: turnNumber,
         actor: 'monster',
@@ -416,10 +439,7 @@ export async function startCombatTurn(
     
     return {
       success: true,
-      data: {
-        ...updatedCombat,
-        turns_data: updatedCombat.turns
-      } as Combat
+      data: updatedCombat as Combat
     };
   } catch (err) {
     console.error('Unexpected error in combat turn:', err);
@@ -435,6 +455,8 @@ export async function getActiveCharacterCombat(
   characterId: string
 ): Promise<ApiResponse<Combat | null>> {
   try {
+    const supabase = await createClient();
+
     // Query for active combat for this character
     const { data, error } = await supabase
       .from('combat')
@@ -480,8 +502,10 @@ export async function getActiveCharacterCombat(
 // Get character skills
 export async function getCharacterSkills(
   characterId: string
-): Promise<ApiResponse<any[]>> {
+): Promise<ApiResponse<Array<Skill & { learned: boolean; level: number }>>> {
   try {
+    const supabase = await createClient();
+
     // Get character data to check class
     const characterResponse = await getCharacter(characterId);
     if (!characterResponse.success || !characterResponse.data) {
@@ -545,8 +569,10 @@ export async function getCharacterSkills(
 export async function learnSkill(
   characterId: string,
   skillId: number
-): Promise<ApiResponse<any>> {
+): Promise<ApiResponse<null>> {
   try {
+    const supabase = await createClient();
+
     // Check if character already has this skill
     const { data: existingSkill, error: existingSkillError } = await supabase
       .from('character_skills')
@@ -566,6 +592,7 @@ export async function learnSkill(
     const { error } = await supabase
       .from('character_skills')
       .insert({
+        id: generateId(), // Generate UUID for the record
         character_id: characterId,
         skill_id: skillId,
         level: 1,
@@ -597,8 +624,10 @@ export async function learnSkill(
 export async function upgradeSkill(
   characterId: string,
   skillId: number
-): Promise<ApiResponse<any>> {
+): Promise<ApiResponse<null>> {
   try {
+    const supabase = await createClient();
+
     // Get current skill level
     const { data: characterSkill, error: skillError } = await supabase
       .from('character_skills')

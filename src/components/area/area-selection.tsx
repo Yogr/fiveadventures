@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import type { Area, Character } from '@/lib/types-updated';
+import type { Area, Character } from '@/lib/types';
 import { getLevelFromExperience } from '@/lib/utils';
 
 interface AreaSelectionProps {

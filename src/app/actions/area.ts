@@ -1,8 +1,7 @@
 'use server';
 
-import { supabase } from '@/lib/supabase';
 import { unstable_cache } from 'next/cache';
-import type { Area } from '@/lib/types-updated';
+import type { Area } from '@/lib/types';
 import areasData from '../../../data/areas.json';
 
 // Module-level variable to store selected areas

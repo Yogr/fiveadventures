@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getCharacter } from '@/app/actions/character';
@@ -8,14 +8,13 @@ import { getAdventure, completeAdventure } from '@/app/actions/adventure-updated
 import { getActiveCharacterCombat } from '@/app/actions/combat';
 import { getAreas, getSelectedArea, selectArea } from '@/app/actions/area';
 import { ROUTES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
-import type { Character, Adventure, AdventureDecision, AdventureOutcome, Combat, Area } from '@/lib/types-updated';
+import type { Character, Adventure, AdventureDecision, AdventureOutcome, Combat, Area } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import AdventureTracker from '@/components/adventure/adventure-tracker';
 import CharacterStats from '@/components/character/character-stats';
 import CombatInterface from '@/components/combat/combat-interface';
 import AnimatedText from '@/components/ui/animated-text';
 import AnimatedReward from '@/components/ui/animated-reward';
-import ItemReward from '@/components/ui/item-reward';
 import LevelUpAnimation from '@/components/ui/level-up-animation';
 import AreaSelection from '@/components/area/area-selection';
 
@@ -581,7 +580,7 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
         <h3 className="text-2xl mb-4">What will you do?</h3>
         
         <div className="space-y-4">
-          {adventure.decisions?.map((decision) => (
+          {adventure.decisions?.map((decision: AdventureDecision) => (
             <div 
               key={decision.id}
               className={`p-4 border-2 rounded-md cursor-pointer transition-all ${

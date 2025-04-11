@@ -12,10 +12,11 @@ export const revalidate = 0;
 export default async function AdventurePage({
   searchParams
 }: {
-  searchParams: { characterId?: string }
+  searchParams: Promise<{ characterId?: string }>
 }) {
   // Get character ID from URL search params (if available)
-  const characterId = searchParams.characterId;
+  const _params = await searchParams;
+  const characterId = _params.characterId;
   
   // Check if user has a character
   const characterResponse = await getCharacterFromCookie(characterId);
@@ -26,7 +27,7 @@ export default async function AdventurePage({
   }
   
   // Get user session
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user || null;
   
