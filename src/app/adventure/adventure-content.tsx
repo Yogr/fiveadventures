@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { getCharacterById } from '@/app/actions/character';
 import { getAdventure, completeAdventure } from '@/app/actions/adventure-updated';
 import { getActiveCharacterCombat } from '@/app/actions/combat';
@@ -19,13 +18,13 @@ import LevelUpAnimation from '@/components/ui/level-up-animation';
 import AreaSelection from '@/components/area/area-selection';
 
 interface AdventureContentProps {
-  characterId: string;
+  initialCharacter: Character;
+  currentDay: number;
 }
 
-export default function AdventureContent({ characterId }: AdventureContentProps) {
-  const router = useRouter();
+export default function AdventureContent({ initialCharacter, currentDay }: AdventureContentProps) {
   const [loading, setLoading] = useState(true);
-  const [character, setCharacter] = useState<Character | null>(null);
+  const [character, setCharacter] = useState<Character>(initialCharacter);
   const [adventure, setAdventure] = useState<Adventure | null>(null);
   const [selectedDecision, setSelectedDecision] = useState<AdventureDecision | null>(null);
   const [outcome, setOutcome] = useState<AdventureOutcome | null>(null);
@@ -40,8 +39,6 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   // Area selection states
   const [areas, setAreas] = useState<Area[]>([]);
   const [selectedArea, setSelectedArea] = useState<Area | null>(null);
-  const [hasSelectedArea, setHasSelectedArea] = useState(false);
-  const [loadingAreas, setLoadingAreas] = useState(false);
   
   // Reset animation state when outcome changes
   useEffect(() => {
@@ -51,139 +48,244 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
     }
   }, [outcome]);
 
-  // Load areas data
+  // Load areas data - only run once on initial mount or when character/currentDay changes
   useEffect(() => {
+    // Track if the component is mounted to prevent state updates after unmount
+    let isMounted = true;
+    
     async function loadAreas() {
-      setLoadingAreas(true);
-      
+      console.log('Loading areas...');
       try {
         // Get all areas
         const areasResponse = await getAreas();
         if (!areasResponse.success || !areasResponse.data) {
           console.error('Failed to load areas');
-          setLoadingAreas(false);
           return;
         }
         
+        if (!isMounted) return;
         setAreas(areasResponse.data);
         
         // Check if character has selected an area for today
-        const selectedAreaResponse = await getSelectedArea(characterId);
+        const selectedAreaResponse = await getSelectedArea(character.id, currentDay);
+        if (!isMounted) return;
+        
         if (!selectedAreaResponse.success) {
-          console.error('Failed to check selected area');
-          setLoadingAreas(false);
+          console.log('No selected area yet today');
+          setLoading(false);
+          setSelectedArea(null);
           return;
         }
         
-        if (selectedAreaResponse.data?.hasSelected && selectedAreaResponse.data.area) {
-          // Use type assertion to ensure TypeScript knows this is an Area
-          const area: Area = selectedAreaResponse.data.area as Area;
-          setSelectedArea(area);
-          setHasSelectedArea(true);
+        // getSelectedArea returns the area_id when successful
+        const areaId = selectedAreaResponse.data;
+        
+        // Find the area object from the areas array
+        const selectedAreaObj = areasResponse.data.find(area => area.id === areaId);
+        
+        if (selectedAreaObj) {
+          console.log('Found selected area:', selectedAreaObj.name);
+          setSelectedArea(selectedAreaObj);
         } else {
+          console.log('Selected area not found in areas list');
           setSelectedArea(null);
-          setHasSelectedArea(false);
         }
         
-        setLoadingAreas(false);
       } catch (err) {
         console.error('Error loading areas:', err);
-        setLoadingAreas(false);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
     
-    if (characterId) {
+    if (character) {
       loadAreas();
     }
-  }, [characterId]);
+    
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMounted = false;
+    };
+  }, [character?.id, currentDay]); // Only depend on character.id, not the entire character object
   
   // Handle area selection
-  const handleAreaSelect = async (areaId: number) => {
-    setLoadingAreas(true);
+  const handleAreaSelect = async (area: Area) => {
+    // Create a local variable to track if the component is still mounted during async operations
+    let isMounted = true;
+    const cleanup = () => { isMounted = false; };
     
     try {
+      // Store necessary IDs locally to avoid referencing the full objects
+      const characterId = character.id;
+      const areaId = area.id;
+      
       const result = await selectArea(characterId, areaId);
-      if (!result.success || !result.data) {
+      if (!isMounted) return cleanup();
+      
+      if (!result.success) {
         console.error('Failed to select area');
-        setLoadingAreas(false);
-        return;
+        return cleanup();
       }
       
-      if (result.data.area) {
-        // Use type assertion to ensure TypeScript knows this is an Area
-        const area: Area = result.data.area as Area;
-        setSelectedArea(area);
-        setHasSelectedArea(true);
-      } else {
-        setSelectedArea(null);
-        setHasSelectedArea(false);
-      }
+      // Set the selected area
+      setSelectedArea(area);
       
       // Load adventure data after area selection
-      loadAdventureData();
+      // We'll use the loadAdventureData function directly since the useEffect will trigger
+      // when selectedArea changes
     } catch (err) {
       console.error('Error selecting area:', err);
-      setLoadingAreas(false);
     }
+    
+    return cleanup;
   };
   
   // Load character and adventure data
   const loadAdventureData = async () => {
+    // Create a local variable to track if the component is still mounted during async operations
+    let isMounted = true;
+    const cleanup = () => { isMounted = false; };
+    
+    console.log('Begin load adventure data');
     setLoading(true);
     setError(null);
     
     try {
-      // Get character data
-      const characterResponse = await getCharacterById(characterId);
-      if (!characterResponse.success || !characterResponse.data) {
-        setError('Failed to load character data');
+      // Store necessary data locally to avoid referencing the full objects
+      const characterId = character.id;
+      const adventureCount = character.daily_adventure_count;
+      
+      // Check if character has completed all adventures for the day
+      if (adventureCount >= MAX_ADVENTURES_PER_DAY) {
+        console.log('Load Adventure Data - All adventures completed for the day');
+        // Stop loading - don't try to get an adventure
+        if (!isMounted) return cleanup();
         setLoading(false);
-        return;
+        return cleanup();
       }
-      
-      setCharacter(characterResponse.data);
-      
+
       // Check if character is in active combat
       const activeCombatResponse = await getActiveCharacterCombat(characterId);
+      if (!isMounted) return cleanup();
+      
       if (activeCombatResponse.success && activeCombatResponse.data) {
+        console.log('Load Adventure Data - Character is in active combat');
         // Character is in active combat, show combat interface
         setCombatId(activeCombatResponse.data.id);
         setShowCombat(true);
         setLoading(false);
-        return;
-      }
-      
-      // Check if character has completed all adventures for the day
-      if (characterResponse.data.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
-        // Set character and stop loading - don't try to get an adventure
-        setCharacter(characterResponse.data);
-        setLoading(false);
-        return;
+        return cleanup();
       }
       
       // Only get next adventure if the character hasn't completed all adventures
-      const adventureResponse = await getAdventure(characterId);
+      if (!selectedArea) {
+        console.log('Load Adventure Data - No selected area, cannot load adventure');
+        if (!isMounted) return cleanup();
+        setLoading(false);
+        return cleanup();
+      }
+
+      const adventureResponse = await getAdventure(character, selectedArea);
+      if (!isMounted) return cleanup();
+      
       if (!adventureResponse.success || !adventureResponse.data) {
+        console.error('Load Adventure Data - Failed to load adventure data');
         setError('Failed to load adventure data');
         setLoading(false);
-        return;
+        return cleanup();
       }
       
+      console.log('Load Adventure Data - Adventure data loaded successfully');
       setAdventure(adventureResponse.data);
       setLoading(false);
     } catch (err) {
       console.error('Error loading adventure data:', err);
-      setError('An unexpected error occurred');
-      setLoading(false);
+      if (isMounted) {
+        setError('An unexpected error occurred');
+        setLoading(false);
+      }
     }
+    
+    return cleanup;
   };
   
-  // Load adventure data when component mounts
+  // Load adventure data when component mounts or when character/selectedArea changes
   useEffect(() => {
-    if (characterId && hasSelectedArea) {
-      loadAdventureData();
+    // Track if the component is mounted to prevent state updates after unmount
+    let isMounted = true;
+    
+    console.log('Adventure Content useEffect loadAdventureData triggered', character?.id, selectedArea?.id);
+    if (character && selectedArea) {
+      // Create a local copy of the loadAdventureData function that respects the isMounted flag
+      const loadAdventureWithMountCheck = async () => {
+        console.log('Begin load adventure data (with mount check)');
+        if (!isMounted) return;
+        setLoading(true);
+        setError(null);
+        
+        try {
+          // Check if character has completed all adventures for the day
+          if (character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
+            console.log('Load Adventure Data - All adventures completed for the day');
+            // Stop loading - don't try to get an adventure
+            if (!isMounted) return;
+            setLoading(false);
+            return;
+          }
+
+          // Check if character is in active combat
+          const activeCombatResponse = await getActiveCharacterCombat(character.id);
+          if (!isMounted) return;
+          
+          if (activeCombatResponse.success && activeCombatResponse.data) {
+            console.log('Load Adventure Data - Character is in active combat');
+            // Character is in active combat, show combat interface
+            setCombatId(activeCombatResponse.data.id);
+            setShowCombat(true);
+            setLoading(false);
+            return;
+          }
+          
+          // Only get next adventure if the character hasn't completed all adventures
+          if (!selectedArea) {
+            console.log('Load Adventure Data - No selected area, cannot load adventure');
+            if (!isMounted) return;
+            setLoading(false);
+            return;
+          }
+
+          const adventureResponse = await getAdventure(character, selectedArea);
+          if (!isMounted) return;
+          
+          if (!adventureResponse.success || !adventureResponse.data) {
+            console.error('Load Adventure Data - Failed to load adventure data');
+            setError('Failed to load adventure data');
+            setLoading(false);
+            return;
+          }
+          
+          console.log('Load Adventure Data - Adventure data loaded successfully');
+          setAdventure(adventureResponse.data);
+          setLoading(false);
+        } catch (err) {
+          console.error('Error loading adventure data:', err);
+          if (isMounted) {
+            setError('An unexpected error occurred');
+            setLoading(false);
+          }
+        }
+      };
+      
+      loadAdventureWithMountCheck();
     }
-  }, [characterId, hasSelectedArea]);
+    
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMounted = false;
+    };
+  }, [character?.id, selectedArea?.id]); // Only depend on character.id and selectedArea.id, not the entire objects
 
   // Handle decision selection
   const handleDecisionSelect = (decision: AdventureDecision) => {
@@ -195,31 +297,38 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   const handleCompleteAdventure = async () => {
     if (!character || !adventure || !selectedDecision) return;
     
+    // Create a local variable to track if the component is still mounted during async operations
+    let isMounted = true;
+    const cleanup = () => { isMounted = false; };
+    
     setLoading(true);
     setError(null);
     
     try {
+      // Store necessary IDs locally to avoid referencing the full objects
+      const characterData = character;
+      const adventureId = adventure.id;
+      const decisionId = selectedDecision.id;
+      const currentExperience = character.experience;
+      
       const result = await completeAdventure({
-        characterId,
-        adventureId: adventure.id,
-        decisionId: selectedDecision.id
+        character: characterData,
+        adventureId,
+        decisionId
       });
+      
+      if (!isMounted) return cleanup();
       
       if (!result.success || !result.data) {
         setError(result.error || 'Failed to complete adventure');
         setLoading(false);
-        return;
+        return cleanup();
       }
       
       // Make sure result.data exists
       if (result.data) {
         // Save old experience for level up check
-        if (character) {
-          setOldExperience(character.experience);
-        }
-        
-        // Update character first
-        setCharacter(result.data.character);
+        setOldExperience(currentExperience);
         
         // Check if outcome has combat
         if (result.data.outcome.has_combat && result.data.combat) {
@@ -231,10 +340,10 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
         setLoading(false);
         
         // Set outcome
-        setOutcome(result.data!.outcome);
+        setOutcome(result.data.outcome);
         
         // Show level up animation if experience increased enough to level up
-        if (character && result.data.character.experience > character.experience) {
+        if (result.data.character.experience > currentExperience) {
           setShowLevelUp(true);
         }
       } else {
@@ -242,13 +351,20 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
       }
     } catch (err) {
       console.error('Error completing adventure:', err);
-      setError('An unexpected error occurred');
-      setLoading(false);
+      if (isMounted) {
+        setError('An unexpected error occurred');
+        setLoading(false);
+      }
     }
+    
+    return cleanup;
   };
   
   // Handle combat end
   const handleCombatEnd = (result: { isVictory: boolean; ranAway: boolean; monsterName: string }) => {
+    // Create a local variable to track if the component is still mounted during async operations
+    let isMounted = true;
+    
     setShowCombat(false);
     
     // If the player ran away, show a different outcome
@@ -270,60 +386,99 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
       });
     }
     
+    // Store character ID locally to avoid referencing the full character object
+    const characterId = character.id;
+    
     // Refresh character data after combat
     getCharacterById(characterId).then(response => {
+      // Check if component is still mounted before updating state
+      if (!isMounted) return;
+      
       if (response.success && response.data) {
         setCharacter(response.data);
       }
+    }).catch(err => {
+      console.error('Error refreshing character data after combat:', err);
     });
+    
+    // Return a cleanup function that sets isMounted to false
+    return () => {
+      isMounted = false;
+    };
   };
 
   // Handle continue to next adventure
   const handleContinue = async () => {
+    // Create a local variable to track if the component is still mounted during async operations
+    let isMounted = true;
+    const cleanup = () => { isMounted = false; };
+    
+    // Reset state for next adventure
     setLoading(true);
     setSelectedDecision(null);
     setOutcome(null);
     
     try {
+      // Store character ID locally to avoid referencing the full character object
+      const characterId = character.id;
+      
       // Get character data
       const characterResponse = await getCharacterById(characterId);
+      if (!isMounted) return cleanup();
+      
       if (!characterResponse.success || !characterResponse.data) {
         setError('Failed to load character data');
         setLoading(false);
-        return;
+        return cleanup();
       }
       
       // Update character state
-      setCharacter(characterResponse.data);
+      const updatedCharacter = characterResponse.data;
+      setCharacter(updatedCharacter);
       
       // Check if character has completed all adventures for the day
-      if (characterResponse.data.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
+      if (updatedCharacter.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
         // Just stop loading - don't try to get an adventure
         setLoading(false);
-        return;
+        return cleanup();
+      }
+
+      if (!selectedArea) {
+        console.log('No selected area, cannot load adventure');
+        setLoading(false);
+        return cleanup();
       }
       
       // Only get next adventure if the character hasn't completed all adventures
-      const adventureResponse = await getAdventure(characterId);
+      const adventureResponse = await getAdventure(updatedCharacter, selectedArea);
+      if (!isMounted) return cleanup();
+      
       if (!adventureResponse.success || !adventureResponse.data) {
         setError('Failed to load adventure data');
         setLoading(false);
-        return;
+        return cleanup();
       }
       
       setAdventure(adventureResponse.data);
       setLoading(false);
     } catch (err) {
       console.error('Error loading next adventure:', err);
-      setError('An unexpected error occurred');
-      setLoading(false);
+      if (isMounted) {
+        setError('An unexpected error occurred');
+        setLoading(false);
+      }
     }
+    
+    return cleanup;
   };
 
+  console.log('Adventure Content Render start');
+  console.log('loading:', loading);
   if (loading) {
     return <LoadingSpinner size="lg" />;
   }
 
+  console.log('error?:', error);
   if (error) {
     return (
       <div className="bg-red-900 border border-red-500 p-4 rounded-md text-center animate-fadeIn">
@@ -393,11 +548,8 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
   }
 
   // Show area selection if no area has been selected
-  if (!hasSelectedArea && character) {
-    if (loadingAreas) {
-      return <LoadingSpinner size="lg" />;
-    }
-    
+  if (!selectedArea && character) {
+
     return (
       <AreaSelection 
         areas={areas}
@@ -413,13 +565,37 @@ export default function AdventureContent({ characterId }: AdventureContentProps)
         <p className="text-xl mb-4">No adventures available</p>
         <button 
           onClick={() => {
+            if (!character || !selectedArea) return;
+            
+            // Create a local variable to track if the component is still mounted during async operations
+            let isMounted = true;
+            
             setLoading(true);
-            getAdventure(characterId).then(response => {
+            
+            // Store necessary data locally to avoid referencing the full objects
+            const characterData = character;
+            const areaData = selectedArea;
+            
+            getAdventure(characterData, areaData).then(response => {
+              // Check if component is still mounted before updating state
+              if (!isMounted) return;
+              
               if (response.success && response.data) {
                 setAdventure(response.data);
               }
               setLoading(false);
+            }).catch(err => {
+              console.error('Error loading adventure data:', err);
+              if (isMounted) {
+                setError('An unexpected error occurred');
+                setLoading(false);
+              }
             });
+            
+            // Return a cleanup function that sets isMounted to false
+            return () => {
+              isMounted = false;
+            };
           }} 
           className="pixel-button"
         >

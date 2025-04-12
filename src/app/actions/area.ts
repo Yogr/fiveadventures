@@ -3,10 +3,8 @@
 import { unstable_cache } from 'next/cache';
 import type { Area } from '@/lib/types';
 import areasData from '../../../data/areas.json';
-
-// Module-level variable to store selected areas
-// This will be reset when the server restarts
-const selectedAreasMap = new Map<string, number>();
+import { createClient } from '@/lib/supabase/server';
+import { getCurrentGameDay } from '@/lib/utils';
 
 // Get all areas
 export async function getAreas() {
@@ -35,101 +33,62 @@ export const getCachedAreas = unstable_cache(
   { revalidate: 86400 } // Cache for 24 hours
 );
 
-// Get selected area for a character
-export async function getSelectedArea(characterId: string) {
-  try {
-    // For now, since we're still developing and the database schema hasn't been updated yet,
-    // we'll simulate the area selection by storing it in memory
-    // In a real implementation, this would be stored in the database
-    
-    // Get all areas
-    const areas = await getCachedAreas();
-    if (!areas.success || !areas.data) {
-      return {
-        success: false,
-        error: 'Failed to get areas'
-      };
-    }
-    
-    // Check if the character has selected an area
-    const selectedAreaId = selectedAreasMap.get(characterId);
-    
-    if (selectedAreaId) {
-      // Find the area in the areas list
-      const selectedArea = areas.data.find(area => area.id === selectedAreaId);
-      
-      if (selectedArea) {
-        return {
-          success: true,
-          data: {
-            areaId: selectedAreaId,
-            area: selectedArea,
-            hasSelected: true
-          }
-        };
-      }
-    }
-    
-    // If no area is selected, return hasSelected: false
+export async function getSelectedArea(characterId: string, day: number) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('character_selected_area')
+    .select('area_id')
+    .eq('character_id', characterId)
+    .eq('day', day)
+    .single();
+
+  // If the error is PGRST116 (no rows found), it means the character hasn't selected an area yet
+  // This is not a real error, just a normal case we need to handle
+  if (error && error.code === 'PGRST116') {
+    console.log('No selected area yet for character:', characterId, 'day:', day);
     return {
-      success: true,
-      data: {
-        areaId: null,
-        area: null,
-        hasSelected: false
-      }
+      success: false,
+      data: null
     };
-  } catch (error) {
+  }
+
+  if (error || !data) {
     console.error('Error getting selected area:', error);
     return {
       success: false,
       error: 'Failed to get selected area'
     };
   }
+
+  return {
+    success: true,
+    data: data.area_id
+  };
 }
 
-// Select an area for a character
 export async function selectArea(characterId: string, areaId: number) {
-  try {
-    // Get the selected area
-    const areas = await getCachedAreas();
-    if (!areas.success || !areas.data) {
-      return {
-        success: false,
-        error: 'Failed to get areas'
-      };
-    }
-    
-    const selectedArea = areas.data.find(area => area.id === areaId);
-    if (!selectedArea) {
-      return {
-        success: false,
-        error: 'Area not found'
-      };
-    }
-    
-    // In a production implementation, we would store the selected area in the database
-    // For now, we'll just return the selected area
-    
-    // Store the selected area in memory for this session
-    // This is a temporary solution until we implement the database table
-    // We'll use a module-level variable to store the selected areas
-    // This will be reset when the server restarts
-    selectedAreasMap.set(characterId, areaId);
-    
-    return {
-      success: true,
-      data: {
-        areaId,
-        area: selectedArea,
-        hasSelected: true
-      }
-    };
-  } catch (error) {
+  const supabase = await createClient();
+
+  const currentDay = getCurrentGameDay();
+
+  const { error } = await supabase
+    .from('character_selected_area')
+    .insert({
+      character_id: characterId,
+      area_id: areaId,
+      day: currentDay
+    })
+
+  if (error) {
     console.error('Error selecting area:', error);
     return {
       success: false,
       error: 'Failed to select area'
-    };
+    }
   }
+
+  return {
+    success: true
+  }
+
 }

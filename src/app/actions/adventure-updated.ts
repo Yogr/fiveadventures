@@ -5,7 +5,8 @@ import {
   calculateSuccessRate,
   getLevelFromExperience,
   generateId,
-  getPrimaryStat
+  getPrimaryStat,
+  getCurrentGameDay
 } from '@/lib/utils';
 import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 import type { 
@@ -16,28 +17,19 @@ import type {
   Combat,
   Monster,
   CharacterAdventure,
-  Item
+  Item,
+  Area
 } from '@/lib/types';
 import { getCharacterById } from './character';
 import { createClient } from '@/lib/supabase/server';
 
 // Get a random adventure for a character
 export async function getAdventure(
-  characterId: string
+  character: Character,
+  area: Area,
 ): Promise<ApiResponse<Adventure>> {
   try {
     const supabase = await createClient();
-    
-    // Get character data to check if they need a non-violent adventure
-    const characterResponse = await getCharacterById(characterId);
-    if (!characterResponse.success || !characterResponse.data) {
-      return {
-        success: false,
-        error: 'Character not found'
-      };
-    }
-    
-    const character = characterResponse.data;
     
     // Check if character has completed all adventures for the day
     if (character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
@@ -47,62 +39,35 @@ export async function getAdventure(
       };
     }
     
-    // For now, since we're still developing and the database schema hasn't been updated yet,
-    // we'll use a simpler approach for area selection
-    // In a real implementation, this would be stored in the database
-    
-    // Import the getSelectedArea function from area.ts
-    const { getSelectedArea } = await import('./area');
-    
-    // Get the selected area for the character
-    const selectedAreaResponse = await getSelectedArea(characterId);
-    
-    // If no area is selected, return an error
-    if (!selectedAreaResponse.success || !selectedAreaResponse.data?.hasSelected) {
-      return {
-        success: false,
-        error: 'No area selected for today'
-      };
-    }
-    
-    // Use a default area ID (1) if areaId is null
-    const areaId = selectedAreaResponse.data.areaId || 1;
-    
     // Determine if we need a non-violent adventure (if character has 0 HP)
     const needsNonViolent = character.current_hitpoints <= 0;
     
     // Determine if this should be an elite encounter (5th adventure or greater)
     const isEliteEncounter = character.daily_adventure_count >= 4;
+
+    const currentDay = await getCurrentGameDay();
     
     // Generate a seed based on character ID, current day, and adventure number
     const seed = generateAdventureSeed(
-      characterId, 
-      character.last_played_day, 
+      character.id, 
+      currentDay, 
       character.daily_adventure_count + 1
     );
     
-    // Get all available adventures
-    let query = supabase
-      .from('adventures')
-      .select(`
+    // Get valid adventures
+    const { data: adventures, error } = await supabase
+    .from('adventures')
+    .select(`
+      *,
+      decisions:adventure_decisions(
         *,
-        decisions:adventure_decisions(
-          *,
-          outcomes:adventure_outcomes(*)
-        )
-      `);
+        outcomes:adventure_outcomes(*)
+      )
+    `)
+    .eq('area_id', area.id)
+    .eq('is_violent', !needsNonViolent)
     
-    // Filter for non-violent adventures if needed
-    if (needsNonViolent) {
-      query = query.eq('is_violent', false);
-    }
-    
-    // Filter by area
-    query = query.eq('area_id', areaId);
-    
-    const { data, error } = await query;
-    
-    if (error || !data || data.length === 0) {
+    if (error || !adventures || adventures.length === 0) {
       console.error('Error getting adventures:', error);
       return {
         success: false,
@@ -112,8 +77,8 @@ export async function getAdventure(
     
     // Use the seed to select a random adventure
     // For simplicity, we'll use the seed to generate an index
-    const adventureIndex = Math.abs(seed) % data.length;
-    const selectedAdventure = data[adventureIndex];
+    const adventureIndex = Math.abs(seed) % adventures.length;
+    const selectedAdventure = adventures[adventureIndex];
     
     return {
       success: true,
@@ -130,11 +95,11 @@ export async function getAdventure(
 
 // Complete an adventure
 export async function completeAdventure({
-  characterId,
+  character,
   adventureId,
   decisionId
 }: {
-  characterId: string;
+  character: Character;
   adventureId: number;
   decisionId: number;
 }): Promise<ApiResponse<{
@@ -144,17 +109,6 @@ export async function completeAdventure({
 }>> {
   try {
     const supabase = await createClient();
-
-    // Get character data
-    const characterResponse = await getCharacterById(characterId);
-    if (!characterResponse.success || !characterResponse.data) {
-      return {
-        success: false,
-        error: 'Character not found'
-      };
-    }
-    
-    const character = characterResponse.data;
     
     // Check if character has completed all adventures for the day
     if (character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
@@ -323,7 +277,7 @@ export async function completeAdventure({
         .from('combat')
         .insert({
           id: generateId(), // Generate UUID for the record
-          character_id: characterId,
+          character_id: character.id,
           adventure_id: adventureId,
           decision_id: decisionId,
           outcome_id: outcome.id,
@@ -404,7 +358,7 @@ export async function completeAdventure({
         daily_adventure_count: newAdventureCount,
         updated_at: new Date().toISOString()
       })
-      .eq('id', characterId);
+      .eq('id', character.id);
     
     if (updateError) {
       console.error('Error updating character:', updateError);
@@ -419,7 +373,7 @@ export async function completeAdventure({
       .from('character_adventures')
       .insert({
         id: generateId(), // Generate UUID for the record
-        character_id: characterId,
+        character_id: character.id,
         adventure_id: adventureId,
         decision_id: decisionId,
         outcome_id: outcome.id,
@@ -442,7 +396,7 @@ export async function completeAdventure({
         .from('character_inventory')
         .insert({
           id: generateId(), // Generate UUID for the record
-          character_id: characterId,
+          character_id: character.id,
           item_id: itemRewardId,
           quantity: 1,
           acquired_at: new Date().toISOString()

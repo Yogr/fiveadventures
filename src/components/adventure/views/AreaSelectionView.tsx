@@ -1,31 +1,43 @@
 'use client';
 
-import { useState } from 'react';
+import { memo, useEffect } from 'react';
 import Image from 'next/image';
 import type { Area, Character } from '@/lib/types';
 import { getLevelFromExperience } from '@/lib/utils';
+import { useAdventure } from '../AdventureContext';
 
-interface AreaSelectionProps {
+interface AreaSelectionViewProps {
   areas: Area[];
   character: Character;
-  onSelectArea: (area: Area) => void;
 }
 
-export default function AreaSelection({ areas, character, onSelectArea }: AreaSelectionProps) {
-  const [selectedArea, setSelectedArea] = useState<Area | null>(null);
+const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: AreaSelectionViewProps) {
+  const { selectArea, state } = useAdventure();
   const characterLevel = getLevelFromExperience(character.experience);
+  
+  // Log for debugging
+  useEffect(() => {
+    console.log('AreaSelectionView rendered with areas:', areas);
+  }, [areas]);
+  
+  // Check if areas is empty
+  if (!areas || areas.length === 0) {
+    return (
+      <div className="bg-gray-900 bg-opacity-80 p-6 animate-fadeIn text-center">
+        <h2 className="text-3xl mb-4 text-yellow-400">Loading Areas...</h2>
+        <p className="text-xl mb-6">
+          Please wait while we load the available adventure areas.
+        </p>
+      </div>
+    );
+  }
   
   // Sort areas by level requirement
   const sortedAreas = [...areas].sort((a, b) => a.level_requirement - b.level_requirement);
   
-  const handleAreaSelect = (area: Area) => {
-    setSelectedArea(area);
-  };
-  
-  const handleConfirmSelection = () => {
-    if (selectedArea !== null) {
-      onSelectArea(selectedArea);
-    }
+  const handleAreaSelect = async (area: Area) => {
+    console.log('Area selected:', area.name);
+    await selectArea(area);
   };
   
   return (
@@ -38,7 +50,6 @@ export default function AreaSelection({ areas, character, onSelectArea }: AreaSe
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {sortedAreas.map((area) => {
           const isLocked = characterLevel < area.level_requirement;
-          const isSelected = selectedArea === area;
           
           return (
             <div 
@@ -46,8 +57,7 @@ export default function AreaSelection({ areas, character, onSelectArea }: AreaSe
               className={`
                 relative border-2 rounded-md p-4 cursor-pointer transition-all
                 ${isLocked ? 'border-gray-600 bg-gray-800 opacity-60 cursor-not-allowed' : 
-                  isSelected ? 'border-purple-500 bg-purple-900 bg-opacity-30' : 
-                  'border-gray-600 bg-gray-800 hover:border-gray-400'}
+                  'border-gray-600 bg-gray-800 hover:border-gray-400 hover:bg-gray-700'}
               `}
               onClick={() => !isLocked && handleAreaSelect(area)}
             >
@@ -81,29 +91,12 @@ export default function AreaSelection({ areas, character, onSelectArea }: AreaSe
               <h3 className="text-xl font-medium mb-1">{area.name}</h3>
               <p className="text-sm text-gray-300 mb-2">Required Level: {area.level_requirement}</p>
               <p className="text-sm">{area.description}</p>
-              
-              {/* Selected indicator */}
-              {isSelected && (
-                <div className="absolute top-2 right-2 bg-purple-500 rounded-full p-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              )}
             </div>
           );
         })}
       </div>
-      
-      <div className="flex justify-center">
-        <button 
-          onClick={handleConfirmSelection}
-          disabled={selectedArea === null}
-          className="pixel-button text-xl disabled:opacity-50"
-        >
-          Begin Adventures
-        </button>
-      </div>
     </div>
   );
-}
+});
+
+export default AreaSelectionView;

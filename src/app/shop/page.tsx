@@ -10,17 +10,10 @@ import { createClient } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function ShopPage({
-  searchParams
-}: {
-  searchParams: Promise<{ characterId?: string }>
-}) {
-  // Get character ID from URL search params (if available)
-  const _searchParams = await searchParams;
-  const characterId = _searchParams.characterId;
+export default async function ShopPage() {
   
   // Check if user has a character
-  const characterResponse = await getCharacterForUser(characterId);
+  const characterResponse = await getCharacterForUser();
   
   if (!characterResponse.success || !characterResponse.data) {
     // Redirect to character creation if no character found

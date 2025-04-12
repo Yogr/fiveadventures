@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Combat, Monster, Character, Skill } from '@/lib/types';
+import type { Combat, Character, Skill } from '@/lib/types';
 import { getCombat, startCombatTurn } from '@/app/actions/adventure-updated';
 import { getCharacterSkills } from '@/app/actions/combat';
 import { getCharacterById } from '@/app/actions/character';
