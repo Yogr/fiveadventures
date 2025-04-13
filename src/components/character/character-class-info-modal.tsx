@@ -23,18 +23,18 @@ export default function CharacterClassInfoModal({
   const stats = CLASS_BASE_STATS[characterClass as keyof typeof CLASS_BASE_STATS];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeIn">
-      <div className="bg-gray-800 p-3 sm:p-4 md:p-6 rounded-lg max-w-md w-full mx-2 sm:mx-4">
-        <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 md:mb-4">{characterClass}</h3>
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fadeIn p-3">
+      <div className="bg-amber-950 p-3 md:p-4 rounded-lg max-w-xs md:max-w-sm w-full">
+        <h3 className="text-base md:text-lg font-bold mb-2">{characterClass}</h3>
         
-        <p className="text-gray-300 text-sm sm:text-base mb-3 sm:mb-4">
+        <p className="text-amber-200 text-xs md:text-sm mb-2">
           {classDescriptions[characterClass as keyof typeof classDescriptions]}
         </p>
         
         {/* Stats Section */}
-        <div className="bg-gray-700 p-3 rounded-md mb-4">
-          <h4 className="text-base sm:text-lg font-semibold mb-2">Base Stats</h4>
-          <div className="grid grid-cols-2 gap-2">
+        <div className="bg-amber-900 p-2 rounded-md mb-3 border border-amber-800">
+          <h4 className="text-sm md:text-base font-semibold mb-1">Base Stats</h4>
+          <div className="grid grid-cols-2 gap-1 text-xs md:text-sm">
             <div className="flex justify-between">
               <span className="font-medium">Strength:</span>
               <span className="text-yellow-300">{stats.strength}</span>
@@ -65,7 +65,7 @@ export default function CharacterClassInfoModal({
         <div className="flex justify-end">
           <button 
             onClick={onClose}
-            className="pixel-button text-sm sm:text-base bg-blue-600 hover:bg-blue-500 active:bg-blue-700"
+            className="pixel-button text-xs md:text-sm bg-amber-800 hover:bg-amber-700 active:bg-amber-900 px-3 py-1"
           >
             Close
           </button>

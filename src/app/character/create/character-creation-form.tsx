@@ -71,27 +71,27 @@ export default function CharacterCreationForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
       {/* Character Name */}
-      <div className="space-y-1 sm:space-y-2">
-        <label htmlFor="name" className="block text-lg sm:text-xl md:text-2xl">
+      <div className="space-y-1">
+        <label htmlFor="name" className="block text-base md:text-lg text-amber-200">
           Character Name
         </label>
-        <div className="flex gap-1 sm:gap-2">
+        <div className="flex gap-1">
           <input
             type="text"
             id="name"
             ref={nameInputRef}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-2 sm:px-3 md:px-4 py-1 sm:py-2 bg-gray-800 border-2 border-gray-600 rounded-md text-base sm:text-lg md:text-xl"
+            className="w-full px-2 py-1 bg-amber-900 border border-amber-700 rounded-md text-sm md:text-base"
             placeholder="Enter name"
             maxLength={20}
           />
           <button
             type="button"
             onClick={handleRandomName}
-            className="pixel-button bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-sm sm:text-base"
+            className="pixel-button bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-xs md:text-sm px-2 py-1"
           >
             Random
           </button>
@@ -99,10 +99,10 @@ export default function CharacterCreationForm() {
       </div>
 
       {/* Character Class Selection */}
-      <div className="space-y-2 sm:space-y-3 md:space-y-4">
-        <h2 className="text-lg sm:text-xl md:text-2xl">Choose Your Class</h2>
+      <div className="space-y-2">
+        <h2 className="text-base md:text-lg text-amber-200">Choose Your Class</h2>
         
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
           {CHARACTER_CLASSES.map((characterClass) => (
             <CharacterClassCard
               key={characterClass}
@@ -125,17 +125,17 @@ export default function CharacterCreationForm() {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-900 border border-red-500 p-3 rounded-md text-center">
+        <div className="bg-red-900 border border-red-500 p-2 rounded-md text-center text-sm">
           {error}
         </div>
       )}
 
       {/* Submit Button */}
-      <div className="flex justify-center">
+      <div className="flex justify-center mt-4">
         <button
           type="submit"
           disabled={isCreating}
-          className="pixel-button text-base sm:text-xl md:text-2xl py-2 sm:py-3 px-6 sm:px-8 disabled:opacity-50"
+          className="pixel-button text-sm md:text-base py-1 md:py-2 px-4 md:px-6 bg-amber-800 hover:bg-amber-700 active:bg-amber-900 disabled:opacity-50"
         >
           {isCreating ? 'Creating...' : 'Begin Adventure'}
         </button>

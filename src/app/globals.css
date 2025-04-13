@@ -10,12 +10,9 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background-image: url('/image/ui/brickbackground.png');
+  background-repeat: repeat;
+  background-size: 320px;
   font-family: 'VT323', monospace;
 }
 
@@ -32,9 +29,9 @@ body {
 /* Pixel Border */
 .pixel-border {
   position: relative;
-  border: 4px solid #fff;
+  border: 4px solid #92400e;
   border-radius: 4px;
-  box-shadow: 0 0 0 4px #000;
+  box-shadow: 0 0 0 4px #451a03;
 }
 
 /* Pixel Button */
@@ -43,16 +40,16 @@ body {
   padding: 0.5rem 1rem;
   font-weight: bold;
   text-transform: uppercase;
-  border: 2px solid #fff;
+  border: 2px solid #92400e;
   border-radius: 4px;
-  background-color: #4a5568;
+  background-color: #78350f;
   color: white;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .pixel-button:hover {
-  background-color: #2d3748;
+  background-color: #92400e;
   transform: translateY(-2px);
 }
 
