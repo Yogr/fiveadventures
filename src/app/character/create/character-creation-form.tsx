@@ -37,6 +37,7 @@ export default function CharacterCreationForm() {
       return;
     }
     
+    // Set creating state to true and clear any previous errors
     setIsCreating(true);
     setError(null);
     
@@ -50,10 +51,17 @@ export default function CharacterCreationForm() {
         // Character created successfully, now set the cookie and redirect
         console.log('Character created successfully:', result.data.characterId);
 
-        // Add character ID to cookies using server action
-        await setCharacterIdCookie(result.data.characterId);
-
-        router.push(ROUTES.ADVENTURE);
+        try {
+          // Add character ID to cookies using server action
+          await setCharacterIdCookie(result.data.characterId);
+          
+          // Keep isCreating true during redirect
+          router.push(ROUTES.ADVENTURE);
+        } catch (cookieErr) {
+          console.error('Error setting character cookie:', cookieErr);
+          setError('Failed to save character data');
+          setIsCreating(false);
+        }
       } else {
         setError(result.error || 'Failed to create character');
         setIsCreating(false);
@@ -135,7 +143,11 @@ export default function CharacterCreationForm() {
         <button
           type="submit"
           disabled={isCreating}
-          className="pixel-button text-sm md:text-base py-1 md:py-2 px-4 md:px-6 bg-amber-800 hover:bg-amber-700 active:bg-amber-900 disabled:opacity-50"
+          className={`pixel-button text-sm md:text-base py-1 md:py-2 px-4 md:px-6 
+            ${isCreating 
+              ? 'bg-gray-600 cursor-not-allowed opacity-70' 
+              : 'bg-amber-800 hover:bg-amber-700 active:bg-amber-900'
+            } transition-all duration-200`}
         >
           {isCreating ? 'Creating...' : 'Begin Adventure'}
         </button>
