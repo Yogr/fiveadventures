@@ -12,7 +12,8 @@ interface AreaSelectionViewProps {
 }
 
 const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: AreaSelectionViewProps) {
-  const { selectArea } = useAdventure();
+  const { selectArea, state } = useAdventure();
+  const { loading } = state;
   const characterLevel = getLevelFromExperience(character.experience);
   const [preSelectedArea, setPreSelectedArea] = useState<Area | null>(null);
   
@@ -120,14 +121,14 @@ const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: 
       <div className="flex justify-center">
         <button 
           onClick={handleConfirmSelection}
-          disabled={!preSelectedArea}
+          disabled={!preSelectedArea || loading}
           className={`pixel-button text-sm md:text-base py-1 md:py-2 px-3 md:px-4 
-            ${!preSelectedArea 
+            ${!preSelectedArea || loading
               ? 'bg-gray-600 cursor-not-allowed opacity-70' 
               : 'bg-amber-800 hover:bg-amber-700 active:bg-amber-900'
             } transition-all duration-200`}
         >
-          Begin Adventures
+          {loading ? 'Processing...' : 'Begin Adventures'}
         </button>
       </div>
     </div>

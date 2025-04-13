@@ -11,7 +11,7 @@ interface AdventureViewProps {
 
 const AdventureView = memo(function AdventureView({ adventure, character }: AdventureViewProps) {
   const { state, selectDecision, completeAdventure } = useAdventure();
-  const { selectedDecision } = state;
+  const { selectedDecision, loading } = state;
   
   const handleDecisionSelect = (decision: AdventureDecision) => {
     selectDecision(decision);
@@ -57,14 +57,14 @@ const AdventureView = memo(function AdventureView({ adventure, character }: Adve
       <div className="flex justify-center">
         <button 
           onClick={handleCompleteAdventure}
-          disabled={!selectedDecision}
+          disabled={!selectedDecision || loading}
           className={`pixel-button text-sm md:text-base py-1 md:py-2 px-3 md:px-4 
-            ${!selectedDecision 
+            ${!selectedDecision || loading
               ? 'bg-gray-600 cursor-not-allowed opacity-70' 
               : 'bg-amber-800 hover:bg-amber-700 active:bg-amber-900'
             } transition-all duration-200`}
         >
-          Proceed with Decision
+          {loading ? 'Processing...' : 'Proceed with Decision'}
         </button>
       </div>
     </div>

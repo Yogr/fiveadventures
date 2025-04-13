@@ -6,6 +6,7 @@ import type { Character } from '@/lib/types';
 import { getRequiredExperience, getLevelFromExperience } from '@/lib/utils';
 import { formatNumber } from '@/lib/utils';
 import AdventureTracker from '@/components/adventure/adventure-tracker';
+import CharacterDetailsModal from './character-details-modal';
 import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 
 interface CharacterStatsProps {
@@ -13,7 +14,7 @@ interface CharacterStatsProps {
 }
 
 export default function CharacterStats({ character }: CharacterStatsProps) {
-  const [showDetailedStats, setShowDetailedStats] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   
   const level = getLevelFromExperience(character.experience);
   const nextLevelExp = getRequiredExperience(level + 1);
@@ -114,7 +115,7 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
           
           {/* Inventory button */}
           <button 
-            onClick={() => setShowDetailedStats(!showDetailedStats)}
+            onClick={() => setShowDetailsModal(true)}
             className="h-5 w-5 bg-amber-800 hover:bg-amber-700 active:bg-amber-900 rounded-md flex items-center justify-center self-center"
             aria-label="Inventory"
           >
@@ -137,70 +138,12 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
         />
       </div>
       
-      {/* Detailed Stats Popup */}
-      {showDetailedStats && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-amber-950 p-3 rounded-lg max-w-md w-full animate-fadeIn border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-bold text-amber-200">Detailed Stats</h3>
-              <button 
-                onClick={() => setShowDetailedStats(false)}
-                className="text-amber-400 hover:text-amber-200"
-              >
-                ✕
-              </button>
-            </div>
-            
-            {/* Character Stats */}
-            <div className="mb-3">
-              <h4 className="text-base mb-1 text-amber-300">Attributes</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="bg-amber-900 p-2 rounded-md">
-                  <div className="flex justify-between">
-                    <span className="text-amber-200">STR</span>
-                    <span className="text-red-400">{character.strength}</span>
-                  </div>
-                </div>
-                <div className="bg-amber-900 p-2 rounded-md">
-                  <div className="flex justify-between">
-                    <span className="text-amber-200">INT</span>
-                    <span className="text-blue-400">{character.intelligence}</span>
-                  </div>
-                </div>
-                <div className="bg-amber-900 p-2 rounded-md">
-                  <div className="flex justify-between">
-                    <span className="text-amber-200">AGI</span>
-                    <span className="text-green-400">{character.agility}</span>
-                  </div>
-                </div>
-                <div className="bg-amber-900 p-2 rounded-md">
-                  <div className="flex justify-between">
-                    <span className="text-amber-200">LCK</span>
-                    <span className="text-yellow-400">{character.luck}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Inventory Placeholder */}
-            <div>
-              <h4 className="text-base mb-1 text-amber-300">Inventory</h4>
-              <div className="bg-amber-900 p-2 rounded-md text-center">
-                <p className="text-amber-200 text-sm">Inventory items will be displayed here</p>
-              </div>
-            </div>
-            
-            <div className="mt-3 text-center">
-              <button 
-                onClick={() => setShowDetailedStats(false)}
-                className="pixel-button bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-sm px-3 py-1"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Character Details Modal */}
+      <CharacterDetailsModal
+        character={character}
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+      />
     </div>
   );
 }
