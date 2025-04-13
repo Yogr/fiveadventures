@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import type { Character } from '@/lib/types';
 import { getRequiredExperience, getLevelFromExperience } from '@/lib/utils';
 import { formatNumber } from '@/lib/utils';
+import AdventureTracker from '@/components/adventure/adventure-tracker';
+import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 
 interface CharacterStatsProps {
   character: Character;
@@ -23,129 +26,156 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
   const energyPercentage = (character.current_energy / character.max_energy) * 100;
   
   return (
-    <div className="bg-gray-800 p-2 sm:p-3 md:p-4 rounded-md relative">
-      <div className="flex justify-between items-center mb-2 sm:mb-3">
-        <h3 className="text-lg sm:text-xl md:text-2xl font-bold">{character.name}</h3>
-        <div className="text-sm sm:text-base md:text-lg">
-          <span className="text-purple-400">Lv. {level}</span> {character.class}
-        </div>
-      </div>
-      
-      <div className="flex flex-row gap-2 sm:gap-3 mb-2 sm:mb-3">
-        {/* Character avatar placeholder */}
-        <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-xl sm:text-2xl md:text-3xl">{character.name.charAt(0)}</span>
+    <div className="bg-amber-950 bg-opacity-90 p-2 md:p-3 rounded-lg relative border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
+      <div className="flex items-start">
+        {/* Left side with avatar and name */}
+        <div className="flex flex-col items-center mr-2">
+          {/* Character name */}
+          <h3 className="text-base md:text-lg font-bold text-amber-200 mb-1 self-start">{character.name}</h3>
+          
+          {/* Character avatar */}
+          <div className="w-12 h-12 md:w-14 md:h-14 rounded-full flex-shrink-0 border border-amber-700 bg-stone-800 overflow-hidden relative">
+            <Image
+              src={`/image/characters/${character.class.toLowerCase()}.png`}
+              alt={`${character.class} character portrait`}
+              fill
+              sizes="(max-width: 768px) 48px, 56px"
+              className="object-cover"
+              priority
+            />
+          </div>
         </div>
         
-        <div className="flex-grow flex flex-col justify-center">
-          {/* HP Bar */}
-          <div className="mb-2">
-            <div className="flex justify-between text-xs sm:text-sm mb-1">
-              <span>HP</span>
-              <span>{character.current_hitpoints} / {character.max_hitpoints}</span>
-            </div>
-            <div className="stat-bar hp-bar">
-              <div 
-                className="stat-bar-fill" 
-                style={{ width: `${Math.max(0, Math.min(100, hpPercentage))}%` }}
-              ></div>
-              <div className="stat-bar-text">
+        {/* Middle section with bars */}
+        <div className="flex-grow flex flex-col justify-center max-w-[65%]">
+          {/* Level and class info above bars */}
+          <div className="text-xs md:text-sm mb-0.5">
+            <span className="text-purple-300">Lv. {level}</span> <span className="text-amber-300">{character.class}</span>
+          </div>
+          
+          {/* HP Bar - combined label and bar */}
+          <div className="mb-1">
+            <div className="flex items-center h-3.5 md:h-4 relative">
+              <span className="absolute left-1 text-xs z-10 text-white font-medium">HP</span>
+              <span className="absolute right-1 text-xs md:text-sm z-10 text-white font-medium">
                 {formatNumber(character.current_hitpoints)}/{formatNumber(character.max_hitpoints)}
+              </span>
+              <div className="w-full h-full bg-amber-900 rounded-md overflow-hidden">
+                <div 
+                  className="h-full bg-red-600" 
+                  style={{ width: `${Math.max(0, Math.min(100, hpPercentage))}%` }}
+                ></div>
               </div>
             </div>
           </div>
           
-          {/* Energy Bar */}
-          <div className="mb-0">
-            <div className="flex justify-between text-xs sm:text-sm mb-1">
-              <span>Energy</span>
-              <span>{character.current_energy} / {character.max_energy}</span>
-            </div>
-            <div className="stat-bar energy-bar">
-              <div 
-                className="stat-bar-fill" 
-                style={{ width: `${Math.max(0, Math.min(100, energyPercentage))}%` }}
-              ></div>
-              <div className="stat-bar-text">
+          {/* Energy Bar - combined label and bar */}
+          <div className="mb-1">
+            <div className="flex items-center h-3.5 md:h-4 relative">
+              <span className="absolute left-1 text-xs z-10 text-white font-medium">MP</span>
+              <span className="absolute right-1 text-xs md:text-sm z-10 text-white font-medium">
                 {formatNumber(character.current_energy)}/{formatNumber(character.max_energy)}
+              </span>
+              <div className="w-full h-full bg-amber-900 rounded-md overflow-hidden">
+                <div 
+                  className="h-full bg-blue-600" 
+                  style={{ width: `${Math.max(0, Math.min(100, energyPercentage))}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+          
+          {/* XP Bar - combined label and bar */}
+          <div>
+            <div className="flex items-center h-3.5 md:h-4 relative">
+              <span className="absolute left-1 text-xs z-10 text-white font-medium">XP</span>
+              <span className="absolute right-1 text-xs md:text-sm z-10 text-white font-medium">
+                {Math.floor(expProgress)}%
+              </span>
+              <div className="w-full h-full bg-amber-900 rounded-md overflow-hidden">
+                <div 
+                  className="h-full bg-green-600" 
+                  style={{ width: `${Math.max(0, Math.min(100, expProgress))}%` }}
+                ></div>
               </div>
             </div>
           </div>
         </div>
+        
+        {/* Right side with gold and inventory */}
+        <div className="flex flex-col justify-center ml-1">
+          <div className="bg-amber-900 px-1.5 py-1 rounded-md flex items-center mb-1">
+            {/* Gold coin placeholder - will be replaced with actual image */}
+            <div className="w-4 h-4 bg-yellow-500 rounded-full mr-1 flex items-center justify-center text-xs">
+              $
+            </div>
+            <span className="text-yellow-400 text-xs">{formatNumber(character.gold)}</span>
+          </div>
+          
+          {/* Inventory button */}
+          <button 
+            onClick={() => setShowDetailedStats(!showDetailedStats)}
+            className="h-5 w-5 bg-amber-800 hover:bg-amber-700 active:bg-amber-900 rounded-md flex items-center justify-center self-center"
+            aria-label="Inventory"
+          >
+            {/* Inventory icon placeholder - will be replaced with actual image */}
+            <div className="w-4 h-4 flex items-center justify-center text-amber-200">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                <path d="M3.375 3C2.339 3 1.5 3.84 1.5 4.875v.75c0 1.036.84 1.875 1.875 1.875h17.25c1.035 0 1.875-.84 1.875-1.875v-.75C22.5 3.839 21.66 3 20.625 3H3.375z" />
+                <path fillRule="evenodd" d="M3.087 9l.54 9.176A3 3 0 006.62 21h10.757a3 3 0 002.995-2.824L20.913 9H3.087zm6.163 3.75A.75.75 0 0110 12h4a.75.75 0 010 1.5h-4a.75.75 0 01-.75-.75z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </button>
+        </div>
       </div>
       
-      {/* XP Bar */}
-      <div className="mb-4">
-        <div className="flex justify-between text-sm mb-1">
-          <span>XP</span>
-          <span>{formatNumber(character.experience - currentLevelExp)} / {formatNumber(nextLevelExp - currentLevelExp)}</span>
-        </div>
-        <div className="stat-bar xp-bar">
-          <div 
-            className="stat-bar-fill" 
-            style={{ width: `${Math.max(0, Math.min(100, expProgress))}%` }}
-          ></div>
-          <div className="stat-bar-text">
-            {Math.floor(expProgress)}%
-          </div>
-        </div>
-      </div>
-      
-      {/* Gold and Inventory Button */}
-      <div className="flex gap-2 items-center">
-        <div className="bg-gray-700 p-1 sm:p-2 rounded-md text-sm sm:text-base flex-grow">
-          <div className="flex justify-between">
-            <span>Gold</span>
-            <span className="text-yellow-400">{formatNumber(character.gold)}</span>
-          </div>
-        </div>
-        <button 
-          onClick={() => setShowDetailedStats(!showDetailedStats)}
-          className="pixel-button bg-yellow-800 hover:bg-yellow-700 active:bg-yellow-900 text-sm"
-        >
-          Inventory
-        </button>
+      {/* Adventure Tracker */}
+      <div className="flex justify-center scale-75 origin-top -mb-6">
+        <AdventureTracker 
+          totalAdventures={MAX_ADVENTURES_PER_DAY} 
+          completedAdventures={character.daily_adventure_count} 
+        />
       </div>
       
       {/* Detailed Stats Popup */}
       {showDetailedStats && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-4 rounded-md max-w-md w-full animate-fadeIn">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Detailed Stats</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-amber-950 p-3 rounded-lg max-w-md w-full animate-fadeIn border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-bold text-amber-200">Detailed Stats</h3>
               <button 
                 onClick={() => setShowDetailedStats(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-amber-400 hover:text-amber-200"
               >
                 ✕
               </button>
             </div>
             
             {/* Character Stats */}
-            <div className="mb-4">
-              <h4 className="text-lg mb-2">Attributes</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm sm:text-base">
-                <div className="bg-gray-700 p-2 rounded-md">
+            <div className="mb-3">
+              <h4 className="text-base mb-1 text-amber-300">Attributes</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="bg-amber-900 p-2 rounded-md">
                   <div className="flex justify-between">
-                    <span>STR</span>
+                    <span className="text-amber-200">STR</span>
                     <span className="text-red-400">{character.strength}</span>
                   </div>
                 </div>
-                <div className="bg-gray-700 p-2 rounded-md">
+                <div className="bg-amber-900 p-2 rounded-md">
                   <div className="flex justify-between">
-                    <span>INT</span>
+                    <span className="text-amber-200">INT</span>
                     <span className="text-blue-400">{character.intelligence}</span>
                   </div>
                 </div>
-                <div className="bg-gray-700 p-2 rounded-md">
+                <div className="bg-amber-900 p-2 rounded-md">
                   <div className="flex justify-between">
-                    <span>AGI</span>
+                    <span className="text-amber-200">AGI</span>
                     <span className="text-green-400">{character.agility}</span>
                   </div>
                 </div>
-                <div className="bg-gray-700 p-2 rounded-md">
+                <div className="bg-amber-900 p-2 rounded-md">
                   <div className="flex justify-between">
-                    <span>LCK</span>
+                    <span className="text-amber-200">LCK</span>
                     <span className="text-yellow-400">{character.luck}</span>
                   </div>
                 </div>
@@ -154,16 +184,16 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
             
             {/* Inventory Placeholder */}
             <div>
-              <h4 className="text-lg mb-2">Inventory</h4>
-              <div className="bg-gray-700 p-3 rounded-md text-center">
-                <p>Inventory items will be displayed here</p>
+              <h4 className="text-base mb-1 text-amber-300">Inventory</h4>
+              <div className="bg-amber-900 p-2 rounded-md text-center">
+                <p className="text-amber-200 text-sm">Inventory items will be displayed here</p>
               </div>
             </div>
             
-            <div className="mt-4 text-center">
+            <div className="mt-3 text-center">
               <button 
                 onClick={() => setShowDetailedStats(false)}
-                className="pixel-button"
+                className="pixel-button bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-sm px-3 py-1"
               >
                 Close
               </button>

@@ -18,6 +18,8 @@ export default async function ShopLayout({
     redirect(ROUTES.CHARACTER_CREATE);
   }
   
+  const character = characterResponse.data;
+  
   // Get user session
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
@@ -27,10 +29,11 @@ export default async function ShopLayout({
   
   return (
     <div className="min-h-screen">
-      {/* Navigation bar flush with top of page */}
+      {/* Navigation bar with character stats */}
       <GameNavigation 
         activeTab="shop" 
-        currentDay={currentDay} 
+        currentDay={currentDay}
+        character={character}
         user={user ? { email: user.email || '' } : null}
         showWorldBossCompanion={false}
       />

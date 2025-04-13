@@ -2,10 +2,7 @@
 
 import { memo } from 'react';
 import type { Adventure, AdventureDecision, Character } from '@/lib/types';
-import CharacterStats from '@/components/character/character-stats';
-import AdventureTracker from '@/components/adventure/adventure-tracker';
 import { useAdventure } from '../AdventureContext';
-import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 
 interface AdventureViewProps {
   adventure: Adventure;
@@ -25,44 +22,33 @@ const AdventureView = memo(function AdventureView({ adventure, character }: Adve
   };
   
   return (
-    <div className="bg-gray-900 bg-opacity-80 p-6 animate-fadeIn">
-      <div className="flex flex-col gap-4 mb-6">
-        <div>
-          <CharacterStats character={character} />
-        </div>
+    <div className="bg-amber-950 bg-opacity-80 p-4 md:p-6 animate-fadeIn rounded-lg border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
+      <div className="mb-4 md:mb-6">
+        <h2 className="text-xl md:text-2xl mb-2 text-amber-300">{adventure.title}</h2>
+        <p className="text-sm md:text-base mb-4 md:mb-6 text-amber-200">{adventure.description}</p>
         
-        <div>
-          <AdventureTracker 
-            totalAdventures={MAX_ADVENTURES_PER_DAY} 
-            completedAdventures={character.daily_adventure_count} 
-          />
-          
-          <h2 className="text-3xl mb-2 text-yellow-400">{adventure.title}</h2>
-          <p className="text-xl mb-6">{adventure.description}</p>
-          
-          {/* Adventure image placeholder */}
-          <div className="w-full h-48 bg-gray-700 mb-6 rounded-md flex items-center justify-center">
-            <p className="text-gray-400">Adventure Image</p>
-          </div>
+        {/* Adventure image placeholder */}
+        <div className="w-full h-36 md:h-48 bg-amber-900 mb-4 md:mb-6 rounded-md flex items-center justify-center">
+          <p className="text-amber-400">Adventure Image</p>
         </div>
       </div>
       
       {/* Decisions */}
-      <div className="mb-6">
-        <h3 className="text-2xl mb-4">What will you do?</h3>
+      <div className="mb-4 md:mb-6">
+        <h3 className="text-lg md:text-xl mb-2 md:mb-4 text-amber-300">What will you do?</h3>
         
-        <div className="space-y-4">
+        <div className="space-y-2 md:space-y-4">
           {adventure.decisions?.map((decision: AdventureDecision) => (
             <div 
               key={decision.id}
-              className={`p-4 border-2 rounded-md cursor-pointer transition-all ${
+              className={`p-3 md:p-4 border-2 rounded-md cursor-pointer transition-all ${
                 selectedDecision?.id === decision.id
-                  ? 'border-purple-500 bg-purple-900 bg-opacity-30'
-                  : 'border-gray-600 bg-gray-800 hover:border-gray-400'
+                  ? 'border-amber-500 bg-amber-900 bg-opacity-50'
+                  : 'border-amber-800 bg-amber-900 bg-opacity-30 hover:border-amber-600'
               }`}
               onClick={() => handleDecisionSelect(decision)}
             >
-              <p className="text-lg">{decision.description}</p>
+              <p className="text-sm md:text-base text-amber-200">{decision.description}</p>
             </div>
           ))}
         </div>
@@ -72,7 +58,11 @@ const AdventureView = memo(function AdventureView({ adventure, character }: Adve
         <button 
           onClick={handleCompleteAdventure}
           disabled={!selectedDecision}
-          className="pixel-button text-xl disabled:opacity-50"
+          className={`pixel-button text-sm md:text-base py-1 md:py-2 px-3 md:px-4 
+            ${!selectedDecision 
+              ? 'bg-gray-600 cursor-not-allowed opacity-70' 
+              : 'bg-amber-800 hover:bg-amber-700 active:bg-amber-900'
+            } transition-all duration-200`}
         >
           Proceed with Decision
         </button>
