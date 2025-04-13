@@ -6,6 +6,16 @@ import type { Character, Item } from '@/lib/types';
 import ItemView from './item-view';
 import ItemDetailModal from '@/components/ui/item-detail-modal';
 import { getLevelFromExperience, getRequiredExperience } from '@/lib/utils';
+import { 
+  getTotalStrength, 
+  getTotalIntelligence, 
+  getTotalAgility, 
+  getTotalLuck,
+  getTotalMaxHitpoints,
+  getTotalMaxEnergy,
+  calculateTotalDamage,
+  calculateTotalDefense
+} from '@/lib/character-utils';
 
 interface CharacterDetailsModalProps {
   character: Character;
@@ -92,10 +102,20 @@ export default function CharacterDetailsModal({
                   </div>
                   
                   <p className="text-amber-200 text-xs">
-                    HP: {character.current_hitpoints}/{character.max_hitpoints}
+                    HP: {character.current_hitpoints}/{getTotalMaxHitpoints(character)}
+                    {getTotalMaxHitpoints(character) > character.max_hitpoints && (
+                      <span className="text-green-400 text-xs ml-1">
+                        (+{getTotalMaxHitpoints(character) - character.max_hitpoints})
+                      </span>
+                    )}
                   </p>
                   <p className="text-amber-200 text-xs">
-                    MP: {character.current_energy}/{character.max_energy}
+                    MP: {character.current_energy}/{getTotalMaxEnergy(character)}
+                    {getTotalMaxEnergy(character) > character.max_energy && (
+                      <span className="text-green-400 text-xs ml-1">
+                        (+{getTotalMaxEnergy(character) - character.max_energy})
+                      </span>
+                    )}
                   </p>
                   <p className="text-yellow-400 text-xs">
                     Gold: {character.gold}
@@ -109,28 +129,56 @@ export default function CharacterDetailsModal({
                   <div className="bg-amber-900 p-1.5 rounded-md">
                     <div className="flex justify-between">
                       <span className="text-amber-200">STR</span>
-                      <span className="text-red-400">{character.strength}</span>
+                      <span className="text-red-400">
+                        {getTotalStrength(character)}
+                        {getTotalStrength(character) > character.strength && (
+                          <span className="text-green-400 text-xs ml-1">
+                            (+{getTotalStrength(character) - character.strength})
+                          </span>
+                        )}
+                      </span>
                     </div>
                   </div>
                   
                   <div className="bg-amber-900 p-1.5 rounded-md">
                     <div className="flex justify-between">
                       <span className="text-amber-200">INT</span>
-                      <span className="text-blue-400">{character.intelligence}</span>
+                      <span className="text-blue-400">
+                        {getTotalIntelligence(character)}
+                        {getTotalIntelligence(character) > character.intelligence && (
+                          <span className="text-green-400 text-xs ml-1">
+                            (+{getTotalIntelligence(character) - character.intelligence})
+                          </span>
+                        )}
+                      </span>
                     </div>
                   </div>
                   
                   <div className="bg-amber-900 p-1.5 rounded-md">
                     <div className="flex justify-between">
                       <span className="text-amber-200">AGI</span>
-                      <span className="text-green-400">{character.agility}</span>
+                      <span className="text-green-400">
+                        {getTotalAgility(character)}
+                        {getTotalAgility(character) > character.agility && (
+                          <span className="text-green-400 text-xs ml-1">
+                            (+{getTotalAgility(character) - character.agility})
+                          </span>
+                        )}
+                      </span>
                     </div>
                   </div>
                   
                   <div className="bg-amber-900 p-1.5 rounded-md">
                     <div className="flex justify-between">
                       <span className="text-amber-200">LCK</span>
-                      <span className="text-yellow-400">{character.luck}</span>
+                      <span className="text-yellow-400">
+                        {getTotalLuck(character)}
+                        {getTotalLuck(character) > character.luck && (
+                          <span className="text-green-400 text-xs ml-1">
+                            (+{getTotalLuck(character) - character.luck})
+                          </span>
+                        )}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -214,10 +262,20 @@ export default function CharacterDetailsModal({
                 </p>
                 
                 <p className="text-amber-200 text-sm">
-                  HP: {character.current_hitpoints}/{character.max_hitpoints}
+                  HP: {character.current_hitpoints}/{getTotalMaxHitpoints(character)}
+                  {getTotalMaxHitpoints(character) > character.max_hitpoints && (
+                    <span className="text-green-400 text-xs ml-1">
+                      (+{getTotalMaxHitpoints(character) - character.max_hitpoints})
+                    </span>
+                  )}
                 </p>
                 <p className="text-amber-200 text-sm">
-                  MP: {character.current_energy}/{character.max_energy}
+                  MP: {character.current_energy}/{getTotalMaxEnergy(character)}
+                  {getTotalMaxEnergy(character) > character.max_energy && (
+                    <span className="text-green-400 text-xs ml-1">
+                      (+{getTotalMaxEnergy(character) - character.max_energy})
+                    </span>
+                  )}
                 </p>
                 <p className="text-yellow-400 text-sm">
                   Gold: {character.gold}
@@ -274,28 +332,75 @@ export default function CharacterDetailsModal({
                 <div className="bg-amber-900 p-2 rounded-md">
                   <div className="flex justify-between">
                     <span className="text-amber-200">STR</span>
-                    <span className="text-red-400">{character.strength}</span>
+                    <span className="text-red-400">
+                      {getTotalStrength(character)}
+                      {getTotalStrength(character) > character.strength && (
+                        <span className="text-green-400 text-xs ml-1">
+                          (+{getTotalStrength(character) - character.strength})
+                        </span>
+                      )}
+                    </span>
                   </div>
                 </div>
                 
                 <div className="bg-amber-900 p-2 rounded-md">
                   <div className="flex justify-between">
                     <span className="text-amber-200">INT</span>
-                    <span className="text-blue-400">{character.intelligence}</span>
+                    <span className="text-blue-400">
+                      {getTotalIntelligence(character)}
+                      {getTotalIntelligence(character) > character.intelligence && (
+                        <span className="text-green-400 text-xs ml-1">
+                          (+{getTotalIntelligence(character) - character.intelligence})
+                        </span>
+                      )}
+                    </span>
                   </div>
                 </div>
                 
                 <div className="bg-amber-900 p-2 rounded-md">
                   <div className="flex justify-between">
                     <span className="text-amber-200">AGI</span>
-                    <span className="text-green-400">{character.agility}</span>
+                    <span className="text-green-400">
+                      {getTotalAgility(character)}
+                      {getTotalAgility(character) > character.agility && (
+                        <span className="text-green-400 text-xs ml-1">
+                          (+{getTotalAgility(character) - character.agility})
+                        </span>
+                      )}
+                    </span>
                   </div>
                 </div>
                 
                 <div className="bg-amber-900 p-2 rounded-md">
                   <div className="flex justify-between">
                     <span className="text-amber-200">LCK</span>
-                    <span className="text-yellow-400">{character.luck}</span>
+                    <span className="text-yellow-400">
+                      {getTotalLuck(character)}
+                      {getTotalLuck(character) > character.luck && (
+                        <span className="text-green-400 text-xs ml-1">
+                          (+{getTotalLuck(character) - character.luck})
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Combat Stats */}
+                <div className="bg-amber-900 p-2 rounded-md">
+                  <div className="flex justify-between">
+                    <span className="text-amber-200">DMG</span>
+                    <span className="text-orange-400">
+                      {calculateTotalDamage(character)}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="bg-amber-900 p-2 rounded-md">
+                  <div className="flex justify-between">
+                    <span className="text-amber-200">DEF</span>
+                    <span className="text-blue-300">
+                      {calculateTotalDefense(character)}
+                    </span>
                   </div>
                 </div>
               </div>
