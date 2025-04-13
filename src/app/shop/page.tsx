@@ -1,58 +1,32 @@
-import { redirect } from 'next/navigation';
 import { getCharacterForUser } from '@/app/actions/character';
-import { ROUTES } from '@/lib/constants';
-import GameNavigation from '@/components/navigation/game-navigation';
 import ShopContainer from '@/components/shop/shop-container';
 import CharacterStats from '@/components/character/character-stats';
-import { getCurrentGameDay } from '@/lib/utils';
-import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function ShopPage() {
-  
-  // Check if user has a character
+  // Get character from layout
   const characterResponse = await getCharacterForUser();
-  
-  if (!characterResponse.success || !characterResponse.data) {
-    // Redirect to character creation if no character found
-    redirect(ROUTES.CHARACTER_CREATE);
-  }
-  
-  // Get user session
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user || null;
-  
-  const character = characterResponse.data;
-  const currentDay = getCurrentGameDay();
+  const character = characterResponse.data!; // We know this exists because of the layout check
   
   return (
-    <div className="min-h-screen p-4">
-      <div className="w-full max-w-lg mx-auto">
-        <GameNavigation 
-          activeTab="shop" 
-          currentDay={currentDay} 
-          user={user ? { email: user.email || '' } : null}
-        />
-        
-        {/* Character stats */}
-        <div className="mb-4">
-          <CharacterStats character={character} />
-        </div>
-        
-        {/* Shop container */}
-        <ShopContainer 
-          initialGold={character.gold} 
-          equipment={character.equipment || {
-            weapon_id: null,
-            helmet_id: null,
-            armor_id: null,
-            trinket_id: null
-          }}
-        />
+    <>
+      {/* Character stats */}
+      <div className="mb-4">
+        <CharacterStats character={character} />
       </div>
-    </div>
+      
+      {/* Shop container */}
+      <ShopContainer 
+        initialGold={character.gold} 
+        equipment={character.equipment || {
+          weapon_id: null,
+          helmet_id: null,
+          armor_id: null,
+          trinket_id: null
+        }}
+      />
+    </>
   );
 }
