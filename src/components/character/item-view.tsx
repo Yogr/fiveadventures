@@ -7,15 +7,17 @@ import type { Item } from '@/lib/types';
 interface ItemViewProps {
   item?: Item | null;
   slotName?: string;
-  onClick?: (item: Item | null) => void;
+  inventoryId?: string;
+  isEquipped?: boolean;
+  onClick?: (item: Item | null, event: React.MouseEvent, inventoryId?: string, isEquipped?: boolean) => void;
 }
 
-export default function ItemView({ item, slotName, onClick }: ItemViewProps) {
+export default function ItemView({ item, slotName, inventoryId, isEquipped = false, onClick }: ItemViewProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   
-  const handleClick = () => {
+  const handleClick = (event: React.MouseEvent) => {
     if (onClick && item) {
-      onClick(item);
+      onClick(item, event, inventoryId, isEquipped);
     }
   };
   

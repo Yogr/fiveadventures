@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import type { Character, Item } from '@/lib/types';
 import ItemView from './item-view';
+import ItemDetailModal from '@/components/ui/item-detail-modal';
 import { getLevelFromExperience, getRequiredExperience } from '@/lib/utils';
 
 interface CharacterDetailsModalProps {
@@ -17,7 +18,14 @@ export default function CharacterDetailsModal({
   isOpen, 
   onClose 
 }: CharacterDetailsModalProps) {
+  // All useState hooks must be at the top level
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  // Track the position of the clicked item for tooltip positioning
+  const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | undefined>(undefined);
+  // Track the inventory item ID for equip/unequip functionality
+  const [selectedInventoryId, setSelectedInventoryId] = useState<string | undefined>(undefined);
+  // Track whether the selected item is equipped
+  const [isSelectedItemEquipped, setIsSelectedItemEquipped] = useState(false);
   
   if (!isOpen) return null;
   
@@ -28,18 +36,14 @@ export default function CharacterDetailsModal({
     ? ((character.experience - currentLevelExp) / (nextLevelExp - currentLevelExp)) * 100
     : 100;
   
-  // Create an array of 8 slots for inventory (filled or empty)
-  const inventorySlots = Array(8).fill(null);
-  if (character.inventory) {
-    character.inventory.forEach((invItem, index) => {
-      if (index < 8) {
-        inventorySlots[index] = invItem.item;
-      }
-    });
-  }
-  
-  const handleItemClick = (item: Item | null) => {
-    setSelectedItem(item);
+  const handleItemClick = (item: Item | null, event: React.MouseEvent, inventoryId?: string, equipped = false) => {
+    if (item) {
+      // Get the position of the click for tooltip positioning
+      setClickPosition({ x: event.clientX, y: event.clientY });
+      setSelectedItem(item);
+      setSelectedInventoryId(inventoryId);
+      setIsSelectedItemEquipped(equipped);
+    }
   };
   
   return (
@@ -142,6 +146,7 @@ export default function CharacterDetailsModal({
                   <ItemView 
                     item={character.equipment?.weapon || null} 
                     slotName="Weapon"
+                    isEquipped={true}
                     onClick={handleItemClick}
                   />
                 </div>
@@ -150,6 +155,7 @@ export default function CharacterDetailsModal({
                   <ItemView 
                     item={character.equipment?.helmet || null} 
                     slotName="Helmet"
+                    isEquipped={true}
                     onClick={handleItemClick}
                   />
                 </div>
@@ -158,6 +164,7 @@ export default function CharacterDetailsModal({
                   <ItemView 
                     item={character.equipment?.armor || null} 
                     slotName="Armor"
+                    isEquipped={true}
                     onClick={handleItemClick}
                   />
                 </div>
@@ -166,6 +173,7 @@ export default function CharacterDetailsModal({
                   <ItemView 
                     item={character.equipment?.trinket || null} 
                     slotName="Trinket"
+                    isEquipped={true}
                     onClick={handleItemClick}
                   />
                 </div>
@@ -226,6 +234,7 @@ export default function CharacterDetailsModal({
                   <ItemView 
                     item={character.equipment?.weapon || null} 
                     slotName="Weapon"
+                    isEquipped={true}
                     onClick={handleItemClick}
                   />
                 </div>
@@ -234,6 +243,7 @@ export default function CharacterDetailsModal({
                   <ItemView 
                     item={character.equipment?.helmet || null} 
                     slotName="Helmet"
+                    isEquipped={true}
                     onClick={handleItemClick}
                   />
                 </div>
@@ -242,6 +252,7 @@ export default function CharacterDetailsModal({
                   <ItemView 
                     item={character.equipment?.armor || null} 
                     slotName="Armor"
+                    isEquipped={true}
                     onClick={handleItemClick}
                   />
                 </div>
@@ -250,6 +261,7 @@ export default function CharacterDetailsModal({
                   <ItemView 
                     item={character.equipment?.trinket || null} 
                     slotName="Trinket"
+                    isEquipped={true}
                     onClick={handleItemClick}
                   />
                 </div>
@@ -294,10 +306,19 @@ export default function CharacterDetailsModal({
           <div>
             <h4 className="text-base mb-2 text-amber-300 border-b border-amber-800 pb-1">Inventory</h4>
             <div className="grid grid-cols-4 gap-2">
-              {inventorySlots.map((item, index) => (
+              {character.inventory?.map((invItem, index) => (
                 <ItemView 
                   key={index} 
-                  item={item} 
+                  item={invItem.item} 
+                  inventoryId={invItem.id}
+                  onClick={handleItemClick}
+                />
+              ))}
+              {/* Fill remaining slots with empty slots */}
+              {Array(Math.max(0, 8 - (character.inventory?.length || 0))).fill(null).map((_, index) => (
+                <ItemView 
+                  key={`empty-${index}`} 
+                  item={null} 
                   onClick={handleItemClick}
                 />
               ))}
@@ -307,6 +328,23 @@ export default function CharacterDetailsModal({
           {/* No close button at bottom as requested */}
         </div>
       </div>
+      
+      {/* Item Detail Modal */}
+      <ItemDetailModal
+        item={selectedItem}
+        isOpen={!!selectedItem}
+        onClose={() => {
+          setSelectedItem(null);
+          setClickPosition(undefined);
+          setSelectedInventoryId(undefined);
+          setIsSelectedItemEquipped(false);
+        }}
+        position={clickPosition}
+        character={character}
+        inventoryItemId={selectedInventoryId}
+        isEquipped={isSelectedItemEquipped}
+        isInventoryScreen={true}
+      />
     </div>
   );
 }
