@@ -4,6 +4,8 @@ import { getCurrentGameDay } from '@/lib/utils';
 import { AdventureProvider } from '@/components/adventure/AdventureContext';
 import AdventureContainer from '@/components/adventure/AdventureContainer';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdventurePage() {
   console.log('Rendering AdventurePage on server');
   
