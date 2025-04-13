@@ -15,6 +15,7 @@ interface ItemDetailModalProps {
   inventoryItemId?: string;
   isEquipped?: boolean;
   isInventoryScreen?: boolean;
+  onCharacterUpdate?: (character: Character) => void;
 }
 
 export default function ItemDetailModal({ 
@@ -25,7 +26,8 @@ export default function ItemDetailModal({
   character,
   inventoryItemId,
   isEquipped = false,
-  isInventoryScreen = false
+  isInventoryScreen = false,
+  onCharacterUpdate
 }: ItemDetailModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -133,8 +135,14 @@ export default function ItemDetailModal({
       const result = await equipItem(inventoryItemId);
       
       if (result.success) {
+        // If we have updated character data and a callback to update it
+        if (result.data && onCharacterUpdate) {
+          onCharacterUpdate(result.data);
+        } else {
+          // Fallback to router.refresh() if we don't have a callback
+          router.refresh();
+        }
         onClose();
-        router.refresh();
       } else {
         setError(result.error || 'Failed to equip item');
       }
@@ -157,8 +165,14 @@ export default function ItemDetailModal({
       const result = await unequipItem(item.type);
       
       if (result.success) {
+        // If we have updated character data and a callback to update it
+        if (result.data && onCharacterUpdate) {
+          onCharacterUpdate(result.data);
+        } else {
+          // Fallback to router.refresh() if we don't have a callback
+          router.refresh();
+        }
         onClose();
-        router.refresh();
       } else {
         setError(result.error || 'Failed to unequip item');
       }
@@ -181,11 +195,20 @@ export default function ItemDetailModal({
   const getTooltipStyle = () => {
     if (!position) return {};
     
+    // Get window dimensions
+    const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 900;
+    
+    // Calculate the horizontal center position
+    const left = `${windowWidth / 2}px`;
+    
+    // Position the popup above the item
+    const top = `${position.y}px`;
+    
     return {
       position: 'fixed' as const,
-      top: `${position.y}px`,
-      left: `${position.x}px`,
-      transform: 'translate(-10%, -110%)',
+      top,
+      left,
+      transform: 'translate(-50%, -100%)', // Center horizontally and position above
       maxHeight: '80vh',
       zIndex: 100,
     };

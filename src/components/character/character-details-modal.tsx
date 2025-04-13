@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import type { Character, Item } from '@/lib/types';
 import ItemView from './item-view';
@@ -24,11 +24,12 @@ interface CharacterDetailsModalProps {
 }
 
 export default function CharacterDetailsModal({ 
-  character, 
+  character: initialCharacter, 
   isOpen, 
   onClose 
 }: CharacterDetailsModalProps) {
   // All useState hooks must be at the top level
+  const [character, setCharacter] = useState<Character>(initialCharacter);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   // Track the position of the clicked item for tooltip positioning
   const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | undefined>(undefined);
@@ -36,6 +37,11 @@ export default function CharacterDetailsModal({
   const [selectedInventoryId, setSelectedInventoryId] = useState<string | undefined>(undefined);
   // Track whether the selected item is equipped
   const [isSelectedItemEquipped, setIsSelectedItemEquipped] = useState(false);
+  
+  // Update character state when initialCharacter changes
+  useEffect(() => {
+    setCharacter(initialCharacter);
+  }, [initialCharacter]);
   
   if (!isOpen) return null;
   
@@ -180,6 +186,18 @@ export default function CharacterDetailsModal({
                         )}
                       </span>
                     </div>
+                  </div>
+                  
+                  {/* Combat Stats */}
+                  <div className="flex justify-between">
+                    <span className="text-amber-200">DMG</span>
+                    <span className="text-orange-400">
+                      {calculateTotalDamage(character)}
+                    </span>
+                    <span className="text-amber-200">DEF</span>
+                    <span className="text-blue-300">
+                      {calculateTotalDefense(character)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -449,6 +467,15 @@ export default function CharacterDetailsModal({
         inventoryItemId={selectedInventoryId}
         isEquipped={isSelectedItemEquipped}
         isInventoryScreen={true}
+        onCharacterUpdate={(updatedCharacter) => {
+          // Update the local character state with the new data
+          setCharacter(updatedCharacter);
+          // Close the item detail modal
+          setSelectedItem(null);
+          setClickPosition(undefined);
+          setSelectedInventoryId(undefined);
+          setIsSelectedItemEquipped(false);
+        }}
       />
     </div>
   );

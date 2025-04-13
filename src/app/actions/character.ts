@@ -146,6 +146,20 @@ export async function getCharacterById(characterId: string): Promise<ApiResponse
       };
     }
     
+    // If character has a linked user_id, check if the current user is authorized to access it
+    if (character.user_id) {
+      // Get the current authenticated user
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // If no authenticated user or user ID doesn't match, deny access
+      if (!session?.user?.id || session.user.id !== character.user_id) {
+        return {
+          success: false,
+          error: 'Unauthorized access to character'
+        };
+      }
+    }
+    
     // Get character equipment
     const { data: equipment, error: equipmentError } = await supabase
       .from('character_equipment')
