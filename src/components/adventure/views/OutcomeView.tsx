@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { AdventureOutcome, Character } from '@/lib/types';
@@ -10,6 +10,8 @@ import AnimatedText from '@/components/ui/animated-text';
 import AnimatedReward from '@/components/ui/animated-reward';
 import LevelUpAnimation from '@/components/ui/level-up-animation';
 import { useAdventure } from '../AdventureContext';
+import { useAdventureState } from '../AdventureStateContext';
+import { incrementAdventureNumber } from '@/app/actions/adventure-state';
 
 interface OutcomeViewProps {
   outcome: AdventureOutcome;
@@ -28,7 +30,42 @@ const OutcomeView = memo(function OutcomeView({
 }: OutcomeViewProps) {
   const router = useRouter();
   const { continueToNextAdventure, dispatch } = useAdventure();
+  const { refreshAdventureState } = useAdventureState();
   const [localShowRewards, setLocalShowRewards] = useState(false);
+  const [adventureIncremented, setAdventureIncremented] = useState(false);
+  
+  // Increment adventure number when component mounts - only once
+  useEffect(() => {
+    let isMounted = true;
+    let incrementAttempted = false;
+    
+    const incrementAdventure = async () => {
+      if (incrementAttempted || !character || !isMounted) return;
+      
+      incrementAttempted = true;
+      console.log('Incrementing adventure number for character:', character.id);
+      
+      try {
+        const result = await incrementAdventureNumber(character.id);
+        if (result.success && isMounted) {
+          console.log('Adventure number incremented successfully:', result.data);
+          setAdventureIncremented(true);
+        } else if (isMounted) {
+          console.error('Failed to increment adventure number:', result.error);
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error('Error incrementing adventure number:', error);
+        }
+      }
+    };
+    
+    incrementAdventure();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - only run once on mount
   
   // We no longer need to refresh the page on mount as we've optimized data flow
   // and removed redundant refreshes throughout the application

@@ -345,6 +345,7 @@ export async function getCharacterByUserId(userId: string): Promise<ApiResponse<
   }
 }
 
+
 // Get character from cookie or auth session
 export async function getCharacterForUser(): Promise<ApiResponse<Character>> {
   try {

@@ -2,6 +2,7 @@
 
 import { memo, useEffect } from 'react';
 import { useAdventure } from './AdventureContext';
+import { AdventureStateProvider, useAdventureState } from './AdventureStateContext';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import ErrorView from './views/ErrorView';
 import NoCharacterView from './views/NoCharacterView';
@@ -13,7 +14,8 @@ import OutcomeView from './views/OutcomeView';
 import CombatInterface from '@/components/combat/combat-interface';
 import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 
-const AdventureContainer = memo(function AdventureContainer() {
+// Inner component that uses both contexts
+const AdventureContainerInner = memo(function AdventureContainerInner() {
   const { 
     state, 
     dispatch, 
@@ -23,8 +25,8 @@ const AdventureContainer = memo(function AdventureContainer() {
   } = useAdventure();
   
   const { 
-    loading, 
-    error, 
+    loading: adventureLoading, 
+    error: adventureError, 
     character, 
     areas, 
     selectedArea, 
@@ -36,6 +38,17 @@ const AdventureContainer = memo(function AdventureContainer() {
     oldExperience,
     showLevelUp
   } = state;
+  
+  // Get adventure state from context
+  const { 
+    loading: stateLoading, 
+    error: stateError, 
+    adventureState 
+  } = useAdventureState();
+  
+  // Combine loading and error states
+  const loading = adventureLoading || stateLoading;
+  const error = adventureError || stateError;
   
   // We no longer need to load areas on mount since they're passed from the server
   // through AdventureProvider's initialAreas prop
@@ -114,6 +127,22 @@ const AdventureContainer = memo(function AdventureContainer() {
       adventure={adventure}
       character={character}
     />
+  );
+});
+
+// Outer component that provides the AdventureStateProvider
+const AdventureContainer = memo(function AdventureContainer() {
+  const { state } = useAdventure();
+  const { character } = state;
+  
+  if (!character) {
+    return <NoCharacterView />;
+  }
+  
+  return (
+    <AdventureStateProvider character={character}>
+      <AdventureContainerInner />
+    </AdventureStateProvider>
   );
 });
 

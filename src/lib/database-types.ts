@@ -75,6 +75,7 @@ export interface Database {
           daily_adventure_count?: number
           last_played_day?: number
           status?: string
+          current_adventure_state?: string
           created_at?: string
           updated_at?: string
         }
@@ -97,6 +98,7 @@ export interface Database {
           daily_adventure_count?: number
           last_played_day?: number
           status?: string
+          current_adventure_state?: string
           created_at?: string
           updated_at?: string
         }

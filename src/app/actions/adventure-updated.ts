@@ -368,21 +368,18 @@ export async function completeAdventure({
       };
     }
     
-    // Record the adventure in the character's history
+    // Update the adventure state to outcome
     const { error: historyError } = await supabase
       .from('character_adventures')
-      .insert({
-        id: generateId(), // Generate UUID for the record
+      .upsert({
         character_id: character.id,
-        adventure_id: adventureId,
+        current_state: 'outcome',
+        current_adventure_id: adventureId,
         decision_id: decisionId,
         outcome_id: outcome.id,
         day: character.last_played_day,
         adventure_number: newAdventureCount,
-        experience_gained: experienceGained,
-        gold_gained: goldGained,
-        item_gained_id: itemRewardId,
-        completed_at: new Date().toISOString()
+        updated_at: new Date().toISOString()
       });
     
     if (historyError) {
@@ -609,7 +606,7 @@ export async function startCombatTurn(
       const roll = Math.floor(Math.random() * 100) + 1;
       
       if (roll <= runChance) {
-        // Success - end combat
+        // Success - end combat and increment adventure count
         await supabase
           .from('combat')
           .update({
@@ -618,6 +615,32 @@ export async function startCombatTurn(
             completed_at: new Date().toISOString()
           })
           .eq('id', combatId);
+          
+        // Increment daily adventure count when successfully running away
+        console.log('Character ran away - updating adventure count');
+        console.log('Current character state before update:', {
+          daily_adventure_count: character.daily_adventure_count
+        });
+        
+        const newAdventureCount = character.daily_adventure_count + 1;
+        
+        console.log('New character state after update:', {
+          daily_adventure_count: newAdventureCount
+        });
+        
+        const { error: characterUpdateError } = await supabase
+          .from('characters')
+          .update({
+            daily_adventure_count: newAdventureCount,
+            updated_at: new Date().toISOString() // Add updated_at timestamp to ensure the update is detected
+          })
+          .eq('id', character.id);
+        
+        if (characterUpdateError) {
+          console.error('Error updating character after running away:', characterUpdateError);
+        } else {
+          console.log('Character successfully updated after running away');
+        }
         
         // Record the turn
         await supabase
@@ -701,14 +724,39 @@ export async function startCombatTurn(
         })
         .eq('id', combatId);
       
-      // Award experience and gold
-      await supabase
+      // Award experience, gold, and increment adventure count
+      console.log('Monster defeated - updating character stats');
+      console.log('Current character state before update:', {
+        experience: character.experience,
+        gold: character.gold,
+        daily_adventure_count: character.daily_adventure_count
+      });
+      
+      const newExperience = character.experience + monster.experience_reward;
+      const newGold = character.gold + monster.gold_reward;
+      const newAdventureCount = character.daily_adventure_count + 1;
+      
+      console.log('New character state after update:', {
+        experience: newExperience,
+        gold: newGold,
+        daily_adventure_count: newAdventureCount
+      });
+      
+      const { error: characterUpdateError } = await supabase
         .from('characters')
         .update({
-          experience: character.experience + monster.experience_reward,
-          gold: character.gold + monster.gold_reward
+          experience: newExperience,
+          gold: newGold,
+          daily_adventure_count: newAdventureCount,
+          updated_at: new Date().toISOString() // Add updated_at timestamp to ensure the update is detected
         })
         .eq('id', character.id);
+      
+      if (characterUpdateError) {
+        console.error('Error updating character after combat victory:', characterUpdateError);
+      } else {
+        console.log('Character successfully updated after combat victory');
+      }
       
       // Get updated combat
       const { data: updatedCombat, error: updateError } = await supabase
@@ -816,7 +864,7 @@ export async function startCombatTurn(
     
     // Check if character is defeated
     if (characterRemainingHp === 0) {
-      // Character defeated - end combat
+      // Character defeated - end combat and increment adventure count
       await supabase
         .from('combat')
         .update({
@@ -828,6 +876,34 @@ export async function startCombatTurn(
           completed_at: new Date().toISOString()
         })
         .eq('id', combatId);
+        
+      // Increment daily adventure count when character is defeated
+      console.log('Character defeated - updating adventure count');
+      console.log('Current character state before update:', {
+        experience: character.experience,
+        gold: character.gold,
+        daily_adventure_count: character.daily_adventure_count
+      });
+      
+      const newAdventureCount = character.daily_adventure_count + 1;
+      
+      console.log('New character state after update:', {
+        daily_adventure_count: newAdventureCount
+      });
+      
+      const { error: characterUpdateError } = await supabase
+        .from('characters')
+        .update({
+          daily_adventure_count: newAdventureCount,
+          updated_at: new Date().toISOString() // Add updated_at timestamp to ensure the update is detected
+        })
+        .eq('id', character.id);
+      
+      if (characterUpdateError) {
+        console.error('Error updating character after combat defeat:', characterUpdateError);
+      } else {
+        console.log('Character successfully updated after combat defeat');
+      }
     } else {
       // Combat continues
       await supabase

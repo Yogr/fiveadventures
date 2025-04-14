@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Combat, Character, Skill } from '@/lib/types';
 import { getCombat, startCombatTurn } from '@/app/actions/adventure-updated';
 import { getCharacterSkills } from '@/app/actions/combat';
 import { getCharacterById } from '@/app/actions/character';
+import { updateAdventureState } from '@/app/actions/adventure-state';
+import { useAdventureState } from '@/components/adventure/AdventureStateContext';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 
 interface CombatInterfaceProps {
@@ -16,6 +18,7 @@ interface CombatInterfaceProps {
 
 export default function CombatInterface({ combatId, character: initialCharacter, onCombatEnd }: CombatInterfaceProps) {
   const router = useRouter();
+  const { adventureState, refreshAdventureState } = useAdventureState();
   const [loading, setLoading] = useState(true);
   const [character, setCharacter] = useState<Character>(initialCharacter);
   const [combat, setCombat] = useState<Combat | null>(null);
@@ -24,6 +27,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   const [actionInProgress, setActionInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [combatLog, setCombatLog] = useState<string[]>([]);
+  const combatEndingRef = useRef(false);
 
   // Load combat data
   useEffect(() => {
@@ -61,7 +65,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
 
   // Check if combat is completed
   useEffect(() => {
-    if (!combat) return;
+    if (!combat || combatEndingRef.current) return;
     
     // Check if monster is defeated (HP <= 0)
     const monsterCurrentHP = combat.monster.hitpoints - combat.character_damage_dealt;
@@ -78,16 +82,37 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
       );
       
-      // No need to call router.refresh() here as state updates will trigger re-renders
-      console.log('Combat completed');
+      // Set combat ending flag to prevent multiple calls
+      combatEndingRef.current = true;
       
-      onCombatEnd({
-        isVictory: isVictory,
-        ranAway: !!ranAway,
-        monsterName: combat.monster?.name || 'monster'
+      // Update adventure state to outcome
+      updateAdventureState(character.id, {
+        current_state: 'outcome',
+        combat_id: null
+      }).then(() => {
+        console.log('Combat completed, adventure state updated to outcome');
+        
+        // Refresh adventure state
+        refreshAdventureState().then(() => {
+          // Call onCombatEnd after state is updated
+          onCombatEnd({
+            isVictory: isVictory,
+            ranAway: !!ranAway,
+            monsterName: combat.monster?.name || 'monster'
+          });
+        });
+      }).catch(error => {
+        console.error('Error updating adventure state:', error);
+        
+        // Call onCombatEnd even if state update fails
+        onCombatEnd({
+          isVictory: isVictory,
+          ranAway: !!ranAway,
+          monsterName: combat.monster?.name || 'monster'
+        });
       });
     }
-  }, [combat, onCombatEnd, router]);
+  }, [combat, character.id, onCombatEnd, refreshAdventureState]);
 
   // Create a floating damage number
   const createFloatingNumber = (target: 'character' | 'monster', value: number, type: 'damage' | 'heal' | 'effect' = 'damage', text?: string) => {
@@ -133,6 +158,11 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     setTimeout(() => {
       element.classList.remove(className);
     }, 500);
+  };
+
+  // Add message to combat log
+  const addToCombatLog = (message: string) => {
+    setCombatLog(prevLog => [...prevLog, message]);
   };
 
   // Handle attack action
@@ -185,11 +215,22 @@ export default function CombatInterface({ combatId, character: initialCharacter,
           
           addToCombatLog(`The ${combat.monster.name} attacked you for ${monsterDamage} damage!`);
           
-          // Refresh character data to update HP
-          getCharacterById(character.id).then(response => {
-            if (response.success && response.data) {
-              setCharacter(response.data);
-            }
+          // Update character HP locally instead of fetching from server
+          console.log('CombatInterface: Updating character HP locally after monster attack');
+          
+          // Calculate new HP
+          const newHP = Math.max(0, character.current_hitpoints - monsterDamage);
+          
+          // Update character state locally
+          setCharacter(prevChar => ({
+            ...prevChar,
+            current_hitpoints: newHP
+          }));
+          
+          console.log('CombatInterface: Character HP updated locally:', {
+            old: character.current_hitpoints,
+            new: newHP,
+            damage: monsterDamage
           });
         }, 500);
       }
@@ -204,9 +245,26 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         }
         
         // Refresh character data after combat ends
+        console.log('CombatInterface: Refreshing character data after combat victory');
         getCharacterById(character.id).then(response => {
           if (response.success && response.data) {
+            console.log('CombatInterface: Character data updated after combat victory:', {
+              old: {
+                hp: `${character.current_hitpoints}/${character.max_hitpoints}`,
+                energy: `${character.current_energy}/${character.max_energy}`,
+                gold: character.gold,
+                adventureCount: character.daily_adventure_count
+              },
+              new: {
+                hp: `${response.data.current_hitpoints}/${response.data.max_hitpoints}`,
+                energy: `${response.data.current_energy}/${response.data.max_energy}`,
+                gold: response.data.gold,
+                adventureCount: response.data.daily_adventure_count
+              }
+            });
             setCharacter(response.data);
+          } else {
+            console.error('CombatInterface: Failed to get character data:', response.error);
           }
         });
       }
@@ -276,11 +334,22 @@ export default function CombatInterface({ combatId, character: initialCharacter,
           
           addToCombatLog(`The ${combat.monster.name} attacked you for ${monsterDamage} damage!`);
           
-          // Refresh character data to update HP
-          getCharacterById(character.id).then(response => {
-            if (response.success && response.data) {
-              setCharacter(response.data);
-            }
+          // Update character HP locally instead of fetching from server
+          console.log('CombatInterface: Updating character HP locally after monster attack');
+          
+          // Calculate new HP
+          const newHP = Math.max(0, character.current_hitpoints - monsterDamage);
+          
+          // Update character state locally
+          setCharacter(prevChar => ({
+            ...prevChar,
+            current_hitpoints: newHP
+          }));
+          
+          console.log('CombatInterface: Character HP updated locally:', {
+            old: character.current_hitpoints,
+            new: newHP,
+            damage: monsterDamage
           });
         }, 500);
       }
@@ -295,9 +364,26 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         }
         
         // Refresh character data after combat ends
+        console.log('CombatInterface: Refreshing character data after combat defeat');
         getCharacterById(character.id).then(response => {
           if (response.success && response.data) {
+            console.log('CombatInterface: Character data updated after combat defeat:', {
+              old: {
+                hp: `${character.current_hitpoints}/${character.max_hitpoints}`,
+                energy: `${character.current_energy}/${character.max_energy}`,
+                gold: character.gold,
+                adventureCount: character.daily_adventure_count
+              },
+              new: {
+                hp: `${response.data.current_hitpoints}/${response.data.max_hitpoints}`,
+                energy: `${response.data.current_energy}/${response.data.max_energy}`,
+                gold: response.data.gold,
+                adventureCount: response.data.daily_adventure_count
+              }
+            });
             setCharacter(response.data);
+          } else {
+            console.error('CombatInterface: Failed to get character data:', response.error);
           }
         });
       }
@@ -358,11 +444,22 @@ export default function CombatInterface({ combatId, character: initialCharacter,
             
             addToCombatLog(`The ${combat.monster.name} attacked you for ${monsterDamage} damage!`);
             
-            // Refresh character data to update HP
-            getCharacterById(character.id).then(response => {
-              if (response.success && response.data) {
-                setCharacter(response.data);
-              }
+            // Update character HP locally instead of fetching from server
+            console.log('CombatInterface: Updating character HP locally after monster attack');
+            
+            // Calculate new HP
+            const newHP = Math.max(0, character.current_hitpoints - monsterDamage);
+            
+            // Update character state locally
+            setCharacter(prevChar => ({
+              ...prevChar,
+              current_hitpoints: newHP
+            }));
+            
+            console.log('CombatInterface: Character HP updated locally:', {
+              old: character.current_hitpoints,
+              new: newHP,
+              damage: monsterDamage
             });
           }, 500);
         }
@@ -374,11 +471,6 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       setError('An unexpected error occurred');
       setActionInProgress(false);
     }
-  };
-
-  // Add message to combat log
-  const addToCombatLog = (message: string) => {
-    setCombatLog(prevLog => [...prevLog, message]);
   };
 
   // Auto-scroll combat log to bottom when new messages are added
@@ -591,13 +683,35 @@ export default function CombatInterface({ combatId, character: initialCharacter,
                 turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
               );
               
-              // No need to call router.refresh() here as state updates will trigger re-renders
-              console.log('Continuing after combat');
+              // Set combat ending flag to prevent multiple calls
+              if (combatEndingRef.current) return;
+              combatEndingRef.current = true;
               
-              onCombatEnd({
-                isVictory: combat.is_victory === true,
-                ranAway: !!ranAway,
-                monsterName: combat.monster?.name || 'monster'
+              // Update adventure state to outcome
+              updateAdventureState(character.id, {
+                current_state: 'outcome',
+                combat_id: null
+              }).then(() => {
+                console.log('Combat completed, adventure state updated to outcome');
+                
+                // Refresh adventure state
+                refreshAdventureState().then(() => {
+                  // Call onCombatEnd after state is updated
+                  onCombatEnd({
+                    isVictory: combat.is_victory === true,
+                    ranAway: !!ranAway,
+                    monsterName: combat.monster?.name || 'monster'
+                  });
+                });
+              }).catch(error => {
+                console.error('Error updating adventure state:', error);
+                
+                // Call onCombatEnd even if state update fails
+                onCombatEnd({
+                  isVictory: combat.is_victory === true,
+                  ranAway: !!ranAway,
+                  monsterName: combat.monster?.name || 'monster'
+                });
               });
             }}
             className="pixel-button text-xl"

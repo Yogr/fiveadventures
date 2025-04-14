@@ -89,6 +89,9 @@ CREATE TABLE IF NOT EXISTS adventures (
   min_gold INTEGER NOT NULL DEFAULT 5,
   is_violent BOOLEAN NOT NULL DEFAULT true,
   image_url TEXT,
+  area_ids INTEGER[] DEFAULT '{-1}',
+  area_id INTEGER,
+  has_combat BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -182,21 +185,40 @@ CREATE TABLE IF NOT EXISTS adventure_outcomes (
   FOREIGN KEY (adventure_id, decision_id) REFERENCES adventure_decisions(adventure_id, id)
 );
 
--- Character Adventures table
-CREATE TABLE IF NOT EXISTS character_adventures (
+-- Combat table
+CREATE TABLE IF NOT EXISTS combat (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   character_id uuid NOT NULL REFERENCES characters(id),
   adventure_id INTEGER NOT NULL REFERENCES adventures(id),
+  decision_id INTEGER NOT NULL,
+  outcome_id INTEGER NOT NULL,
+  monster_id INTEGER NOT NULL REFERENCES monsters(id),
+  is_completed BOOLEAN NOT NULL DEFAULT false,
+  is_victory BOOLEAN,
+  turns INTEGER NOT NULL DEFAULT 0,
+  character_damage_dealt INTEGER NOT NULL DEFAULT 0,
+  monster_damage_dealt INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  completed_at TIMESTAMP WITH TIME ZONE,
+  FOREIGN KEY (adventure_id, decision_id, outcome_id) REFERENCES adventure_outcomes(adventure_id, decision_id, id)
+);
+
+-- Character Adventures table - Repurposed as state manager
+CREATE TABLE IF NOT EXISTS character_adventures (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  character_id uuid NOT NULL REFERENCES characters(id),
+  current_state VARCHAR NOT NULL DEFAULT 'none',
+  current_adventure_id INTEGER REFERENCES adventures(id),
   decision_id INTEGER,
   outcome_id INTEGER,
-  day INTEGER NOT NULL,
-  adventure_number INTEGER NOT NULL,
-  experience_gained INTEGER NOT NULL,
-  gold_gained INTEGER NOT NULL,
-  item_gained_id INTEGER REFERENCES items(id),
-  completed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  FOREIGN KEY (adventure_id, decision_id) REFERENCES adventure_decisions(adventure_id, id),
-  FOREIGN KEY (adventure_id, decision_id, outcome_id) REFERENCES adventure_outcomes(adventure_id, decision_id, id)
+  combat_id uuid REFERENCES combat(id),
+  day INTEGER NOT NULL DEFAULT 1,
+  adventure_number INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  FOREIGN KEY (current_adventure_id, decision_id) REFERENCES adventure_decisions(adventure_id, id),
+  FOREIGN KEY (current_adventure_id, decision_id, outcome_id) REFERENCES adventure_outcomes(adventure_id, decision_id, id),
+  UNIQUE(character_id)
 );
 
 -- World Boss table
@@ -243,23 +265,6 @@ CREATE TABLE IF NOT EXISTS boss_rewards (
   claimed_at TIMESTAMP WITH TIME ZONE
 );
 
--- Combat table
-CREATE TABLE IF NOT EXISTS combat (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  character_id uuid NOT NULL REFERENCES characters(id),
-  adventure_id INTEGER NOT NULL REFERENCES adventures(id),
-  decision_id INTEGER NOT NULL,
-  outcome_id INTEGER NOT NULL,
-  monster_id INTEGER NOT NULL REFERENCES monsters(id),
-  is_completed BOOLEAN NOT NULL DEFAULT false,
-  is_victory BOOLEAN,
-  turns INTEGER NOT NULL DEFAULT 0,
-  character_damage_dealt INTEGER NOT NULL DEFAULT 0,
-  monster_damage_dealt INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  completed_at TIMESTAMP WITH TIME ZONE,
-  FOREIGN KEY (adventure_id, decision_id, outcome_id) REFERENCES adventure_outcomes(adventure_id, decision_id, id)
-);
 
 -- Combat Turns table
 CREATE TABLE IF NOT EXISTS combat_turns (
@@ -273,6 +278,26 @@ CREATE TABLE IF NOT EXISTS combat_turns (
   healing_done INTEGER,
   effects JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create areas table
+CREATE TABLE IF NOT EXISTS areas (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  image TEXT NOT NULL,
+  level_requirement INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Add character_selected_area table to track which area a character has selected for the day
+CREATE TABLE IF NOT EXISTS character_selected_area (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  character_id uuid NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  area_id INTEGER NOT NULL,
+  day INTEGER NOT NULL,
+  selected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(character_id, day)
 );
 
 -- Create indexes for performance
@@ -293,6 +318,8 @@ CREATE INDEX IF NOT EXISTS idx_character_skills_character_id ON character_skills
 CREATE INDEX IF NOT EXISTS idx_combat_character_id ON combat(character_id);
 CREATE INDEX IF NOT EXISTS idx_combat_turns_combat_id ON combat_turns(combat_id);
 CREATE INDEX IF NOT EXISTS idx_reward_items_reward_table_id ON reward_items(reward_table_id);
+CREATE INDEX IF NOT EXISTS idx_character_selected_area_character_id ON character_selected_area(character_id);
+CREATE INDEX IF NOT EXISTS idx_character_selected_area_day ON character_selected_area(day);
 
 -- Row Level Security Policies
 
@@ -307,6 +334,7 @@ ALTER TABLE IF EXISTS boss_rewards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS character_skills ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS combat ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS combat_turns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS character_selected_area ENABLE ROW LEVEL SECURITY;
 
 -- Users can only access their own data
 CREATE POLICY users_policy ON users
@@ -391,34 +419,6 @@ CREATE POLICY combat_turns_policy ON combat_turns
     AND (characters.user_id::TEXT = auth.uid()::TEXT OR characters.user_id IS NULL)
   ));
 
--- Add area_ids column to adventures table
-ALTER TABLE adventures ADD COLUMN area_ids INTEGER[] DEFAULT '{-1}';
-
--- Create areas table
-CREATE TABLE IF NOT EXISTS areas (
-  id INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,
-  description TEXT NOT NULL,
-  image TEXT NOT NULL,
-  level_requirement INTEGER NOT NULL DEFAULT 1,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Add character_selected_area table to track which area a character has selected for the day
-CREATE TABLE IF NOT EXISTS character_selected_area (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  character_id uuid NOT NULL REFERENCES characters(id) UNIQUE,
-  area_id INTEGER NOT NULL,
-  day INTEGER NOT NULL,
-  selected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create index for performance
-CREATE INDEX IF NOT EXISTS idx_character_selected_area_character_id ON character_selected_area(character_id);
-
--- Enable Row Level Security
-ALTER TABLE IF EXISTS character_selected_area ENABLE ROW LEVEL SECURITY;
-
 -- Character selected area can only be accessed by the character's owner
 CREATE POLICY character_selected_area_policy ON character_selected_area
   FOR ALL
@@ -428,24 +428,16 @@ CREATE POLICY character_selected_area_policy ON character_selected_area
     AND (characters.user_id::TEXT = auth.uid()::TEXT OR characters.user_id IS NULL)
   ));
 
--- Create character_selected_area table
-CREATE TABLE IF NOT EXISTS character_selected_area (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  character_id UUID NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
-  area_id INTEGER NOT NULL,
-  day INTEGER NOT NULL,
-  selected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(character_id, day)
-);
+-- Add comments to explain the purpose of the columns
+COMMENT ON TABLE character_adventures IS 'Tracks the current adventure state for each character';
+COMMENT ON COLUMN character_adventures.current_state IS 'Current state of the character in the adventure flow (none, selecting_area, adventure, combat, outcome, adventures_completed)';
+COMMENT ON COLUMN character_adventures.current_adventure_id IS 'ID of the current adventure';
+COMMENT ON COLUMN character_adventures.decision_id IS 'ID of the selected decision';
+COMMENT ON COLUMN character_adventures.outcome_id IS 'ID of the current outcome';
+COMMENT ON COLUMN character_adventures.combat_id IS 'ID of the active combat';
+COMMENT ON COLUMN character_adventures.day IS 'Game day';
+COMMENT ON COLUMN character_adventures.adventure_number IS 'Which adventure of the day (1-5)';
 
--- Add index for faster lookups
-CREATE INDEX IF NOT EXISTS idx_character_selected_area_character_id ON character_selected_area(character_id);
-CREATE INDEX IF NOT EXISTS idx_character_selected_area_day ON character_selected_area(day);
-
--- Add area_id column to adventures table if it doesn't exist
-ALTER TABLE adventures ADD COLUMN IF NOT EXISTS area_id INTEGER;
-
--- Add comment to explain the purpose of the table
 COMMENT ON TABLE character_selected_area IS 'Tracks which area a character has selected for each day';
 COMMENT ON COLUMN character_selected_area.character_id IS 'Reference to the character';
 COMMENT ON COLUMN character_selected_area.area_id IS 'ID of the selected area';

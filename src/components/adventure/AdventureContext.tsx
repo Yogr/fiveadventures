@@ -9,6 +9,7 @@ import { getCharacterById } from '@/app/actions/character';
 import { getAdventure } from '@/app/actions/adventure-updated';
 import { getActiveCharacterCombat } from '@/app/actions/combat';
 import { getSelectedArea } from '@/app/actions/area';
+import { updateAdventureState } from '@/app/actions/adventure-state';
 
 // Define the state shape
 interface AdventureState {
@@ -191,9 +192,10 @@ export function AdventureProvider({
       if (selectedAreaResponse.success && selectedAreaResponse.data) {
         // Find the area object from the areas array
         const areaId = selectedAreaResponse.data;
-        console.log('Found area ID:', areaId, 'looking in areas:', state.areas.map(a => a.id));
+        const areas = state.areas; // Capture areas to avoid dependency on state.areas
+        console.log('Found area ID:', areaId, 'looking in areas:', areas.map(a => a.id));
         
-        const selectedAreaObj = state.areas.find(area => area.id === areaId);
+        const selectedAreaObj = areas.find(area => area.id === areaId);
         
         if (selectedAreaObj) {
           console.log('Found matching area object:', selectedAreaObj.name);
@@ -213,7 +215,7 @@ export function AdventureProvider({
       // In case of error, set selectedArea to null
       dispatch({ type: 'SET_SELECTED_AREA', payload: null });
     }
-  }, [state.areas, dispatch]);
+  }, [dispatch]); // Remove state.areas dependency
 
   // Load adventure data
   const loadAdventureData = useCallback(async () => {
@@ -223,26 +225,86 @@ export function AdventureProvider({
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
       
+      const characterId = state.character.id;
+      const selectedAreaId = state.selectedArea.id;
+      const skipCombatCheck = state.skipCombatCheck;
+      const hasOutcome = !!state.outcome;
+      const adventureCount = state.character.daily_adventure_count;
+      
+      // Get current adventure state
+      const adventureStateResponse = await import('@/app/actions/adventure-state').then(
+        ({ getAdventureState }) => getAdventureState(characterId)
+      );
+      
+      let currentState = 'none';
+      if (adventureStateResponse.success && adventureStateResponse.data) {
+        currentState = adventureStateResponse.data.current_state;
+      }
+      
       // Check if character has completed all adventures for the day
-      if (state.character.daily_adventure_count >= 5) { // Using 5 as MAX_ADVENTURES_PER_DAY
+      if (adventureCount >= 5) { // Using 5 as MAX_ADVENTURES_PER_DAY
+        // Update state to adventures_completed if not already
+        if (currentState !== 'adventures_completed') {
+          await updateAdventureState(characterId, {
+            current_state: 'adventures_completed',
+            current_adventure_id: null,
+            decision_id: null,
+            outcome_id: null,
+            combat_id: null,
+            day: state.character.last_played_day,
+            adventure_number: adventureCount
+          });
+        }
         dispatch({ type: 'SET_LOADING', payload: false });
         return;
       }
 
-      // Skip combat check if flag is set
-      if (!state.skipCombatCheck) {
+      // Only check for active combat if the character's state is 'combat' or we're skipping the check
+      if ((currentState === 'combat' || skipCombatCheck) && !skipCombatCheck) {
         // Check if character is in active combat
-        const activeCombatResponse = await getActiveCharacterCombat(state.character.id);
+        const activeCombatResponse = await getActiveCharacterCombat(characterId);
         
         if (activeCombatResponse.success && activeCombatResponse.data) {
+          // Update state to combat if not already
+          if (currentState !== 'combat') {
+            await updateAdventureState(characterId, {
+              current_state: 'combat',
+              current_adventure_id: null,
+              decision_id: null,
+              outcome_id: null,
+              combat_id: activeCombatResponse.data.id,
+              day: state.character.last_played_day,
+              adventure_number: adventureCount
+            });
+          }
+          
           dispatch({ type: 'SET_COMBAT_ID', payload: activeCombatResponse.data.id });
           dispatch({ type: 'SET_SHOW_COMBAT', payload: true });
           dispatch({ type: 'SET_LOADING', payload: false });
           return;
         }
-      } else {
+      } else if (skipCombatCheck) {
         // Reset the skip combat check flag after using it once
         dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: false });
+      }
+      
+      // If character is in 'outcome' state, don't load a new adventure
+      if (currentState === 'outcome' && hasOutcome) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return;
+      }
+      
+      // Update state to adventure
+      if (currentState !== 'adventure') {
+        await updateAdventureState(characterId, {
+          current_state: 'adventure',
+          current_adventure_id: null,
+          decision_id: null,
+          outcome_id: null,
+          combat_id: null,
+          day: state.character.last_played_day,
+          adventure_number: adventureCount
+        });
       }
       
       const adventureResponse = await getAdventure(state.character, state.selectedArea);
@@ -263,26 +325,34 @@ export function AdventureProvider({
       dispatch({ type: 'SET_ERROR', payload: 'An unexpected error occurred' });
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [state.character, state.selectedArea]);
+  }, [state.character?.id, state.selectedArea?.id, state.skipCombatCheck, !!state.outcome]);
 
   // Select area
   const selectArea = useCallback(async (area: Area) => {
     if (!state.character) return;
     
     try {
+      const characterId = state.character.id;
+      
       dispatch({ type: 'SET_LOADING', payload: true });
       
+      // Update adventure state to selecting_area
       const { selectArea } = await import('@/app/actions/area');
-      const result = await selectArea(state.character.id, area.id);
+      await updateAdventureState(characterId, {
+        current_state: 'selecting_area',
+        current_adventure_id: null,
+        decision_id: null,
+        outcome_id: null,
+        combat_id: null,
+        day: state.character.last_played_day,
+        adventure_number: state.character.daily_adventure_count
+      });
+      
+      const result = await selectArea(characterId, area.id);
       
       if (result.success) {
         dispatch({ type: 'SET_SELECTED_AREA', payload: area });
-        
-        // Refresh server components after a short delay to ensure they have the latest data
-        setTimeout(() => {
-          console.log('Area selected, refreshing server components');
-          //router.refresh();
-        }, 300);
+        console.log('Area selected, state updated');
       } else {
         dispatch({ type: 'SET_ERROR', payload: result.error || 'Failed to select area' });
       }
@@ -292,7 +362,7 @@ export function AdventureProvider({
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [state.character, router]);
+  }, [state.character?.id]);
 
   // Select decision
   const selectDecision = useCallback((decision: AdventureDecision) => {
@@ -307,11 +377,16 @@ export function AdventureProvider({
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
       
+      const characterId = state.character.id;
+      const adventureId = state.adventure.id;
+      const decisionId = state.selectedDecision.id;
+      const currentExperience = state.character.experience;
+      
       const { completeAdventure } = await import('@/app/actions/adventure-updated');
       const result = await completeAdventure({
         character: state.character,
-        adventureId: state.adventure.id,
-        decisionId: state.selectedDecision.id
+        adventureId: adventureId,
+        decisionId: decisionId
       });
       
       if (!result.success || !result.data) {
@@ -324,40 +399,59 @@ export function AdventureProvider({
       }
       
       // Save old experience for level up check
-      dispatch({ type: 'SET_OLD_EXPERIENCE', payload: state.character.experience });
+      dispatch({ type: 'SET_OLD_EXPERIENCE', payload: currentExperience });
       
       // Check if outcome has combat
       if (result.data.outcome.has_combat && result.data.combat) {
+        // Update adventure state to combat
+        await updateAdventureState(characterId, {
+          current_state: 'combat',
+          current_adventure_id: adventureId,
+          decision_id: decisionId,
+          outcome_id: result.data.outcome.id,
+          combat_id: result.data.combat.id,
+          day: state.character.last_played_day,
+          adventure_number: state.character.daily_adventure_count
+        });
+        
         dispatch({ type: 'SET_COMBAT_ID', payload: result.data.combat.id });
         dispatch({ type: 'SET_SHOW_COMBAT', payload: true });
+      } else {
+        // Update adventure state to outcome
+        await updateAdventureState(characterId, {
+          current_state: 'outcome',
+          current_adventure_id: adventureId,
+          decision_id: decisionId,
+          outcome_id: result.data.outcome.id,
+          combat_id: null,
+          day: state.character.last_played_day,
+          adventure_number: state.character.daily_adventure_count
+        });
       }
       
       // Set outcome
       dispatch({ type: 'SET_OUTCOME', payload: result.data.outcome });
       
       // Show level up animation if experience increased enough to level up
-      if (result.data.character.experience > state.character.experience) {
+      if (result.data.character.experience > currentExperience) {
         dispatch({ type: 'SET_SHOW_LEVEL_UP', payload: true });
       }
       
       // Update character
       dispatch({ type: 'SET_CHARACTER', payload: result.data.character });
-      
-      // Refresh server components after a short delay to ensure they have the latest data
-      setTimeout(() => {
-        console.log('Adventure completed, refreshing server components');
-        //router.refresh();
-      }, 300);
+      console.log('Adventure completed, state updated');
     } catch (error) {
       console.error('Error completing adventure:', error);
       dispatch({ type: 'SET_ERROR', payload: 'An unexpected error occurred' });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [state.character, state.adventure, state.selectedDecision, router]);
+  }, [state.character?.id, state.adventure?.id, state.selectedDecision?.id]);
 
   // Handle combat end
   const handleCombatEnd = useCallback((result: { isVictory: boolean; ranAway: boolean; monsterName: string }) => {
+    console.log('AdventureContext: handleCombatEnd called with result:', result);
+    
     // Set flag to skip combat check on next loadAdventureData call
     dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: true });
     
@@ -367,6 +461,7 @@ export function AdventureProvider({
     
     // If the player ran away, show a different outcome
     if (result.ranAway) {
+      console.log('AdventureContext: Player ran away, creating custom outcome');
       dispatch({
         type: 'SET_OUTCOME',
         payload: {
@@ -387,19 +482,70 @@ export function AdventureProvider({
       });
     }
     
-    // Refresh character data after combat
+    // Update adventure state to outcome
     if (state.character) {
-      loadCharacterData(state.character.id);
+      const characterId = state.character.id;
+      
+      console.log('AdventureContext: Refreshing character data after combat end');
+      console.log('AdventureContext: Current character state before refresh:', {
+        hp: `${state.character.current_hitpoints}/${state.character.max_hitpoints}`,
+        energy: `${state.character.current_energy}/${state.character.max_energy}`,
+        gold: state.character.gold,
+        adventureCount: state.character.daily_adventure_count
+      });
+      
+      // Update adventure state to outcome
+      updateAdventureState(characterId, {
+        current_state: 'outcome',
+        current_adventure_id: null,
+        decision_id: null,
+        outcome_id: null,
+        combat_id: null,
+        day: state.character.last_played_day,
+        adventure_number: state.character.daily_adventure_count
+      }).then(() => {
+        // Refresh character data after updating state
+        getCharacterById(characterId).then(response => {
+          if (response.success && response.data) {
+            console.log('AdventureContext: Character data refreshed after combat end');
+            console.log('AdventureContext: Updated character state after refresh:', {
+              hp: `${response.data.current_hitpoints}/${response.data.max_hitpoints}`,
+              energy: `${response.data.current_energy}/${response.data.max_energy}`,
+              gold: response.data.gold,
+              adventureCount: response.data.daily_adventure_count
+            });
+            
+            // Update character in state directly
+            dispatch({ type: 'SET_CHARACTER', payload: response.data });
+          } else {
+            console.error('AdventureContext: Error refreshing character data after combat:', response.error);
+            // Fall back to loadCharacterData if getCharacterById fails
+            loadCharacterData(characterId)
+              .catch(error => {
+                console.error('AdventureContext: Error refreshing character data after combat:', error);
+              });
+          }
+        }).catch(error => {
+          console.error('AdventureContext: Error refreshing character data after combat:', error);
+          // Fall back to loadCharacterData if getCharacterById fails
+          loadCharacterData(characterId)
+            .catch(error => {
+              console.error('AdventureContext: Error refreshing character data after combat:', error);
+            });
+        });
+      });
     }
     
-    console.log('Combat ended, no longer refreshing server components');
-  }, [state.character, loadCharacterData, dispatch]);
+    console.log('AdventureContext: Combat ended, no longer refreshing server components');
+  }, [state.character?.id, loadCharacterData, dispatch]);
 
   // Continue to next adventure
   const continueToNextAdventure = useCallback(async () => {
     if (!state.character) return;
     
     try {
+      const characterId = state.character.id;
+      
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'RESET_ADVENTURE_STATE' });
       
@@ -409,8 +555,35 @@ export function AdventureProvider({
       // Clear combat state
       dispatch({ type: 'SET_COMBAT_ID', payload: null });
       
-      // Get character data
-      await loadCharacterData(state.character.id);
+      // Update adventure state to adventure
+      await updateAdventureState(characterId, {
+        current_state: 'adventure',
+        current_adventure_id: null,
+        decision_id: null,
+        outcome_id: null,
+        combat_id: null,
+        day: state.character.last_played_day,
+        adventure_number: state.character.daily_adventure_count
+      });
+      
+      // Get character data directly and update state
+      const { getCharacterById } = await import('@/app/actions/character');
+      const response = await getCharacterById(characterId);
+      if (response.success && response.data) {
+        console.log('AdventureContext: Character data refreshed after continuing to next adventure');
+        console.log('AdventureContext: Updated character state:', {
+          hp: `${response.data.current_hitpoints}/${response.data.max_hitpoints}`,
+          energy: `${response.data.current_energy}/${response.data.max_energy}`,
+          gold: response.data.gold,
+          adventureCount: response.data.daily_adventure_count
+        });
+        
+        // Update character in state directly
+        dispatch({ type: 'SET_CHARACTER', payload: response.data });
+      } else {
+        // Fall back to loadCharacterData if getCharacterById fails
+        await loadCharacterData(characterId);
+      }
       
       // Load adventure data
       await loadAdventureData();
@@ -422,18 +595,30 @@ export function AdventureProvider({
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [state.character, loadCharacterData, loadAdventureData, dispatch]);
+  }, [state.character?.id, loadCharacterData, loadAdventureData, dispatch]);
 
   // Set up Supabase subscription for character updates
   useEffect(() => {
     if (!state.character) return;
     
-    const supabase = createClient();
     const characterId = state.character.id;
+    if (!characterId) return;
+    
+    const supabase = createClient();
+    
+    // Enhanced logging for debugging
+    console.log('AdventureContext: Creating subscription for character ID:', characterId);
+    console.log('AdventureContext: Initial character state:', {
+      name: state.character.name,
+      hp: `${state.character.current_hitpoints}/${state.character.max_hitpoints}`,
+      energy: `${state.character.current_energy}/${state.character.max_energy}`,
+      gold: state.character.gold,
+      adventureCount: state.character.daily_adventure_count
+    });
     
     // Subscribe to character updates
     const subscription = supabase
-      .channel(`character-${characterId}`)
+      .channel(`character-${characterId}-adventure`)
       .on(
         'postgres_changes',
         {
@@ -442,17 +627,43 @@ export function AdventureProvider({
           table: 'characters',
           filter: `id=eq.${characterId}`
         },
-        async () => {
+        async (payload) => {
+          // Enhanced logging for debugging
+          console.log('AdventureContext: Received database update event:', {
+            eventType: 'UPDATE',
+            table: 'characters',
+            recordId: payload.new.id,
+            timestamp: new Date().toISOString()
+          });
+          console.log('AdventureContext: Updated character data from payload:', {
+            name: payload.new.name,
+            hp: `${payload.new.current_hitpoints}/${payload.new.max_hitpoints}`,
+            energy: `${payload.new.current_energy}/${payload.new.max_energy}`,
+            gold: payload.new.gold,
+            adventureCount: payload.new.daily_adventure_count
+          });
+          
           // Refresh character data when updated
+          console.log('AdventureContext: Fetching full character data from server...');
           await loadCharacterData(characterId);
+          console.log('AdventureContext: Character data refreshed');
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('AdventureContext: Successfully subscribed to character updates');
+        } else {
+          console.error('AdventureContext: Subscription error:', status, err);
+        }
+      });
+    
+    console.log('AdventureContext: Subscription initialized with channel:', `character-${characterId}-adventure`);
     
     return () => {
+      console.log('AdventureContext: Cleaning up Supabase subscription');
       supabase.removeChannel(subscription);
     };
-  }, [state.character, loadCharacterData]);
+  }, [state.character?.id, loadCharacterData]); // Only depend on character ID, not the entire character object
 
   // Reset animation state when outcome changes
   useEffect(() => {
@@ -467,7 +678,7 @@ export function AdventureProvider({
     if (state.character && state.selectedArea) {
       loadAdventureData();
     }
-  }, [state.selectedArea, loadAdventureData]);
+  }, [state.character?.id, state.selectedArea?.id, loadAdventureData]);
 
   const contextValue = {
     state,

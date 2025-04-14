@@ -14,6 +14,7 @@ import type {
 } from '@/lib/types';
 import { getCharacterById } from './character';
 import { createClient } from '@/lib/supabase/server';
+import { updateAdventureState } from './adventure-state';
 
 // Get a random adventure for a character
 export async function getAdventure(
@@ -78,6 +79,22 @@ export async function getAdventure(
     // For simplicity, we'll use the seed to generate an index
     const adventureIndex = Math.abs(seed) % data.length;
     const selectedAdventure = data[adventureIndex];
+    
+    // Update adventure state to adventure
+    const adventureStateResult = await updateAdventureState(characterId, {
+      current_state: 'adventure',
+      current_adventure_id: selectedAdventure.id,
+      decision_id: null,
+      outcome_id: null,
+      combat_id: null,
+      day: character.last_played_day,
+      adventure_number: character.daily_adventure_count + 1
+    });
+    
+    if (!adventureStateResult.success) {
+      console.error('Error updating adventure state:', adventureStateResult.error);
+      // Continue anyway, this isn't critical
+    }
     
     return {
       success: true,
@@ -286,7 +303,23 @@ export async function completeAdventure({
       };
     }
     
-    // Record the adventure in the character's history
+    // Update adventure state
+    const adventureStateResult = await updateAdventureState(characterId, {
+      current_state: 'outcome',
+      current_adventure_id: adventureId,
+      decision_id: decisionId,
+      outcome_id: outcome.id,
+      combat_id: null,
+      day: character.last_played_day,
+      adventure_number: newAdventureCount
+    });
+    
+    if (!adventureStateResult.success) {
+      console.error('Error updating adventure state:', adventureStateResult.error);
+      // Continue anyway, this isn't critical
+    }
+    
+    // Record the adventure in the character's history for backward compatibility
     const { error: historyError } = await supabase
       .from('character_adventures')
       .insert({
@@ -346,6 +379,22 @@ export async function completeAdventure({
             combatData = {
               id: combat.id
             };
+            
+            // Update adventure state to combat
+            const adventureStateResult = await updateAdventureState(characterId, {
+              current_state: 'combat',
+              current_adventure_id: adventureId,
+              decision_id: decisionId,
+              outcome_id: outcome.id,
+              combat_id: combat.id,
+              day: character.last_played_day,
+              adventure_number: newAdventureCount
+            });
+            
+            if (!adventureStateResult.success) {
+              console.error('Error updating adventure state:', adventureStateResult.error);
+              // Continue anyway, this isn't critical
+            }
           }
         } catch (combatErr) {
           console.error('Unexpected error in combat creation:', combatErr);

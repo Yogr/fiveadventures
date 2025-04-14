@@ -5,6 +5,7 @@ import type { Area } from '@/lib/types';
 import areasData from '../../../data/areas.json';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentGameDay } from '@/lib/utils';
+import { updateAdventureState } from './adventure-state';
 
 // Get all areas
 export async function getAreas() {
@@ -132,6 +133,22 @@ export async function selectArea(characterId: string, areaId: number) {
     }
   }
 
+  // Update adventure state to selecting_area
+  const adventureStateResult = await updateAdventureState(characterId, {
+    current_state: 'selecting_area',
+    current_adventure_id: null,
+    decision_id: null,
+    outcome_id: null,
+    combat_id: null,
+    day: currentDay,
+    adventure_number: 0
+  });
+  
+  if (!adventureStateResult.success) {
+    console.error('Error updating adventure state:', adventureStateResult.error);
+    // Continue anyway, this isn't critical
+  }
+  
   return {
     success: true
   };
