@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Adventure, AdventureDecision, Character } from '@/lib/types';
 import { useAdventure } from '../AdventureContext';
 
@@ -10,6 +11,7 @@ interface AdventureViewProps {
 }
 
 const AdventureView = memo(function AdventureView({ adventure, character }: AdventureViewProps) {
+  const router = useRouter();
   const { state, selectDecision, completeAdventure } = useAdventure();
   const { selectedDecision, loading } = state;
   
@@ -18,7 +20,11 @@ const AdventureView = memo(function AdventureView({ adventure, character }: Adve
   };
   
   const handleCompleteAdventure = async () => {
+    console.log('Completing adventure...');
+    // Complete the adventure first
     await completeAdventure();
+    
+    // No need to call router.refresh() here as state updates will trigger re-renders
   };
   
   return (

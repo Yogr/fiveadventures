@@ -1,10 +1,11 @@
 'use client';
 
-import { memo, useEffect, useState } from 'react';
+import { memo, useState } from 'react';
 import Image from 'next/image';
 import type { Area, Character } from '@/lib/types';
 import { getLevelFromExperience } from '@/lib/utils';
 import { useAdventure } from '../AdventureContext';
+// Removed unused router import
 
 interface AreaSelectionViewProps {
   areas: Area[];
@@ -17,10 +18,7 @@ const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: 
   const characterLevel = getLevelFromExperience(character.experience);
   const [preSelectedArea, setPreSelectedArea] = useState<Area | null>(null);
   
-  // Log for debugging
-  useEffect(() => {
-    console.log('AreaSelectionView rendered with areas:', areas);
-  }, [areas]);
+  // Removed debug logging useEffect to reduce unnecessary renders
   
   // Check if areas is empty
   if (!areas || areas.length === 0) {
@@ -49,7 +47,8 @@ const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: 
   
   const handleConfirmSelection = async () => {
     if (preSelectedArea) {
-      console.log('Area confirmed:', preSelectedArea.name);
+      console.log('Area confirmed:', preSelectedArea.name, 'with ID:', preSelectedArea.id);
+      console.log('Character ID:', character.id);
       await selectArea(preSelectedArea);
     }
   };

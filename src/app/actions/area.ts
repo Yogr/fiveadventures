@@ -68,27 +68,71 @@ export async function getSelectedArea(characterId: string, day: number) {
 
 export async function selectArea(characterId: string, areaId: number) {
   const supabase = await createClient();
-
   const currentDay = getCurrentGameDay();
 
-  const { error } = await supabase
+  // First check if the character already has a selected area row
+  const { data: existingArea, error: checkError } = await supabase
     .from('character_selected_area')
-    .insert({
-      character_id: characterId,
-      area_id: areaId,
-      day: currentDay
-    })
+    .select('area_id, day')
+    .eq('character_id', characterId)
+    .single();
 
-  if (error) {
-    console.error('Error selecting area:', error);
+  if (checkError && checkError.code !== 'PGRST116') {
+    // Real error, not just "no rows found"
+    console.error('Error checking existing area:', checkError);
     return {
       success: false,
-      error: 'Failed to select area'
+      error: 'Failed to check existing area'
+    };
+  }
+
+  // If area already exists, update it instead of inserting
+  if (existingArea) {
+    if (existingArea.day !== currentDay) {
+      // If the day is different, we can update the area
+      const { error: updateError } = await supabase
+        .from('character_selected_area')
+        .update({
+          area_id: areaId,
+          day: currentDay
+        })
+        .eq('character_id', characterId);
+      if (updateError) {
+        console.error('Error updating area:', updateError);
+        return {
+          success: false,
+          error: 'Failed to update area'
+        };
+      }
+      console.log('Area updated successfully for character:', characterId, 'to area:', areaId);
+    } else {
+      // If the day is the same, we can just return failure because user can't select a new area today
+      return {
+        success: false,
+        message: 'Area already selected for today'
+      };
+    }
+
+  } else {
+    // No existing area, insert a new one
+    const { error: insertError } = await supabase
+      .from('character_selected_area')
+      .insert({
+        character_id: characterId,
+        area_id: areaId,
+        day: currentDay
+      });
+
+    if (insertError) {
+      console.error('Error inserting area:', insertError);
+      return {
+        success: false,
+        error: 'Failed to insert area'
+      };
     }
   }
 
   return {
     success: true
-  }
-
+  };
 }

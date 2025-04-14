@@ -1,10 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import WorldBossButtonCompanion from '@/components/worldboss/world-boss-button-companion';
 import CharacterStats from '@/components/character/character-stats';
 import type { Character } from '@/lib/types';
+import { createClient } from '@/lib/supabase/client';
+import { getCharacterById } from '@/app/actions/character';
 
 interface GameNavigationProps {
   activeTab: 'adventure' | 'shop' | 'worldboss';
@@ -19,10 +22,61 @@ interface GameNavigationProps {
 export default function GameNavigation({ 
   activeTab, 
   currentDay, 
-  character,
+  character: initialCharacter,
   user, 
   showWorldBossCompanion = false 
 }: GameNavigationProps) {
+  // Use state to track the character data so we can update it
+  const [character, setCharacter] = useState<Character>(initialCharacter);
+
+  // Set up Supabase subscription for character updates
+  useEffect(() => {
+    console.log('Setting up Supabase subscription for character updates in GameNavigation');
+    const supabase = createClient();
+    const characterId = initialCharacter.id;
+    
+    // Subscribe to character updates
+    const subscription = supabase
+      .channel(`nav-character-${characterId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'characters',
+          filter: `id=eq.${characterId}`
+        },
+        async (payload) => {
+          // Refresh character data when updated
+          console.log('Character updated in database:', payload);
+          console.log('Refreshing navigation data for character:', characterId);
+          
+          try {
+            const response = await getCharacterById(characterId);
+            console.log('Character data response:', response);
+            
+            if (response.success && response.data) {
+              console.log('Setting new character data:', response.data);
+              console.log('Old adventure count:', character.daily_adventure_count);
+              console.log('New adventure count:', response.data.daily_adventure_count);
+              setCharacter(response.data);
+            } else {
+              console.error('Failed to get character data:', response.error);
+            }
+          } catch (error) {
+            console.error('Error refreshing character data:', error);
+          }
+        }
+      )
+      .subscribe();
+    
+    console.log('Subscription set up with channel:', `nav-character-${characterId}`);
+    
+    return () => {
+      console.log('Cleaning up Supabase subscription');
+      supabase.removeChannel(subscription);
+    };
+  }, [initialCharacter.id, character.daily_adventure_count]);
   return (
     <div className="w-full flex flex-col">
       {/* Top navigation bar */}

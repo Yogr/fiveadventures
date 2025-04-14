@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Combat, Character, Skill } from '@/lib/types';
 import { getCombat, startCombatTurn } from '@/app/actions/adventure-updated';
 import { getCharacterSkills } from '@/app/actions/combat';
@@ -14,6 +15,7 @@ interface CombatInterfaceProps {
 }
 
 export default function CombatInterface({ combatId, character: initialCharacter, onCombatEnd }: CombatInterfaceProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [character, setCharacter] = useState<Character>(initialCharacter);
   const [combat, setCombat] = useState<Combat | null>(null);
@@ -76,13 +78,16 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
       );
       
+      // No need to call router.refresh() here as state updates will trigger re-renders
+      console.log('Combat completed');
+      
       onCombatEnd({
         isVictory: isVictory,
         ranAway: !!ranAway,
         monsterName: combat.monster?.name || 'monster'
       });
     }
-  }, [combat, onCombatEnd]);
+  }, [combat, onCombatEnd, router]);
 
   // Create a floating damage number
   const createFloatingNumber = (target: 'character' | 'monster', value: number, type: 'damage' | 'heal' | 'effect' = 'damage', text?: string) => {
@@ -585,6 +590,9 @@ export default function CombatInterface({ combatId, character: initialCharacter,
               const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) => 
                 turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
               );
+              
+              // No need to call router.refresh() here as state updates will trigger re-renders
+              console.log('Continuing after combat');
               
               onCombatEnd({
                 isVictory: combat.is_victory === true,

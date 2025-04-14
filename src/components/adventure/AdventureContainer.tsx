@@ -12,7 +12,6 @@ import AdventureView from './views/AdventureView';
 import OutcomeView from './views/OutcomeView';
 import CombatInterface from '@/components/combat/combat-interface';
 import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
-import { getAreas } from '@/app/actions/area';
 
 const AdventureContainer = memo(function AdventureContainer() {
   const { 
@@ -38,25 +37,8 @@ const AdventureContainer = memo(function AdventureContainer() {
     showLevelUp
   } = state;
   
-  // Load areas on mount
-  useEffect(() => {
-    const loadAreasData = async () => {
-      try {
-        console.log('Loading areas data...');
-        const areasResponse = await getAreas();
-        if (areasResponse.success && areasResponse.data) {
-          console.log('Areas loaded successfully:', areasResponse.data.length);
-          dispatch({ type: 'SET_AREAS', payload: areasResponse.data });
-        } else {
-          console.error('Failed to load areas:', areasResponse.error);
-        }
-      } catch (error) {
-        console.error('Error loading areas:', error);
-      }
-    };
-    
-    loadAreasData();
-  }, [dispatch]);
+  // We no longer need to load areas on mount since they're passed from the server
+  // through AdventureProvider's initialAreas prop
   
   // Load selected area if character exists
   useEffect(() => {

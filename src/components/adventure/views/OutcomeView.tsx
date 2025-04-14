@@ -2,6 +2,7 @@
 
 import { memo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { AdventureOutcome, Character } from '@/lib/types';
 import { ROUTES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 import AdventureTracker from '@/components/adventure/adventure-tracker';
@@ -25,8 +26,12 @@ const OutcomeView = memo(function OutcomeView({
   showRewards,
   showLevelUp
 }: OutcomeViewProps) {
+  const router = useRouter();
   const { continueToNextAdventure, dispatch } = useAdventure();
   const [localShowRewards, setLocalShowRewards] = useState(false);
+  
+  // We no longer need to refresh the page on mount as we've optimized data flow
+  // and removed redundant refreshes throughout the application
   
   // Check if this is a "ran away" outcome
   const ranAway = outcome.description.includes('ran away from');
@@ -36,6 +41,8 @@ const OutcomeView = memo(function OutcomeView({
   const isFinalAdventure = character.daily_adventure_count === MAX_ADVENTURES_PER_DAY;
   
   const handleContinue = async () => {
+    console.log('Continuing to next adventure');
+    // No need to call router.refresh() here as state updates will trigger re-renders
     await continueToNextAdventure();
   };
   

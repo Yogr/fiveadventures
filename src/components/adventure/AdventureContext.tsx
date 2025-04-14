@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { Character, Adventure, AdventureDecision, AdventureOutcome, Combat, Area } from '@/lib/types';
 import { getCharacterById } from '@/app/actions/character';
@@ -24,6 +25,7 @@ interface AdventureState {
   showRewards: boolean;
   oldExperience: number;
   showLevelUp: boolean;
+  skipCombatCheck: boolean; // Flag to skip combat check after combat ends
 }
 
 // Define action types
@@ -41,6 +43,7 @@ type AdventureAction =
   | { type: 'SET_SHOW_REWARDS'; payload: boolean }
   | { type: 'SET_OLD_EXPERIENCE'; payload: number }
   | { type: 'SET_SHOW_LEVEL_UP'; payload: boolean }
+  | { type: 'SET_SKIP_COMBAT_CHECK'; payload: boolean }
   | { type: 'RESET_ADVENTURE_STATE' };
 
 // Create the context
@@ -74,6 +77,7 @@ const initialState: AdventureState = {
   showRewards: false,
   oldExperience: 0,
   showLevelUp: false,
+  skipCombatCheck: false,
 };
 
 // Reducer function
@@ -105,6 +109,8 @@ function adventureReducer(state: AdventureState, action: AdventureAction): Adven
       return { ...state, oldExperience: action.payload };
     case 'SET_SHOW_LEVEL_UP':
       return { ...state, showLevelUp: action.payload };
+    case 'SET_SKIP_COMBAT_CHECK':
+      return { ...state, skipCombatCheck: action.payload };
     case 'RESET_ADVENTURE_STATE':
       return {
         ...state,
@@ -112,6 +118,8 @@ function adventureReducer(state: AdventureState, action: AdventureAction): Adven
         outcome: null,
         showRewards: false,
         showLevelUp: false,
+        combatId: null,
+        showCombat: false,
       };
     default:
       return state;
@@ -134,6 +142,7 @@ export function AdventureProvider({
   initialSelectedArea = null,
   children 
 }: AdventureProviderProps) {
+  const router = useRouter();
   const [state, dispatch] = useReducer(adventureReducer, {
     ...initialState,
     character: initialCharacter,
@@ -174,21 +183,35 @@ export function AdventureProvider({
   // Load area data
   const loadAreaData = useCallback(async (characterId: string, day: number) => {
     try {
+      console.log('Loading area data for character:', characterId, 'day:', day);
       const selectedAreaResponse = await getSelectedArea(characterId, day);
+      
+      console.log('Selected area response:', selectedAreaResponse);
       
       if (selectedAreaResponse.success && selectedAreaResponse.data) {
         // Find the area object from the areas array
-        const selectedAreaObj = state.areas.find(area => area.id === selectedAreaResponse.data);
+        const areaId = selectedAreaResponse.data;
+        console.log('Found area ID:', areaId, 'looking in areas:', state.areas.map(a => a.id));
+        
+        const selectedAreaObj = state.areas.find(area => area.id === areaId);
         
         if (selectedAreaObj) {
+          console.log('Found matching area object:', selectedAreaObj.name);
           dispatch({ type: 'SET_SELECTED_AREA', payload: selectedAreaObj });
+        } else {
+          console.log('Area ID not found in areas array');
+          // Area ID not found in areas array, set selectedArea to null
+          dispatch({ type: 'SET_SELECTED_AREA', payload: null });
         }
       } else {
+        console.log('No area selected yet, setting selectedArea to null');
         // No area selected yet, set selectedArea to null
         dispatch({ type: 'SET_SELECTED_AREA', payload: null });
       }
     } catch (error) {
       console.error('Error loading area data:', error);
+      // In case of error, set selectedArea to null
+      dispatch({ type: 'SET_SELECTED_AREA', payload: null });
     }
   }, [state.areas, dispatch]);
 
@@ -206,14 +229,20 @@ export function AdventureProvider({
         return;
       }
 
-      // Check if character is in active combat
-      const activeCombatResponse = await getActiveCharacterCombat(state.character.id);
-      
-      if (activeCombatResponse.success && activeCombatResponse.data) {
-        dispatch({ type: 'SET_COMBAT_ID', payload: activeCombatResponse.data.id });
-        dispatch({ type: 'SET_SHOW_COMBAT', payload: true });
-        dispatch({ type: 'SET_LOADING', payload: false });
-        return;
+      // Skip combat check if flag is set
+      if (!state.skipCombatCheck) {
+        // Check if character is in active combat
+        const activeCombatResponse = await getActiveCharacterCombat(state.character.id);
+        
+        if (activeCombatResponse.success && activeCombatResponse.data) {
+          dispatch({ type: 'SET_COMBAT_ID', payload: activeCombatResponse.data.id });
+          dispatch({ type: 'SET_SHOW_COMBAT', payload: true });
+          dispatch({ type: 'SET_LOADING', payload: false });
+          return;
+        }
+      } else {
+        // Reset the skip combat check flag after using it once
+        dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: false });
       }
       
       const adventureResponse = await getAdventure(state.character, state.selectedArea);
@@ -248,6 +277,12 @@ export function AdventureProvider({
       
       if (result.success) {
         dispatch({ type: 'SET_SELECTED_AREA', payload: area });
+        
+        // Refresh server components after a short delay to ensure they have the latest data
+        setTimeout(() => {
+          console.log('Area selected, refreshing server components');
+          //router.refresh();
+        }, 300);
       } else {
         dispatch({ type: 'SET_ERROR', payload: result.error || 'Failed to select area' });
       }
@@ -257,7 +292,7 @@ export function AdventureProvider({
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [state.character]);
+  }, [state.character, router]);
 
   // Select decision
   const selectDecision = useCallback((decision: AdventureDecision) => {
@@ -307,17 +342,28 @@ export function AdventureProvider({
       
       // Update character
       dispatch({ type: 'SET_CHARACTER', payload: result.data.character });
+      
+      // Refresh server components after a short delay to ensure they have the latest data
+      setTimeout(() => {
+        console.log('Adventure completed, refreshing server components');
+        //router.refresh();
+      }, 300);
     } catch (error) {
       console.error('Error completing adventure:', error);
       dispatch({ type: 'SET_ERROR', payload: 'An unexpected error occurred' });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [state.character, state.adventure, state.selectedDecision]);
+  }, [state.character, state.adventure, state.selectedDecision, router]);
 
   // Handle combat end
   const handleCombatEnd = useCallback((result: { isVictory: boolean; ranAway: boolean; monsterName: string }) => {
+    // Set flag to skip combat check on next loadAdventureData call
+    dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: true });
+    
+    // Clear combat state
     dispatch({ type: 'SET_SHOW_COMBAT', payload: false });
+    dispatch({ type: 'SET_COMBAT_ID', payload: null });
     
     // If the player ran away, show a different outcome
     if (result.ranAway) {
@@ -345,7 +391,9 @@ export function AdventureProvider({
     if (state.character) {
       loadCharacterData(state.character.id);
     }
-  }, [state.character, loadCharacterData]);
+    
+    console.log('Combat ended, no longer refreshing server components');
+  }, [state.character, loadCharacterData, dispatch]);
 
   // Continue to next adventure
   const continueToNextAdventure = useCallback(async () => {
@@ -355,18 +403,26 @@ export function AdventureProvider({
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'RESET_ADVENTURE_STATE' });
       
+      // Set flag to skip combat check on next loadAdventureData call
+      dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: true });
+      
+      // Clear combat state
+      dispatch({ type: 'SET_COMBAT_ID', payload: null });
+      
       // Get character data
       await loadCharacterData(state.character.id);
       
       // Load adventure data
       await loadAdventureData();
+      
+      console.log('Continuing to next adventure');
     } catch (error) {
       console.error('Error loading next adventure:', error);
       dispatch({ type: 'SET_ERROR', payload: 'An unexpected error occurred' });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [state.character, loadCharacterData, loadAdventureData]);
+  }, [state.character, loadCharacterData, loadAdventureData, dispatch]);
 
   // Set up Supabase subscription for character updates
   useEffect(() => {
