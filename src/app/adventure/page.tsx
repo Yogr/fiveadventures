@@ -4,9 +4,7 @@ import { getCurrentGameDay } from '@/lib/utils';
 import { AdventureProvider } from '@/components/adventure/AdventureContext';
 import AdventureContainer from '@/components/adventure/AdventureContainer';
 
-// Use ISR with a reasonable revalidation time instead of forcing dynamic rendering
-// This allows caching while ensuring data is refreshed periodically
-export const revalidate = 60; // Revalidate every 60 seconds
+export const dynamic = 'force-dynamic';
 
 export default async function AdventurePage() {
   console.log('Rendering AdventurePage on server');

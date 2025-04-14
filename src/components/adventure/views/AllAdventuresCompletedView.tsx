@@ -32,9 +32,6 @@ const AllAdventuresCompletedView = memo(function AllAdventuresCompletedView({
         <Link href={ROUTES.WORLD_BOSS} className="pixel-button bg-red-600 hover:bg-red-500 active:bg-red-700">
           Fight World Boss
         </Link>
-        <Link href={ROUTES.INVENTORY} className="pixel-button bg-blue-600 hover:bg-blue-500 active:bg-blue-700">
-          Inventory
-        </Link>
         <Link href={ROUTES.SHOP} className="pixel-button bg-green-600 hover:bg-green-500 active:bg-green-700">
           Shop
         </Link>

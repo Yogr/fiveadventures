@@ -597,73 +597,8 @@ export function AdventureProvider({
     }
   }, [state.character?.id, loadCharacterData, loadAdventureData, dispatch]);
 
-  // Set up Supabase subscription for character updates
-  useEffect(() => {
-    if (!state.character) return;
-    
-    const characterId = state.character.id;
-    if (!characterId) return;
-    
-    const supabase = createClient();
-    
-    // Enhanced logging for debugging
-    console.log('AdventureContext: Creating subscription for character ID:', characterId);
-    console.log('AdventureContext: Initial character state:', {
-      name: state.character.name,
-      hp: `${state.character.current_hitpoints}/${state.character.max_hitpoints}`,
-      energy: `${state.character.current_energy}/${state.character.max_energy}`,
-      gold: state.character.gold,
-      adventureCount: state.character.daily_adventure_count
-    });
-    
-    // Subscribe to character updates
-    const subscription = supabase
-      .channel(`character-${characterId}-adventure`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'characters',
-          filter: `id=eq.${characterId}`
-        },
-        async (payload) => {
-          // Enhanced logging for debugging
-          console.log('AdventureContext: Received database update event:', {
-            eventType: 'UPDATE',
-            table: 'characters',
-            recordId: payload.new.id,
-            timestamp: new Date().toISOString()
-          });
-          console.log('AdventureContext: Updated character data from payload:', {
-            name: payload.new.name,
-            hp: `${payload.new.current_hitpoints}/${payload.new.max_hitpoints}`,
-            energy: `${payload.new.current_energy}/${payload.new.max_energy}`,
-            gold: payload.new.gold,
-            adventureCount: payload.new.daily_adventure_count
-          });
-          
-          // Refresh character data when updated
-          console.log('AdventureContext: Fetching full character data from server...');
-          await loadCharacterData(characterId);
-          console.log('AdventureContext: Character data refreshed');
-        }
-      )
-      .subscribe((status, err) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('AdventureContext: Successfully subscribed to character updates');
-        } else {
-          console.error('AdventureContext: Subscription error:', status, err);
-        }
-      });
-    
-    console.log('AdventureContext: Subscription initialized with channel:', `character-${characterId}-adventure`);
-    
-    return () => {
-      console.log('AdventureContext: Cleaning up Supabase subscription');
-      supabase.removeChannel(subscription);
-    };
-  }, [state.character?.id, loadCharacterData]); // Only depend on character ID, not the entire character object
+  // We no longer need a character subscription here as the GameNavigation component
+  // already handles character updates, and we only need to react to adventure state changes
 
   // Reset animation state when outcome changes
   useEffect(() => {
