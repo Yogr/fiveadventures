@@ -319,20 +319,18 @@ export async function completeAdventure({
       // Continue anyway, this isn't critical
     }
     
-    // Record the adventure in the character's history for backward compatibility
+    // Update the character_adventures table with the outcome
     const { error: historyError } = await supabase
       .from('character_adventures')
-      .insert({
+      .upsert({
         character_id: characterId,
-        adventure_id: adventureId,
+        current_state: 'outcome',
+        current_adventure_id: adventureId,
         decision_id: decisionId,
         outcome_id: outcome.id,
         day: character.last_played_day,
         adventure_number: newAdventureCount,
-        experience_gained: experienceGained,
-        gold_gained: goldGained,
-        item_gained_id: outcome.reward_table_id ? outcome.reward_table_id : null,
-        completed_at: new Date().toISOString()
+        updated_at: new Date().toISOString()
       });
     
     if (historyError) {
@@ -439,13 +437,12 @@ export async function getAdventureHistory(
       .from('character_adventures')
       .select(`
         *,
-        adventure:adventure_id(*),
+        adventure:current_adventure_id(*),
         decision:decision_id(*),
-        outcome:outcome_id(*),
-        item_gained:item_gained_id(*)
+        outcome:outcome_id(*)
       `)
       .eq('character_id', characterId)
-      .order('completed_at', { ascending: false });
+      .order('updated_at', { ascending: false });
     
     if (error) {
       console.error('Error getting adventure history:', error);
