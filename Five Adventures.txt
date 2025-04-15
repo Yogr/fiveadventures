@@ -5,18 +5,31 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Todo
 -------------
-- Fix the outcome rewards
+- Fix the outcome rewards rendering
+- Fix up the area selection: Display name at the top, make the info actually a pop-up like the item display, and put the 'choose area' button inside of the selected area, not at the bottom.
+- Add images to the adventure tracker
+- Add images for the adventures
+- Display level up pop up properly during outcome
+- Actually award the item loot
+- Put a little image border for rarity color around items
+- Update shop graphics and display
+- Add Skills to combat
+- Add authentication and make sure character linking works
+- Create the various platform apps and actually hook up full auth stuff
 
-
-
-
-
-- Fix skills. They should show up and be usable in combat. They probably are not being granted to the user during character creation, we need to add the skills to be inserted in the initial character creation based on their class.
-
-
-- Make 'elite' encounters and always have any encounter > 4 fetch an 'elite' encounter. These encounters always feature an encounter with an 'elite' enemy, such as a Goblin King or Minotaur Captain or a Lich or some other more fearsome enemy, but similar to other enemies in the same area.
+- Improve adventures and decisions
+  - Tweak enemy stats so they are more balanced
+  - Decisions should show a stat icon if they are determined by a stat
+  - Make sure the decision outcome randomizer selection makes sense
+  - Only show 2 options for most adventures, allow for a 3rd 'unlockable' option if character meets the stat floor
+- Add music
+- Add sounds
+- Set up the 'global' adventures
+- Make adventures for other areas
+  - Create a thorough adventure template with explicit criteria a.k.a the above adventure improvements. Then have the AI create the adventures for each area.
 
 - Have a random NPC come from the side of the screen to give quests or updates about the game. He will have a question mark or exclamation point over his head and you can click him to make him speak in a pop-up.
+
 
 Game Design
 -----------------

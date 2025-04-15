@@ -9,6 +9,7 @@ import { getCharacterById } from '@/app/actions/character';
 import { updateAdventureState } from '@/app/actions/adventure-state';
 import { useAdventureState } from '@/components/adventure/AdventureStateContext';
 import LoadingSpinner from '@/components/ui/loading-spinner';
+import Image from 'next/image';
 
 interface CombatInterfaceProps {
   combatId: string;
@@ -520,9 +521,13 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         <div className="bg-gray-800 p-3 rounded-md relative">
           <h3 className="text-lg mb-1">{character.name}</h3>
           
-          {/* Character Image Placeholder */}
           <div className="w-16 h-16 mx-auto mb-2 bg-blue-900 rounded-full flex items-center justify-center character-avatar">
-            <span className="text-xl">{character.class.charAt(0)}</span>
+            <Image
+              src={`/image/characters/${character.class.toLowerCase()}.png`}
+              alt={character.name}
+              width={64}
+              height={64}
+            />
           </div>
           
           <div className="mb-2">
@@ -564,9 +569,14 @@ export default function CombatInterface({ combatId, character: initialCharacter,
             )}
           </h3>
           
-          {/* Monster Image Placeholder */}
           <div className={`w-16 h-16 mx-auto mb-2 ${combat.monster.is_elite ? 'bg-yellow-900' : 'bg-red-900'} rounded-full flex items-center justify-center monster-avatar ${combat.monster.is_elite ? 'border-2 border-yellow-400' : ''}`}>
-            <span className="text-xl">{combat.monster.name.charAt(0)}</span>
+            <Image
+                src={`/image/enemy/${combat.monster.image_url}.png`}
+                alt={combat.monster.name}
+                width={48}
+                height={48}
+                className="-scale-x-100"
+              />
           </div>
           
           <div className="mb-2">

@@ -199,7 +199,7 @@ export async function completeAdventure({
     outcomesWithSuccessRates.sort((a, b) => b.successRate - a.successRate);
     
     // Generate a random number between 0 and 100
-    const roll = Math.floor(Math.random() * 100) + 1;
+    const roll = Math.floor(Math.random() * 100);
     
     // Select outcome based on roll and success rates
     const firstOutcomeSuccessRate = outcomesWithSuccessRates[0];

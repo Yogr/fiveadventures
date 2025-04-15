@@ -11,7 +11,7 @@
       }
     },
     "value": 20,
-    "image_url": null
+    "image_url": "sword"
   },
   {
     "name": "Iron Mace",
@@ -29,7 +29,7 @@
       }
     },
     "value": 18,
-    "image_url": null
+    "image_url": "mace"
   },
   {
     "name": "Hunter's Bow",
@@ -43,7 +43,7 @@
       }
     },
     "value": 15,
-    "image_url": null
+    "image_url": "short_bow"
   },
   {
     "name": "Apprentice Wand",
@@ -57,7 +57,7 @@
       }
     },
     "value": 25,
-    "image_url": null
+    "image_url": "wand"
   },
   {
     "name": "Leather Cap",
@@ -70,7 +70,7 @@
       }
     },
     "value": 10,
-    "image_url": null
+    "image_url": "helmet"
   },
   {
     "name": "Iron Helmet",
@@ -79,7 +79,7 @@
     "base_defense": 4,
     "effects": null,
     "value": 20,
-    "image_url": null
+    "image_url": "helmet"
   },
   {
     "name": "Wizard's Hat",
@@ -92,7 +92,7 @@
       }
     },
     "value": 35,
-    "image_url": null
+    "image_url": "wizard_hat"
   },
   {
     "name": "Leather Armor",
@@ -105,7 +105,7 @@
       }
     },
     "value": 25,
-    "image_url": null
+    "image_url": "chainmail"
   },
   {
     "name": "Chain Mail",
@@ -118,7 +118,7 @@
       }
     },
     "value": 40,
-    "image_url": null
+    "image_url": "chainmail"
   },
   {
     "name": "Mage Robes",
@@ -132,7 +132,7 @@
       }
     },
     "value": 45,
-    "image_url": null
+    "image_url": "chainmail"
   },
   {
     "name": "Lucky Coin",
@@ -144,7 +144,7 @@
       }
     },
     "value": 30,
-    "image_url": null
+    "image_url": "coin"
   },
   {
     "name": "Warrior's Pendant",
@@ -157,7 +157,7 @@
       }
     },
     "value": 35,
-    "image_url": null
+    "image_url": "ring"
   },
   {
     "name": "Thief's Charm",
@@ -170,7 +170,7 @@
       }
     },
     "value": 40,
-    "image_url": null
+    "image_url": "amethyst"
   },
   {
     "name": "Enchanted Amulet",
@@ -187,7 +187,7 @@
       }
     },
     "value": 75,
-    "image_url": null
+    "image_url": "ruby"
   },
   {
     "name": "Flaming Sword",
@@ -205,7 +205,7 @@
       }
     },
     "value": 120,
-    "image_url": null
+    "image_url": "great_sword"
   },
   {
     "name": "Frost Staff",
@@ -223,7 +223,7 @@
       }
     },
     "value": 130,
-    "image_url": null
+    "image_url": "staff"
   },
   {
     "name": "Shadow Dagger",
@@ -242,7 +242,7 @@
       }
     },
     "value": 110,
-    "image_url": null
+    "image_url": "stiletto"
   },
   {
     "name": "Plate Armor",
@@ -256,7 +256,7 @@
       }
     },
     "value": 150,
-    "image_url": null
+    "image_url": "chainmail"
   },
   {
     "name": "Enchanted Helmet",
@@ -270,7 +270,7 @@
       }
     },
     "value": 100,
-    "image_url": null
+    "image_url": "helmet"
   },
   {
     "name": "Dragon Slayer",
@@ -285,7 +285,7 @@
       }
     },
     "value": 300,
-    "image_url": null
+    "image_url": "great_sword"
   },
   {
     "name": "Archmage Staff",
@@ -304,7 +304,7 @@
       }
     },
     "value": 320,
-    "image_url": null
+    "image_url": "staff"
   },
   {
     "name": "Amulet of Second Chances",
@@ -320,7 +320,7 @@
       }
     },
     "value": 500,
-    "image_url": null
+    "image_url": "ruby"
   },
   {
     "name": "Legendary Blade of Heroes",
@@ -341,7 +341,7 @@
       }
     },
     "value": 1000,
-    "image_url": null
+    "image_url": "great_sword"
   },
   {
     "name": "Ancient Wizard's Grimoire",
@@ -364,6 +364,6 @@
       }
     },
     "value": 1200,
-    "image_url": null
+    "image_url": "grimoire"
   }
 ]

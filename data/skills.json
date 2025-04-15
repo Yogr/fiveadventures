@@ -6,6 +6,7 @@
     "class": "Warrior",
     "energy_cost": 15,
     "cooldown": 5,
+    "level_required": 1,
     "effects": {
       "strength_boost": 5,
       "duration": 3
@@ -19,6 +20,7 @@
     "class": "Warrior",
     "energy_cost": 20,
     "cooldown": 4,
+    "level_required": 5,
     "effects": {
       "damage": 8,
       "stun": 1
@@ -32,6 +34,7 @@
     "class": "Warrior",
     "energy_cost": 25,
     "cooldown": 3,
+    "level_required": 10,
     "effects": {
       "damage": 15,
       "multi_target": true
@@ -45,6 +48,7 @@
     "class": "Wizard",
     "energy_cost": 20,
     "cooldown": 2,
+    "level_required": 1,
     "effects": {
       "damage_multiplier": 1.5,
       "element": "fire"
@@ -58,6 +62,7 @@
     "class": "Wizard",
     "energy_cost": 15,
     "cooldown": 3,
+    "level_required": 5,
     "effects": {
       "damage": 12,
       "slow": 2,
@@ -72,6 +77,7 @@
     "class": "Wizard",
     "energy_cost": 25,
     "cooldown": 5,
+    "level_required": 10,
     "effects": {
       "shield": 20,
       "duration": 3
@@ -85,6 +91,7 @@
     "class": "Thief",
     "energy_cost": 10,
     "cooldown": 3,
+    "level_required": 1,
     "effects": {
       "gold_chance": 75,
       "item_chance": 25
@@ -98,6 +105,7 @@
     "class": "Thief",
     "energy_cost": 20,
     "cooldown": 4,
+    "level_required": 5,
     "effects": {
       "damage_multiplier": 2.0,
       "requires_stealth": true
@@ -111,6 +119,7 @@
     "class": "Thief",
     "energy_cost": 15,
     "cooldown": 5,
+    "level_required": 10,
     "effects": {
       "escape_chance": 75,
       "stealth": true
@@ -124,6 +133,7 @@
     "class": "Ranger",
     "energy_cost": 15,
     "cooldown": 2,
+    "level_required": 1,
     "effects": {
       "damage_multiplier": 1.3,
       "ignore_defense": true
@@ -137,6 +147,7 @@
     "class": "Ranger",
     "energy_cost": 15,
     "cooldown": 4,
+    "level_required": 5,
     "effects": {
       "damage": 10,
       "slow": 2
@@ -150,6 +161,7 @@
     "class": "Ranger",
     "energy_cost": 30,
     "cooldown": 6,
+    "level_required": 10,
     "effects": {
       "summon": "animal",
       "duration": 5
@@ -163,6 +175,7 @@
     "class": "Cleric",
     "energy_cost": 25,
     "cooldown": 3,
+    "level_required": 1,
     "effects": {
       "healing": 30
     },
@@ -175,6 +188,7 @@
     "class": "Cleric",
     "energy_cost": 20,
     "cooldown": 2,
+    "level_required": 5,
     "effects": {
       "damage": 15,
       "bonus_vs_undead": 10
@@ -188,6 +202,7 @@
     "class": "Cleric",
     "energy_cost": 30,
     "cooldown": 5,
+    "level_required": 10,
     "effects": {
       "shield": 25,
       "duration": 3
