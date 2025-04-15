@@ -5,7 +5,7 @@
     "min_experience": 20,
     "min_gold": 10,
     "is_violent": true,
-    "image_url": null,
+    "image_url": "forest_path",
     "area_id": 1,
     "decisions": [
       {
@@ -50,7 +50,7 @@
     "min_experience": 25,
     "min_gold": 15,
     "is_violent": true,
-    "image_url": null,
+    "image_url": "ancient_ruins",
     "area_id": 1,
     "decisions": [
       {
@@ -115,7 +115,7 @@
     "min_experience": 30,
     "min_gold": 20,
     "is_violent": true,
-    "image_url": null,
+    "image_url": "village_in_need",
     "area_id": 1,
     "decisions": [
       {
@@ -182,7 +182,7 @@
     "min_experience": 15,
     "min_gold": 5,
     "is_violent": false,
-    "image_url": null,
+    "image_url": "enchanted_grove",
     "area_id": 1,
     "decisions": [
       {
@@ -243,7 +243,7 @@
     "min_experience": 25,
     "min_gold": 15,
     "is_violent": true,
-    "image_url": null,
+    "image_url": "mountain_pass",
     "area_id": 1,
     "decisions": [
       {
@@ -309,7 +309,7 @@
     "min_experience": 35,
     "min_gold": 25,
     "is_violent": true,
-    "image_url": null,
+    "image_url": "haunted_manor",
     "area_id": 1,
     "decisions": [
       {
@@ -374,7 +374,7 @@
     "min_experience": 30,
     "min_gold": 20,
     "is_violent": true,
-    "image_url": null,
+    "image_url": "merchant_caravan",
     "area_id": 1,
     "decisions": [
       {
@@ -440,7 +440,7 @@
     "min_experience": 35,
     "min_gold": 20,
     "is_violent": true,
-    "image_url": null,
+    "image_url": "mysterious_cave",
     "area_id": 1,
     "decisions": [
       {
@@ -509,7 +509,7 @@
     "min_experience": 15,
     "min_gold": 5,
     "is_violent": false,
-    "image_url": null,
+    "image_url": "healing_spring",
     "area_id": 1,
     "decisions": [
       {
@@ -570,7 +570,7 @@
     "min_experience": 40,
     "min_gold": 30,
     "is_violent": true,
-    "image_url": null,
+    "image_url": "wizards_tower",
     "area_id": 1,
     "decisions": [
       {

@@ -126,6 +126,7 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
     <AdventureView 
       adventure={adventure}
       character={character}
+      area={selectedArea}
     />
   );
 });

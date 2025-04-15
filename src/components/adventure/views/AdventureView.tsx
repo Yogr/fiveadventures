@@ -2,15 +2,17 @@
 
 import { memo } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Adventure, AdventureDecision, Character } from '@/lib/types';
+import type { Adventure, AdventureDecision, Area, Character } from '@/lib/types';
 import { useAdventure } from '../AdventureContext';
+import Image from 'next/image';
 
 interface AdventureViewProps {
   adventure: Adventure;
   character: Character;
+  area: Area;
 }
 
-const AdventureView = memo(function AdventureView({ adventure, character }: AdventureViewProps) {
+const AdventureView = memo(function AdventureView({ adventure, character, area }: AdventureViewProps) {
   const router = useRouter();
   const { state, selectDecision, completeAdventure } = useAdventure();
   const { selectedDecision, loading } = state;
@@ -26,6 +28,8 @@ const AdventureView = memo(function AdventureView({ adventure, character }: Adve
     
     // No need to call router.refresh() here as state updates will trigger re-renders
   };
+
+  const formattedAreaName = area.name.toLowerCase().replace(/\s+/g, '-');
   
   return (
     <div className="bg-amber-950 bg-opacity-80 p-4 md:p-6 animate-fadeIn rounded-lg border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
@@ -35,7 +39,13 @@ const AdventureView = memo(function AdventureView({ adventure, character }: Adve
         
         {/* Adventure image placeholder */}
         <div className="w-full h-36 md:h-48 bg-amber-900 mb-4 md:mb-6 rounded-md flex items-center justify-center">
-          <p className="text-amber-400">Adventure Image</p>
+          <Image
+            src={`/image/adventure/${formattedAreaName}_${adventure.image_url}.png`}
+            alt={adventure.title}
+            width={200}
+            height={128}
+            className="object-cover w-full h-full rounded-md"
+          />
         </div>
       </div>
       

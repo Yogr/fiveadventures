@@ -6,9 +6,16 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 Todo
 -------------
 - Fix the outcome rewards rendering
-- Fix up the area selection: Display name at the top, make the info actually a pop-up like the item display, and put the 'choose area' button inside of the selected area, not at the bottom.
+- Normalize the enemy art sizes
+- Add the weapons to the warrior and thief graphics
 - Add images to the adventure tracker
-- Add images for the adventures
+- dont have a fade in animation for the item detail popup, or any popup for that matter
+- Get world boss implemented
+   - Hitpoints
+   - Day counter
+   - Attack damage calculation and application
+   - Rewards
+
 - Display level up pop up properly during outcome
 - Actually award the item loot
 - Put a little image border for rarity color around items
