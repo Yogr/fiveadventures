@@ -44,9 +44,39 @@ export default function ItemView({ item, slotName, inventoryId, isEquipped = fal
     return description;
   };
   
+  // Get rarity color class
+  const getRarityColorClass = (rarity: string) => {
+    switch (rarity) {
+      case 'Common': return 'border-gray-400';
+      case 'Uncommon': return 'border-green-500';
+      case 'Rare': return 'border-blue-500';
+      case 'Epic': return 'border-purple-500';
+      case 'Legendary': return 'border-yellow-500';
+      default: return 'border-amber-700';
+    }
+  };
+  
+  // Get rarity glow class
+  const getRarityGlowClass = (rarity: string) => {
+    switch (rarity) {
+      case 'Common': return '';
+      case 'Uncommon': return 'shadow-sm shadow-green-500/50';
+      case 'Rare': return 'shadow-md shadow-blue-500/50';
+      case 'Epic': return 'shadow-lg shadow-purple-500/50';
+      case 'Legendary': return 'shadow-xl shadow-yellow-500/50';
+      default: return '';
+    }
+  };
+  
   return (
     <div 
-      className="relative w-12 h-12 md:w-14 md:h-14 bg-amber-900 rounded-md border border-amber-700 overflow-hidden cursor-pointer"
+      className={`relative w-12 h-12 md:w-14 md:h-14 rounded-md border-2 overflow-hidden cursor-pointer ${
+        item ? getRarityColorClass(item.rarity) : 'border-amber-700'
+      } ${
+        item ? getRarityGlowClass(item.rarity) : ''
+      } ${
+        item ? 'bg-gradient-to-br from-gray-900 to-gray-700' : 'bg-amber-950'
+      }`}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
       onClick={handleClick}
@@ -69,20 +99,18 @@ export default function ItemView({ item, slotName, inventoryId, isEquipped = fal
               </div>
             )}
             
-            {/* Rarity indicator */}
-            <div className={`absolute bottom-0 left-0 right-0 h-1 ${
-              item.rarity === 'Common' ? 'bg-gray-400' :
-              item.rarity === 'Uncommon' ? 'bg-green-500' :
-              item.rarity === 'Rare' ? 'bg-blue-500' :
-              item.rarity === 'Epic' ? 'bg-purple-500' :
-              'bg-yellow-500' // Legendary
-            }`}></div>
           </div>
           
           {/* Item tooltip */}
           {showTooltip && (
-            <div className="absolute z-10 bottom-full left-0 mb-1 w-48 bg-amber-950 p-2 rounded-md border border-amber-700 text-xs">
-              <p className="font-bold text-amber-200">{item.name}</p>
+            <div className={`absolute z-10 bottom-full left-0 mb-1 w-48 bg-gradient-to-br from-gray-900 to-gray-800 p-2 rounded-md border-2 ${getRarityColorClass(item.rarity)} text-xs shadow-lg`}>
+              <p className={`font-bold ${
+                item.rarity === 'Common' ? 'text-gray-300' :
+                item.rarity === 'Uncommon' ? 'text-green-400' :
+                item.rarity === 'Rare' ? 'text-blue-400' :
+                item.rarity === 'Epic' ? 'text-purple-400' :
+                'text-yellow-400' // Legendary
+              }`}>{item.name}</p>
               <p className="text-amber-300 mt-1">{getItemDescription(item)}</p>
               
               {/* Stats from effects */}
