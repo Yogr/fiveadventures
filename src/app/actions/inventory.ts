@@ -24,7 +24,7 @@ export async function equipItem(inventoryItemId: string) {
     // Get the inventory item
     const { data: inventoryItem, error: inventoryError } = await supabase
       .from('character_inventory')
-      .select('*, item:items(*)')
+      .select('*, item:item_id(*)')
       .eq('id', inventoryItemId)
       .single();
     
@@ -40,17 +40,14 @@ export async function equipItem(inventoryItemId: string) {
     // Get the item type
     const itemType = inventoryItem.item.type;
     
-    // Get current equipment
-    const { data: equipment, error: equipmentError } = await supabase
+    // Get current equipment - don't error if not found
+    const { data: equipment } = await supabase
       .from('character_equipment')
       .select('*')
       .eq('character_id', character.id)
-      .single();
+      .maybeSingle();
     
-    if (equipmentError) {
-      console.error('Error fetching equipment:', equipmentError);
-      return { success: false, error: 'Failed to fetch equipment' };
-    }
+    console.log('Current equipment:', equipment);
     
     // Determine which equipment slot to update and check if there's an item already equipped
     let updateData: any = {};
@@ -59,19 +56,19 @@ export async function equipItem(inventoryItemId: string) {
     switch (itemType) {
       case 'Weapon':
         updateData.weapon_id = inventoryItem.item_id;
-        currentlyEquippedItemId = equipment.weapon_id;
+        currentlyEquippedItemId = equipment?.weapon_id || null;
         break;
       case 'Helmet':
         updateData.helmet_id = inventoryItem.item_id;
-        currentlyEquippedItemId = equipment.helmet_id;
+        currentlyEquippedItemId = equipment?.helmet_id || null;
         break;
       case 'Armor':
         updateData.armor_id = inventoryItem.item_id;
-        currentlyEquippedItemId = equipment.armor_id;
+        currentlyEquippedItemId = equipment?.armor_id || null;
         break;
       case 'Trinket':
         updateData.trinket_id = inventoryItem.item_id;
-        currentlyEquippedItemId = equipment.trinket_id;
+        currentlyEquippedItemId = equipment?.trinket_id || null;
         break;
       default:
         return { success: false, error: 'Invalid item type' };
@@ -94,19 +91,44 @@ export async function equipItem(inventoryItemId: string) {
       }
     }
     
-    // Update equipment
-    const { error: updateError } = await supabase
-      .from('character_equipment')
-      .update({
-        ...updateData,
-        updated_at: new Date().toISOString()
-      })
-      .eq('character_id', character.id);
+    // Log the equipment data before update
+    console.log('Equipment before update:', equipment);
+    console.log('Update data:', updateData);
     
-    if (updateError) {
-      console.error('Error updating equipment:', updateError);
-      return { success: false, error: 'Failed to equip item' };
+    // Use upsert to either create or update the equipment record
+    const upsertData = equipment ? {
+      id: equipment.id, // Include the existing ID to avoid creating a new record
+      character_id: character.id,
+      ...updateData,
+      updated_at: new Date().toISOString()
+    } : {
+      character_id: character.id,
+      ...updateData,
+      updated_at: new Date().toISOString()
+    };
+    
+    console.log('Upserting equipment record with data:', upsertData);
+    
+    const { data: upsertedEquipment, error: upsertError } = await supabase
+      .from('character_equipment')
+      .upsert(upsertData, {
+        onConflict: 'character_id',
+        ignoreDuplicates: false
+      })
+      .select();
+    
+    if (upsertError) {
+      console.error('Error upserting equipment record:', upsertError);
+      console.error('Error details:', {
+        code: upsertError.code,
+        message: upsertError.message,
+        details: upsertError.details,
+        hint: upsertError.hint
+      });
+      return { success: false, error: `Failed to equip item: ${upsertError.message}` };
     }
+    
+    console.log('Upserted equipment record:', upsertedEquipment);
     
     // Remove the item from inventory
     const { error: removeFromInventoryError } = await supabase
@@ -118,6 +140,10 @@ export async function equipItem(inventoryItemId: string) {
       console.error('Error removing item from inventory:', removeFromInventoryError);
       // This is not critical, so we don't return an error
     }
+    
+    // Revalidate paths to update UI
+    revalidatePath('/shop');
+    revalidatePath('/adventure');
     
     // Get the updated character data with equipment and inventory
     const updatedCharacterResponse = await getCharacterById(character.id);
@@ -156,15 +182,15 @@ export async function unequipItem(itemType: string) {
     
     const character = characterResponse.data;
     
-    // Check if the character has the item equipped
-    const { data: equipment, error: equipmentError } = await supabase
+    // Check if the character has the item equipped - don't error if not found
+    const { data: equipment } = await supabase
       .from('character_equipment')
       .select('*')
       .eq('character_id', character.id)
-      .single();
+      .maybeSingle();
     
-    if (equipmentError || !equipment) {
-      return { success: false, error: 'Equipment not found' };
+    if (!equipment) {
+      return { success: false, error: 'No equipment found for this character' };
     }
     
     // Determine which equipment slot to update and get the item ID
@@ -212,19 +238,44 @@ export async function unequipItem(itemType: string) {
       return { success: false, error: 'Failed to unequip item' };
     }
     
-    // Update equipment
-    const { error: updateError } = await supabase
-      .from('character_equipment')
-      .update({
-        ...updateData,
-        updated_at: new Date().toISOString()
-      })
-      .eq('character_id', character.id);
+    // Log the equipment data before update
+    console.log('Equipment before unequip:', equipment);
+    console.log('Unequip update data:', updateData);
     
-    if (updateError) {
-      console.error('Error updating equipment:', updateError);
-      return { success: false, error: 'Failed to unequip item' };
+    // Use upsert to update the equipment record
+    const upsertData = {
+      id: equipment.id, // Include the existing ID to avoid creating a new record
+      character_id: character.id,
+      ...updateData,
+      updated_at: new Date().toISOString()
+    };
+    
+    console.log('Upserting equipment record with data:', upsertData);
+    
+    const { data: upsertedEquipment, error: upsertError } = await supabase
+      .from('character_equipment')
+      .upsert(upsertData, {
+        onConflict: 'character_id',
+        ignoreDuplicates: false
+      })
+      .select();
+    
+    if (upsertError) {
+      console.error('Error upserting equipment record:', upsertError);
+      console.error('Error details:', {
+        code: upsertError.code,
+        message: upsertError.message,
+        details: upsertError.details,
+        hint: upsertError.hint
+      });
+      return { success: false, error: `Failed to unequip item: ${upsertError.message}` };
     }
+    
+    console.log('Upserted equipment record after unequip:', upsertedEquipment);
+    
+    // Revalidate paths to update UI
+    revalidatePath('/shop');
+    revalidatePath('/adventure');
     
     // Get the updated character data with equipment and inventory
     const updatedCharacterResponse = await getCharacterById(character.id);

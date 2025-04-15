@@ -26,7 +26,7 @@ const getShopItemsCached = unstable_cache(
     const selectedItems = getRandomShopItems(itemsData, MAX_SHOP_ITEMS, seed);
     
     // Calculate prices based on item rarity
-    return selectedItems.map((item: any) => {
+    return selectedItems.map((item: any, index: number) => {
       // Base price multiplier based on rarity
       const rarityMultipliers: Record<ItemRarity, number> = {
         'Common': 1,
@@ -42,10 +42,17 @@ const getShopItemsCached = unstable_cache(
       // Calculate price based on item value and rarity
       const price = Math.round(item.value * rarityMultiplier);
       
+      // Assign an ID to the item based on its index in the array
+      // Add 1000 to avoid conflicts with existing items
+      const itemWithId = {
+        ...item,
+        id: index + 1000
+      };
+      
       // Create a shop item
       return {
         id: generateId(), // Generate a unique ID for the shop item
-        item: item,
+        item: itemWithId,
         price: price
       };
     });
@@ -108,25 +115,117 @@ export async function buyItem(itemId: string): Promise<ApiResponse<{ message: st
       return { success: false, error: 'Failed to update character gold' };
     }
     
-    // 2. Add item to character's inventory
-    const { error: addItemError } = await supabase
-      .from('character_inventory')
-      .insert({
-        character_id: character.id,
-        item_id: shopItem.item.id || 0,
-        quantity: 1,
-        acquired_at: new Date().toISOString()
-      });
+    // Log detailed information about the item being purchased
+    console.log('Attempting to purchase item:', {
+      shopItemId: itemId,
+      itemDetails: shopItem.item,
+      itemId: shopItem.item.id,
+      characterId: character.id,
+      price: shopItem.price,
+      characterGold: character.gold
+    });
     
-    if (addItemError) {
-      console.error('Error adding item to inventory:', addItemError);
+    // First, check if the item exists in the items table
+    const { data: itemExists, error: itemCheckError } = await supabase
+      .from('items')
+      .select('id')
+      .eq('id', shopItem.item.id)
+      .maybeSingle();
+    
+    if (itemCheckError) {
+      console.error('Error checking if item exists:', itemCheckError);
       // Rollback gold deduction
-      await supabase
+      const { error: rollbackError } = await supabase
         .from('characters')
         .update({ gold: character.gold })
         .eq('id', character.id);
-      return { success: false, error: 'Failed to add item to inventory' };
+        
+      if (rollbackError) {
+        console.error('Error rolling back gold deduction:', rollbackError);
+      } else {
+        console.log('Successfully rolled back gold deduction');
+      }
+      
+      return { success: false, error: 'Failed to check if item exists in database' };
     }
+    
+    // If the item doesn't exist in the database, we need to create it first
+    if (!itemExists) {
+      console.log('Item does not exist in database, creating it first:', shopItem.item);
+      
+      const { data: createdItem, error: createItemError } = await supabase
+        .from('items')
+        .insert({
+          id: shopItem.item.id,
+          name: shopItem.item.name,
+          type: shopItem.item.type,
+          rarity: shopItem.item.rarity,
+          weapon_type: shopItem.item.weapon_type || null,
+          base_damage: shopItem.item.base_damage || null,
+          base_defense: shopItem.item.base_defense || null,
+          effects: shopItem.item.effects || null,
+          value: shopItem.item.value,
+          image_url: shopItem.item.image_url || null,
+          created_at: new Date().toISOString()
+        })
+        .select();
+      
+      if (createItemError) {
+        console.error('Error creating item in database:', createItemError);
+        // Rollback gold deduction
+        const { error: rollbackError } = await supabase
+          .from('characters')
+          .update({ gold: character.gold })
+          .eq('id', character.id);
+          
+        if (rollbackError) {
+          console.error('Error rolling back gold deduction:', rollbackError);
+        } else {
+          console.log('Successfully rolled back gold deduction');
+        }
+        
+        return { success: false, error: 'Failed to create item in database' };
+      }
+      
+      console.log('Successfully created item in database:', createdItem);
+    }
+    
+    // 2. Add item to character's inventory
+    const { data: insertData, error: addItemError } = await supabase
+      .from('character_inventory')
+      .insert({
+        character_id: character.id,
+        item_id: shopItem.item.id,
+        quantity: 1,
+        acquired_at: new Date().toISOString()
+      })
+      .select();
+    
+    if (addItemError) {
+      console.error('Error adding item to inventory:', addItemError);
+      console.error('Error details:', {
+        code: addItemError.code,
+        message: addItemError.message,
+        details: addItemError.details,
+        hint: addItemError.hint
+      });
+      
+      // Rollback gold deduction
+      const { error: rollbackError } = await supabase
+        .from('characters')
+        .update({ gold: character.gold })
+        .eq('id', character.id);
+        
+      if (rollbackError) {
+        console.error('Error rolling back gold deduction:', rollbackError);
+      } else {
+        console.log('Successfully rolled back gold deduction');
+      }
+      
+      return { success: false, error: `Failed to add item to inventory: ${addItemError.message}` };
+    }
+    
+    console.log('Successfully added item to inventory:', insertData);
     
     // Revalidate paths to update UI
     revalidatePath('/shop');
