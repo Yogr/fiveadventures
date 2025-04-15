@@ -5,7 +5,7 @@ import Image from 'next/image';
 import type { Area, Character } from '@/lib/types';
 import { getLevelFromExperience } from '@/lib/utils';
 import { useAdventure } from '../AdventureContext';
-// Removed unused router import
+import AreaInfoPopup from '../../ui/area-info-popup';
 
 interface AreaSelectionViewProps {
   areas: Area[];
@@ -17,8 +17,8 @@ const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: 
   const { loading } = state;
   const characterLevel = getLevelFromExperience(character.experience);
   const [preSelectedArea, setPreSelectedArea] = useState<Area | null>(null);
-  
-  // Removed debug logging useEffect to reduce unnecessary renders
+  const [popupArea, setPopupArea] = useState<Area | null>(null);
+  const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
   
   // Check if areas is empty
   if (!areas || areas.length === 0) {
@@ -38,19 +38,27 @@ const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: 
   // Limit to 8 areas as specified
   const displayAreas = sortedAreas.slice(0, 8);
   
-  const handleAreaPreSelect = (area: Area) => {
+  const handleAreaClick = (area: Area, event: React.MouseEvent) => {
     if (characterLevel >= area.level_requirement) {
+      // Show popup with area details
+      setPopupArea(area);
+      setPopupPosition({ x: event.clientX, y: event.clientY });
+      
+      // Also select the area
       setPreSelectedArea(area);
-      console.log('Area pre-selected:', area.name);
+      console.log('Area selected:', area.name);
     }
   };
   
-  const handleConfirmSelection = async () => {
-    if (preSelectedArea) {
-      console.log('Area confirmed:', preSelectedArea.name, 'with ID:', preSelectedArea.id);
-      console.log('Character ID:', character.id);
-      await selectArea(preSelectedArea);
-    }
+  const handleConfirmSelection = async (area: Area) => {
+    console.log('Area confirmed:', area.name, 'with ID:', area.id);
+    console.log('Character ID:', character.id);
+    await selectArea(area);
+  };
+  
+  const closePopup = () => {
+    setPopupArea(null);
+    setPopupPosition(null);
   };
   
   return (
@@ -58,7 +66,7 @@ const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: 
       <h2 className="text-base md:text-lg text-amber-300 font-bold text-center mb-2">Choose Your Adventure Area</h2>
       
       {/* 2x4 Grid of Square Areas */}
-      <div className="grid grid-cols-2 gap-2 md:gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-2 md:gap-3">
         {displayAreas.map((area) => {
           const isLocked = characterLevel < area.level_requirement;
           const isSelected = preSelectedArea?.id === area.id;
@@ -67,27 +75,37 @@ const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: 
             <div 
               key={area.id}
               className={`
-                relative aspect-square border-2 rounded-md cursor-pointer transition-all overflow-hidden
+                relative aspect-square border-2 rounded-md transition-all overflow-hidden
                 ${isLocked ? 'border-amber-800 opacity-60 cursor-not-allowed' : 
                   isSelected ? 'border-amber-400 border-4' : 
                   'border-amber-700 hover:border-amber-500'}
               `}
-              onClick={() => !isLocked && handleAreaPreSelect(area)}
             >
-              {/* Area image (square) */}
-              {area.image ? (
-                <Image 
-                  src={`/image/area/${area.image}.png`}
-                  alt={area.name}
-                  width={200}
-                  height={200}
-                  className="object-cover w-full h-full"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-amber-900">
-                  <span className="text-amber-200">No Image</span>
-                </div>
-              )}
+              {/* Area image with name overlay */}
+              <div 
+                className="relative w-full h-full cursor-pointer"
+                onClick={(e) => !isLocked && handleAreaClick(area, e)}
+              >
+                {area.image ? (
+                  <>
+                    <Image 
+                      src={`/image/area/${area.image}.png`}
+                      alt={area.name}
+                      width={200}
+                      height={200}
+                      className="object-cover w-full h-full"
+                    />
+                    {/* Area name overlay at the top */}
+                    <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black to-transparent p-1 text-center">
+                      <h3 className="text-sm md:text-base font-medium text-amber-300">{area.name}</h3>
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-amber-900">
+                    <span className="text-amber-200">{area.name}</span>
+                  </div>
+                )}
+              </div>
               
               {/* Lock overlay for locked areas */}
               {isLocked && (
@@ -101,14 +119,25 @@ const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: 
                 </div>
               )}
               
-              {/* Info popup for selected area */}
+              {/* Selected indicator */}
               {isSelected && (
-                <div className={`absolute ${area.id % 2 === 0 ? 'top-0 left-0' : 'top-0 right-0'} 
-                  bg-amber-900 bg-opacity-90 p-2 rounded-md shadow-lg max-w-[150px] md:max-w-[200px] text-left
-                  ${area.id % 2 === 0 ? 'rounded-tl-none' : 'rounded-tr-none'}`}>
-                  <h3 className="text-sm md:text-base font-medium text-amber-300">{area.name}</h3>
-                  <p className="text-xs text-amber-400 mb-1">Level: {area.level_requirement}</p>
-                  <p className="text-xs text-amber-200 line-clamp-3">{area.description}</p>
+                <div className="absolute top-2 right-2 bg-amber-500 rounded-full p-0.5 md:p-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              
+              {/* Button inside the selected area */}
+              {isSelected && (
+                <div className="absolute bottom-0 left-0 right-0 p-1 bg-black bg-opacity-70">
+                  <button 
+                    onClick={() => !loading && handleConfirmSelection(area)}
+                    disabled={loading}
+                    className="pixel-button text-xs py-1 w-full bg-amber-700 hover:bg-amber-600 active:bg-amber-800 transition-all duration-200"
+                  >
+                    {loading ? 'Processing...' : 'Begin Adventures'}
+                  </button>
                 </div>
               )}
             </div>
@@ -116,20 +145,15 @@ const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: 
         })}
       </div>
       
-      {/* Confirm Button */}
-      <div className="flex justify-center">
-        <button 
-          onClick={handleConfirmSelection}
-          disabled={!preSelectedArea || loading}
-          className={`pixel-button text-sm md:text-base py-1 md:py-2 px-3 md:px-4 
-            ${!preSelectedArea || loading
-              ? 'bg-gray-600 cursor-not-allowed opacity-70' 
-              : 'bg-amber-800 hover:bg-amber-700 active:bg-amber-900'
-            } transition-all duration-200`}
-        >
-          {loading ? 'Processing...' : 'Begin Adventures'}
-        </button>
-      </div>
+      {/* Area Info Popup */}
+      {popupArea && popupPosition && (
+        <AreaInfoPopup
+          area={popupArea}
+          isOpen={true}
+          onClose={closePopup}
+          position={popupPosition}
+        />
+      )}
     </div>
   );
 });

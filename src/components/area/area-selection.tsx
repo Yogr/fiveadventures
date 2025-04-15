@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import type { Area, Character } from '@/lib/types';
 import { getLevelFromExperience } from '@/lib/utils';
+import AreaInfoModal from '../ui/area-info-modal';
 
 interface AreaSelectionProps {
   areas: Area[];
@@ -13,19 +14,31 @@ interface AreaSelectionProps {
 
 export default function AreaSelection({ areas, character, onSelectArea }: AreaSelectionProps) {
   const [selectedArea, setSelectedArea] = useState<Area | null>(null);
+  const [modalArea, setModalArea] = useState<Area | null>(null);
+  const [modalPosition, setModalPosition] = useState<{ x: number; y: number } | undefined>(undefined);
   const characterLevel = getLevelFromExperience(character.experience);
   
   // Sort areas by level requirement
   const sortedAreas = [...areas].sort((a, b) => a.level_requirement - b.level_requirement);
   
+  const handleAreaClick = (area: Area, event: React.MouseEvent) => {
+    if (characterLevel < area.level_requirement) return; // Don't do anything for locked areas
+    
+    // Set the modal position based on click coordinates
+    setModalPosition({ x: event.clientX, y: event.clientY });
+    setModalArea(area);
+  };
+  
   const handleAreaSelect = (area: Area) => {
     setSelectedArea(area);
   };
   
-  const handleConfirmSelection = () => {
-    if (selectedArea !== null) {
-      onSelectArea(selectedArea);
-    }
+  const handleConfirmSelection = (area: Area) => {
+    onSelectArea(area);
+  };
+  
+  const closeModal = () => {
+    setModalArea(null);
   };
   
   return (
@@ -35,7 +48,7 @@ export default function AreaSelection({ areas, character, onSelectArea }: AreaSe
         Select an area to explore. Each offers different challenges and rewards.
       </p>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 mb-4 md:mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
         {sortedAreas.map((area) => {
           const isLocked = characterLevel < area.level_requirement;
           const isSelected = selectedArea === area;
@@ -44,25 +57,35 @@ export default function AreaSelection({ areas, character, onSelectArea }: AreaSe
             <div 
               key={area.id}
               className={`
-                relative border rounded-md p-2 md:p-3 cursor-pointer transition-all
+                relative border rounded-md p-2 md:p-3 transition-all
                 ${isLocked ? 'border-amber-800 bg-amber-950 bg-opacity-60 cursor-not-allowed' : 
                   isSelected ? 'border-amber-500 bg-amber-900 bg-opacity-50' : 
                   'border-amber-800 bg-amber-950 bg-opacity-70 hover:border-amber-600'}
               `}
-              onClick={() => !isLocked && handleAreaSelect(area)}
             >
-              {/* Area image */}
-              <div className="w-full h-24 md:h-32 bg-amber-950 bg-opacity-50 mb-2 rounded-md flex items-center justify-center overflow-hidden">
+              {/* Area image with name overlay */}
+              <div 
+                className="relative w-full h-24 md:h-32 bg-amber-950 bg-opacity-50 mb-2 rounded-md overflow-hidden cursor-pointer"
+                onClick={(e) => !isLocked && handleAreaClick(area, e)}
+              >
                 {area.image ? (
-                  <Image 
-                    src={`/image/area/${area.image}.png`}
-                    alt={area.name}
-                    width={200}
-                    height={128}
-                    className="object-cover w-full h-full"
-                  />
+                  <>
+                    <Image 
+                      src={`/image/area/${area.image}.png`}
+                      alt={area.name}
+                      width={200}
+                      height={128}
+                      className="object-cover w-full h-full"
+                    />
+                    {/* Area name overlay at the top */}
+                    <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black to-transparent p-1 text-center">
+                      <h3 className="text-sm md:text-base font-medium text-amber-300">{area.name}</h3>
+                    </div>
+                  </>
                 ) : (
-                  <div className="text-amber-700">No Image</div>
+                  <div className="text-amber-700 flex items-center justify-center h-full">
+                    <h3 className="text-base md:text-lg font-medium text-amber-300">{area.name}</h3>
+                  </div>
                 )}
                 
                 {/* Lock overlay for locked areas */}
@@ -78,9 +101,7 @@ export default function AreaSelection({ areas, character, onSelectArea }: AreaSe
                 )}
               </div>
               
-              <h3 className="text-base md:text-lg font-medium mb-0.5 md:mb-1 text-amber-300">{area.name}</h3>
-              <p className="text-xs md:text-sm text-amber-400 mb-1">Required Level: {area.level_requirement}</p>
-              <p className="text-xs md:text-sm text-amber-200 line-clamp-2">{area.description}</p>
+              <p className="text-xs md:text-sm text-amber-400 mb-2">Required Level: {area.level_requirement}</p>
               
               {/* Selected indicator */}
               {isSelected && (
@@ -90,24 +111,36 @@ export default function AreaSelection({ areas, character, onSelectArea }: AreaSe
                   </svg>
                 </div>
               )}
+              
+              {/* Choose Area button at the bottom of each area */}
+              <div className="flex justify-center">
+                <button 
+                  onClick={() => !isLocked && handleConfirmSelection(area)}
+                  disabled={isLocked}
+                  className={`pixel-button text-xs md:text-sm py-1 px-2 md:px-3 w-full
+                    ${isLocked 
+                      ? 'bg-gray-600 cursor-not-allowed opacity-70' 
+                      : isSelected
+                        ? 'bg-amber-700 hover:bg-amber-600 active:bg-amber-800'
+                        : 'bg-amber-800 hover:bg-amber-700 active:bg-amber-900'
+                    } transition-all duration-200`}
+                >
+                  {isSelected ? 'Begin Adventures' : 'Choose Area'}
+                </button>
+              </div>
             </div>
           );
         })}
       </div>
       
-      <div className="flex justify-center">
-        <button 
-          onClick={handleConfirmSelection}
-          disabled={selectedArea === null}
-          className={`pixel-button text-sm md:text-base py-1 md:py-2 px-3 md:px-4 
-            ${selectedArea === null 
-              ? 'bg-gray-600 cursor-not-allowed opacity-70' 
-              : 'bg-amber-800 hover:bg-amber-700 active:bg-amber-900'
-            } transition-all duration-200`}
-        >
-          Begin Adventures
-        </button>
-      </div>
+      {/* Area Info Modal */}
+      <AreaInfoModal
+        area={modalArea}
+        isOpen={modalArea !== null}
+        onClose={closeModal}
+        position={modalPosition}
+        onSelectArea={() => modalArea && handleAreaSelect(modalArea)}
+      />
     </div>
   );
 }
