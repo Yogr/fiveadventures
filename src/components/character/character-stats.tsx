@@ -50,15 +50,15 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
         {/* Middle section with bars */}
         <div className="flex-grow flex flex-col justify-center max-w-[65%]">
           {/* Level and class info above bars */}
-          <div className="text-xs md:text-sm mb-0.5">
+          <div className="text-sm mb-0.5">
             <span className="text-purple-300">Lv. {level}</span> <span className="text-amber-300">{character.class}</span>
           </div>
           
           {/* HP Bar - combined label and bar */}
           <div className="mb-1">
             <div className="flex items-center h-3.5 md:h-4 relative">
-              <span className="absolute left-1 text-xs z-10 text-white font-medium">HP</span>
-              <span className="absolute right-1 text-xs md:text-sm z-10 text-white font-medium">
+              <span className="absolute left-1 text-sm z-10 text-white font-medium">HP</span>
+              <span className="absolute right-1 text-sm z-10 text-white font-medium">
                 {formatNumber(character.current_hitpoints)}/{formatNumber(character.max_hitpoints)}
               </span>
               <div className="w-full h-full bg-amber-900 rounded-md overflow-hidden">
@@ -73,8 +73,8 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
           {/* Energy Bar - combined label and bar */}
           <div className="mb-1">
             <div className="flex items-center h-3.5 md:h-4 relative">
-              <span className="absolute left-1 text-xs z-10 text-white font-medium">MP</span>
-              <span className="absolute right-1 text-xs md:text-sm z-10 text-white font-medium">
+              <span className="absolute left-1 text-sm z-10 text-white font-medium">MP</span>
+              <span className="absolute right-1 text-sm z-10 text-white font-medium">
                 {formatNumber(character.current_energy)}/{formatNumber(character.max_energy)}
               </span>
               <div className="w-full h-full bg-amber-900 rounded-md overflow-hidden">
@@ -89,8 +89,8 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
           {/* XP Bar - combined label and bar */}
           <div>
             <div className="flex items-center h-3.5 md:h-4 relative">
-              <span className="absolute left-1 text-xs z-10 text-white font-medium">XP</span>
-              <span className="absolute right-1 text-xs md:text-sm z-10 text-white font-medium">
+              <span className="absolute left-1 text-sm z-10 text-white font-medium">XP</span>
+              <span className="absolute right-1 text-sm z-10 text-white font-medium">
                 {Math.floor(expProgress)}%
               </span>
               <div className="w-full h-full bg-amber-900 rounded-md overflow-hidden">
@@ -107,10 +107,16 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
         <div className="flex flex-col justify-center ml-1">
           <div className="bg-amber-900 px-1.5 py-1 rounded-md flex items-center mb-1">
             {/* Gold coin placeholder - will be replaced with actual image */}
-            <div className="w-4 h-4 bg-yellow-500 rounded-full mr-1 flex items-center justify-center text-xs">
-              $
+            <div className="w-4 h-4 mr-1 flex items-center justify-center text-xs">
+              <Image
+                src="/image/ui/coin.png"
+                alt="Gold"
+                width={16}
+                height={16}
+                className="object-contain"
+              />
             </div>
-            <span className="text-yellow-400 text-xs">{formatNumber(character.gold)}</span>
+            <span className="text-yellow-400 text-sm">{formatNumber(character.gold)}</span>
           </div>
           
           {/* Inventory button */}
