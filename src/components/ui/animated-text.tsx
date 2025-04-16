@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface AnimatedTextProps {
   text: string;
@@ -9,21 +9,32 @@ interface AnimatedTextProps {
   onComplete?: () => void;
 }
 
-export default function AnimatedText({ 
-  text, 
-  className = '', 
+export default function AnimatedText({
+  text,
+  className = '',
   speed = 100,
   onComplete
 }: AnimatedTextProps) {
   const [displayedText, setDisplayedText] = useState<string[]>([]);
+  const hasCompletedRef = useRef(false);
+  const wordsRef = useRef<string[]>([]);
+  
+  // Update the words ref when text changes
+  useEffect(() => {
+    wordsRef.current = text.split(' ');
+  }, [text]);
   
   useEffect(() => {
-    // Reset displayed text when text changes
+    // If we've already completed the animation, display all words immediately
+    if (hasCompletedRef.current) {
+      setDisplayedText(wordsRef.current);
+      return;
+    }
+    
+    // Reset displayed text when text changes and we haven't completed yet
     setDisplayedText([]);
     
-    // Split text into words inside the effect
-    const words = text.split(' ');
-    
+    const words = wordsRef.current;
     let currentIndex = 0;
     const interval = setInterval(() => {
       if (currentIndex < words.length) {
@@ -34,6 +45,7 @@ export default function AnimatedText({
         currentIndex++;
       } else {
         clearInterval(interval);
+        hasCompletedRef.current = true;
         if (onComplete) {
           onComplete();
         }

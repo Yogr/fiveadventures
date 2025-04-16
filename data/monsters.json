@@ -164,7 +164,7 @@
         "description": "A precise attack that ignores defense"
       }
     },
-    "image_url": "bandit_leader"
+    "image_url": "bandit"
   },
   {
     "id": 9,
@@ -184,7 +184,7 @@
         "description": "Slams the ground, causing an earthquake"
       }
     },
-    "image_url": "stone_golem"
+    "image_url": "rock_troll"
   },
   {
     "id": 10,
@@ -211,6 +211,6 @@
         "description": "Releases a burst of frost that damages and slows"
       }
     },
-    "image_url": "ancient_lich"
+    "image_url": "lich"
   }
 ]

@@ -6,9 +6,13 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 Todo
 -------------
 - Fix the outcome rewards rendering
+- Display level up pop up properly during outcome
 - Normalize the enemy art sizes
-- Add the weapons to the warrior and thief graphics
+  - Fix any enemy broken image
+- Replace the character graphics with new ones
 - Add images to the adventure tracker
+- Animate the adventure tracker
+- Re-do Shop page with good graphics
 - dont have a fade in animation for the item detail popup, or any popup for that matter
 - Get world boss implemented
    - Hitpoints
@@ -16,7 +20,7 @@ Todo
    - Attack damage calculation and application
    - Rewards
 
-- Display level up pop up properly during outcome
+
 - Actually award the item loot
 - Put a little image border for rarity color around items
 - Update shop graphics and display
