@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Combat, Character, Skill } from '@/lib/types';
-import { getCombat, startCombatTurn } from '@/app/actions/adventure-updated';
+import { getCombat, startCombatTurn } from '@/app/actions/combat';
 import { getCharacterSkills } from '@/app/actions/combat';
 import { getCharacterById } from '@/app/actions/character';
 import { updateAdventureState } from '@/app/actions/adventure-state';

@@ -31,8 +31,8 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
     areas, 
     selectedArea, 
     adventure, 
-    outcome, 
-    combatId, 
+    outcome,
+    combatId,
     showCombat,
     showRewards,
     oldExperience,
@@ -102,12 +102,14 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
   // Show outcome if available
   if (outcome) {
     return (
-      <OutcomeView 
+      <OutcomeView
         outcome={outcome}
         character={character}
         oldExperience={oldExperience}
         showRewards={showRewards}
         showLevelUp={showLevelUp}
+        rewardItem={state.rewardItem}
+        messageOverride={undefined} // TODO: Implement a 'getMessageOverride' function to handle this. It should look to see if we are in combat, and if so, return the combat outcome aka. if defeated, won, or ran away. Otherwise, return undefined.
       />
     );
   }

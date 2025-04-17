@@ -1,38 +1,36 @@
 'use server';
 
 import { 
-  generateAdventureSeed, 
+  generateAdventureSeed,
   calculateSuccessRate,
-  getLevelFromExperience
+  getLevelFromExperience,
+  generateId,
+  getPrimaryStat,
+  getCurrentGameDay
 } from '@/lib/utils';
 import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 import type {
   ApiResponse,
   Adventure,
   AdventureOutcome,
-  Character
+  Character,
+  Combat,
+  Monster,
+  CharacterAdventure,
+  Item,
+  Area,
+  RewardItem
 } from '@/lib/types';
 import { getCharacterById } from './character';
 import { createClient } from '@/lib/supabase/server';
-import { updateAdventureState } from './adventure-state';
 
 // Get a random adventure for a character
 export async function getAdventure(
-  characterId: string
+  character: Character,
+  area: Area,
 ): Promise<ApiResponse<Adventure>> {
   try {
     const supabase = await createClient();
-    
-    // Get character data to check if they need a non-violent adventure
-    const characterResponse = await getCharacterById(characterId);
-    if (!characterResponse.success || !characterResponse.data) {
-      return {
-        success: false,
-        error: 'Character not found'
-      };
-    }
-    
-    const character = characterResponse.data;
     
     // Check if character has completed all adventures for the day
     if (character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
@@ -45,29 +43,32 @@ export async function getAdventure(
     // Determine if we need a non-violent adventure (if character has 0 HP)
     const needsNonViolent = character.current_hitpoints <= 0;
     
-    // Generate a seed based on character ID, current day, and adventure count
-    // Use adventure count + 1 for the next adventure
-    const seed = generateAdventureSeed(characterId, character.last_played_day, character.daily_adventure_count + 1);
+    // Determine if this should be an elite encounter (5th adventure or greater)
+    const isEliteEncounter = character.daily_adventure_count >= 4;
+
+    const currentDay = await getCurrentGameDay();
     
-    // Get all available adventures
-    let query = supabase
-      .from('adventures')
-      .select(`
+    // Generate a seed based on character ID, current day, and adventure number
+    const seed = generateAdventureSeed(
+      character.id, 
+      currentDay, 
+      character.daily_adventure_count + 1
+    );
+    
+    // Get valid adventures
+    const { data: adventures, error } = await supabase
+    .from('adventures')
+    .select(`
+      *,
+      decisions:adventure_decisions(
         *,
-        decisions:adventure_decisions(
-          *,
-          outcomes:adventure_outcomes(*)
-        )
-      `);
+        outcomes:adventure_outcomes(*)
+      )
+    `)
+    .eq('area_id', area.id)
+    .eq('is_violent', !needsNonViolent)
     
-    // Filter for non-violent adventures if needed
-    if (needsNonViolent) {
-      query = query.eq('is_violent', false);
-    }
-    
-    const { data, error } = await query;
-    
-    if (error || !data || data.length === 0) {
+    if (error || !adventures || adventures.length === 0) {
       console.error('Error getting adventures:', error);
       return {
         success: false,
@@ -77,24 +78,8 @@ export async function getAdventure(
     
     // Use the seed to select a random adventure
     // For simplicity, we'll use the seed to generate an index
-    const adventureIndex = Math.abs(seed) % data.length;
-    const selectedAdventure = data[adventureIndex];
-    
-    // Update adventure state to adventure
-    const adventureStateResult = await updateAdventureState(characterId, {
-      current_state: 'adventure',
-      current_adventure_id: selectedAdventure.id,
-      decision_id: null,
-      outcome_id: null,
-      combat_id: null,
-      day: character.last_played_day,
-      adventure_number: character.daily_adventure_count + 1
-    });
-    
-    if (!adventureStateResult.success) {
-      console.error('Error updating adventure state:', adventureStateResult.error);
-      // Continue anyway, this isn't critical
-    }
+    const adventureIndex = Math.abs(seed) % adventures.length;
+    const selectedAdventure = adventures[adventureIndex];
     
     return {
       success: true,
@@ -111,33 +96,21 @@ export async function getAdventure(
 
 // Complete an adventure
 export async function completeAdventure({
-  characterId,
+  character,
   adventureId,
   decisionId
 }: {
-  characterId: string;
+  character: Character;
   adventureId: number;
   decisionId: number;
 }): Promise<ApiResponse<{
   character: Character;
   outcome: AdventureOutcome;
-  combat?: {
-    id: string;
-  };
+  combat?: Combat | null;
+  rewardItem?: RewardItem | null;
 }>> {
   try {
     const supabase = await createClient();
-
-    // Get character data
-    const characterResponse = await getCharacterById(characterId);
-    if (!characterResponse.success || !characterResponse.data) {
-      return {
-        success: false,
-        error: 'Character not found'
-      };
-    }
-    
-    const character = characterResponse.data;
     
     // Check if character has completed all adventures for the day
     if (character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
@@ -182,8 +155,6 @@ export async function completeAdventure({
     }
     
     // Determine the outcome based on character stats and requirements
-    // For now, we'll just pick the first outcome
-    // In a real implementation, we would calculate success rates based on character stats
     const outcomes = decision.outcomes as AdventureOutcome[];
     if (!outcomes || outcomes.length === 0) {
       return {
@@ -203,14 +174,21 @@ export async function completeAdventure({
     
     // Calculate success rates for each outcome
     const outcomesWithSuccessRates = outcomes.map(outcome => {
-      // Ensure stat_requirements is of the correct type or use an empty object
-      const statRequirements = outcome.stat_requirements 
-        ? (typeof outcome.stat_requirements === 'object' ? outcome.stat_requirements as { [key: string]: number } : {})
-        : {};
+      let successRate = 100; // Default to 100% if no requirements
       
-      const successRate = Object.keys(statRequirements).length > 0
-        ? calculateSuccessRate(characterStats, statRequirements)
-        : 100; // Default to 100% if no requirements
+      if (outcome.stat_requirements && typeof outcome.stat_requirements === 'object') {
+        // Convert stat_requirements to the expected format for calculateSuccessRate
+        const statRequirements: { [key: string]: number } = {};
+        
+        // Safely extract stat requirements
+        for (const [key, value] of Object.entries(outcome.stat_requirements)) {
+          if (typeof value === 'number') {
+            statRequirements[key] = value;
+          }
+        }
+        
+        successRate = calculateSuccessRate(characterStats, statRequirements);
+      }
       
       return {
         outcome,
@@ -223,26 +201,22 @@ export async function completeAdventure({
     outcomesWithSuccessRates.sort((a, b) => b.successRate - a.successRate);
     
     // Generate a random number between 0 and 100
-    const roll = Math.floor(Math.random() * 100) + 1;
-    
-    // Make sure we have at least one outcome
-    if (outcomesWithSuccessRates.length === 0) {
-      return {
-        success: false,
-        error: 'No valid outcomes available for this decision'
-      };
-    }
-    
-    // We know we have at least one outcome at this point
-    // Use non-null assertion since we've already checked length > 0
-    const firstOutcome = outcomesWithSuccessRates[0]!;
+    const roll = Math.floor(Math.random() * 100);
     
     // Select outcome based on roll and success rates
-    let selectedOutcome = firstOutcome.outcome; // Default to highest success rate
+    const firstOutcomeSuccessRate = outcomesWithSuccessRates[0];
+    if (!firstOutcomeSuccessRate) {
+      return {
+        success: false,
+        error: 'No valid outcomes found'
+      };
+    }
+
+    let selectedOutcome = firstOutcomeSuccessRate.outcome; // Default to highest success rate
     
     // If there's only one outcome, use it
     if (outcomesWithSuccessRates.length === 1) {
-      selectedOutcome = firstOutcome.outcome;
+      selectedOutcome = firstOutcomeSuccessRate.outcome;
     } else {
       // If there are multiple outcomes, use weighted selection
       // The higher the success rate, the more likely to be chosen
@@ -253,33 +227,129 @@ export async function completeAdventure({
         0
       );
       
-      // Calculate cumulative probabilities
-      let cumulativeProbability = 0;
-      
-      for (const item of outcomesWithSuccessRates) {
-        // Calculate normalized probability (0-100)
-        const probability = (item.successRate / totalSuccessRate) * 100;
-        cumulativeProbability += probability;
+      if (totalSuccessRate > 0) {
+        // Calculate cumulative probabilities
+        let cumulativeProbability = 0;
         
-        // If roll is less than or equal to cumulative probability, select this outcome
-        if (roll <= cumulativeProbability) {
-          selectedOutcome = item.outcome;
-          break;
+        for (const item of outcomesWithSuccessRates) {
+          // Calculate normalized probability (0-100)
+          const probability = (item.successRate / totalSuccessRate) * 100;
+          cumulativeProbability += probability;
+          
+          // If roll is less than or equal to cumulative probability, select this outcome
+          if (roll <= cumulativeProbability) {
+            selectedOutcome = item.outcome;
+            break;
+          }
         }
       }
     }
     
     const outcome = selectedOutcome;
     
+    // Check if this outcome has combat
+    let combat = null;
+    if (outcome.has_combat && outcome.monster_ids && outcome.monster_ids.length > 0) {
+      // Determine if this should be an elite encounter (5th adventure)
+      const isEliteEncounter = character.daily_adventure_count >= 4;
+      
+      // Select a random monster from the monster_ids array
+      const randomIndex = Math.floor(Math.random() * outcome.monster_ids.length);
+      const selectedMonsterId = outcome.monster_ids[randomIndex];
+      
+      if (selectedMonsterId === undefined) {
+        console.error('No monster ID found at index', randomIndex);
+        return {
+          success: false,
+          error: 'Failed to select monster'
+        };
+      }
+      
+      // If this is an elite encounter, use the elite version of the monster
+      // Elite monster IDs are 100 + the regular monster ID
+      // For example, if the regular monster ID is 1, the elite version is 101
+      const monsterId = isEliteEncounter 
+        ? (typeof selectedMonsterId === 'string' 
+            ? parseInt(selectedMonsterId, 10) + 100 
+            : selectedMonsterId + 100)
+        : selectedMonsterId;
+      
+      // Create a new combat record
+      const { data: newCombat, error: combatError } = await supabase
+        .from('combat')
+        .insert({
+          id: generateId(), // Generate UUID for the record
+          character_id: character.id,
+          adventure_id: adventureId,
+          decision_id: decisionId,
+          outcome_id: outcome.id,
+          monster_id: monsterId as number, // Ensure it's treated as a number
+          is_completed: false,
+          turns: 0,
+          character_damage_dealt: 0,
+          monster_damage_dealt: 0
+        })
+        .select('*, monster:monster_id(*)')
+        .single();
+      
+      if (combatError) {
+        console.error('Error creating combat:', combatError);
+        // Continue anyway, this isn't critical
+      } else {
+        combat = newCombat;
+      }
+      
+      // Don't update character stats yet, as combat will be resolved separately
+      return {
+        success: true,
+        data: {
+          character,
+          outcome,
+          combat
+        }
+      };
+    }
+    
+    // If there's no combat, process rewards immediately
+    
+    // Check if there's a reward table
+    let itemRewardId = null;
+    let selectedRewardItem = null;
+    
+    if (outcome.reward_table_id) {
+      // Get the reward table
+      const { data: rewardItems, error: rewardError } = await supabase
+        .from('reward_items')
+        .select('*, item:item_id(*)')
+        .eq('reward_table_id', outcome.reward_table_id);
+      
+      if (!rewardError && rewardItems && rewardItems.length > 0) {
+        // Roll for each reward item
+        const roll = Math.floor(Math.random() * 100) + 1; // 1-100
+        
+        // Sort by chance (lowest to highest)
+        const sortedRewards = rewardItems.sort((a, b) => a.chance - b.chance);
+        
+        // Find the first reward where roll < chance
+        for (const reward of sortedRewards) {
+          if (roll <= reward.chance) {
+            itemRewardId = reward.item_id;
+            selectedRewardItem = reward; // Store the full reward item
+            break;
+          }
+        }
+      }
+    }
+    
     // Calculate rewards
-    const experienceGained = adventure.min_experience + outcome.experience_bonus;
-    const goldGained = adventure.min_gold + outcome.gold_bonus;
+    const experienceGained = adventure.min_experience + (outcome.experience_bonus || 0);
+    const goldGained = adventure.min_gold + (outcome.gold_bonus || 0);
     
     // Update character stats
     const newExperience = character.experience + experienceGained;
     const newGold = character.gold + goldGained;
-    const newHitpoints = Math.max(0, Math.min(character.max_hitpoints, character.current_hitpoints + outcome.hitpoints_change));
-    const newEnergy = Math.max(0, Math.min(character.max_energy, character.current_energy + outcome.energy_change));
+    const newHitpoints = Math.max(0, Math.min(character.max_hitpoints, character.current_hitpoints + (outcome.hitpoints_change || 0)));
+    const newEnergy = Math.max(0, Math.min(character.max_energy, character.current_energy + (outcome.energy_change || 0)));
     const newAdventureCount = character.daily_adventure_count + 1;
     
     // Update character in database
@@ -293,7 +363,7 @@ export async function completeAdventure({
         daily_adventure_count: newAdventureCount,
         updated_at: new Date().toISOString()
       })
-      .eq('id', characterId);
+      .eq('id', character.id);
     
     if (updateError) {
       console.error('Error updating character:', updateError);
@@ -303,105 +373,47 @@ export async function completeAdventure({
       };
     }
     
-    // Update adventure state
-    const adventureStateResult = await updateAdventureState(characterId, {
-      current_state: 'outcome',
-      current_adventure_id: adventureId,
-      decision_id: decisionId,
-      outcome_id: outcome.id,
-      combat_id: null,
-      day: character.last_played_day,
-      adventure_number: newAdventureCount
-    });
-    
-    if (!adventureStateResult.success) {
-      console.error('Error updating adventure state:', adventureStateResult.error);
-      // Continue anyway, this isn't critical
-    }
-    
-    // Update the character_adventures table with the outcome
+    // Update the adventure state to outcome
     const { error: historyError } = await supabase
       .from('character_adventures')
-      .upsert({
-        character_id: characterId,
-        current_state: 'outcome',
-        current_adventure_id: adventureId,
-        decision_id: decisionId,
-        outcome_id: outcome.id,
-        day: character.last_played_day,
-        adventure_number: newAdventureCount,
-        updated_at: new Date().toISOString()
-      });
+      .upsert(
+        {
+          character_id: character.id,
+          current_state: 'outcome',
+          current_adventure_id: adventureId,
+          decision_id: decisionId,
+          outcome_id: outcome.id,
+          day: character.last_played_day,
+          adventure_number: newAdventureCount,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'character_id' }
+      );
     
     if (historyError) {
       console.error('Error recording adventure history:', historyError);
       // Continue anyway, this isn't critical
     }
     
-    // If there's a reward table, we could potentially add an item to the character's inventory
-    // This would require additional logic to select an item from the reward table
-    // For now, we'll skip this part
-    
-    // Check if outcome has combat
-    let combatData = undefined;
-    
-    if (outcome.has_combat && outcome.monster_ids && outcome.monster_ids.length > 0) {
-      // Select a random monster from the outcome's monster_ids
-      const randomIndex = Math.floor(Math.random() * outcome.monster_ids.length);
-      const monsterId = outcome.monster_ids[randomIndex];
+    // If there's an item reward, add it to the character's inventory
+    if (itemRewardId) {
+      const { error: inventoryError } = await supabase
+        .from('character_inventory')
+        .insert({
+          id: generateId(), // Generate UUID for the record
+          character_id: character.id,
+          item_id: itemRewardId,
+          quantity: 1,
+          acquired_at: new Date().toISOString()
+        });
       
-      // Make sure we have a valid monster ID
-      if (typeof monsterId === 'number') {
-        try {
-          // Create a combat encounter
-          const { data: combat, error: combatError } = await supabase
-            .from('combat')
-            .insert({
-              character_id: characterId,
-              adventure_id: adventureId,
-              decision_id: decisionId,
-              outcome_id: outcome.id,
-              monster_id: monsterId,
-              is_completed: false,
-              turns: 0,
-              character_damage_dealt: 0,
-              monster_damage_dealt: 0,
-              created_at: new Date().toISOString()
-            })
-            .select()
-            .single();
-          
-          if (combatError) {
-            console.error('Error creating combat encounter:', combatError);
-          } else if (combat) {
-            combatData = {
-              id: combat.id
-            };
-            
-            // Update adventure state to combat
-            const adventureStateResult = await updateAdventureState(characterId, {
-              current_state: 'combat',
-              current_adventure_id: adventureId,
-              decision_id: decisionId,
-              outcome_id: outcome.id,
-              combat_id: combat.id,
-              day: character.last_played_day,
-              adventure_number: newAdventureCount
-            });
-            
-            if (!adventureStateResult.success) {
-              console.error('Error updating adventure state:', adventureStateResult.error);
-              // Continue anyway, this isn't critical
-            }
-          }
-        } catch (combatErr) {
-          console.error('Unexpected error in combat creation:', combatErr);
-          // Continue anyway, this isn't critical
-        }
+      if (inventoryError) {
+        console.error('Error adding item to inventory:', inventoryError);
+        // Continue anyway, this isn't critical
       }
     }
     
-    // Return updated character and outcome
+    // Return updated character, outcome, and reward item
     return {
       success: true,
       data: {
@@ -414,7 +426,7 @@ export async function completeAdventure({
           daily_adventure_count: newAdventureCount
         },
         outcome,
-        combat: combatData
+        rewardItem: selectedRewardItem
       }
     };
   } catch (err) {
@@ -429,7 +441,7 @@ export async function completeAdventure({
 // Get adventure history for a character
 export async function getAdventureHistory(
   characterId: string
-): Promise<ApiResponse<any[]>> {
+): Promise<ApiResponse<CharacterAdventure[]>> {
   try {
     const supabase = await createClient();
 
@@ -437,12 +449,13 @@ export async function getAdventureHistory(
       .from('character_adventures')
       .select(`
         *,
-        adventure:current_adventure_id(*),
+        adventure:adventure_id(*),
         decision:decision_id(*),
-        outcome:outcome_id(*)
+        outcome:outcome_id(*),
+        item_gained:item_gained_id(*)
       `)
       .eq('character_id', characterId)
-      .order('updated_at', { ascending: false });
+      .order('completed_at', { ascending: false });
     
     if (error) {
       console.error('Error getting adventure history:', error);
@@ -454,7 +467,7 @@ export async function getAdventureHistory(
     
     return {
       success: true,
-      data: data || []
+      data: data as CharacterAdventure[] || []
     };
   } catch (err) {
     console.error('Unexpected error getting adventure history:', err);

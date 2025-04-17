@@ -4,9 +4,9 @@ import { createContext, useContext, useReducer, useCallback, useEffect } from 'r
 import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import type { Character, Adventure, AdventureDecision, AdventureOutcome, Combat, Area } from '@/lib/types';
+import type { Character, Adventure, AdventureDecision, AdventureOutcome, Combat, Area, RewardItem } from '@/lib/types';
 import { getCharacterById } from '@/app/actions/character';
-import { getAdventure } from '@/app/actions/adventure-updated';
+import { getAdventure } from '@/app/actions/adventure';
 import { getActiveCharacterCombat } from '@/app/actions/combat';
 import { getSelectedArea } from '@/app/actions/area';
 import { updateAdventureState } from '@/app/actions/adventure-state';
@@ -27,6 +27,7 @@ interface AdventureState {
   oldExperience: number;
   showLevelUp: boolean;
   skipCombatCheck: boolean; // Flag to skip combat check after combat ends
+  rewardItem: RewardItem | null;
 }
 
 // Define action types
@@ -45,6 +46,7 @@ type AdventureAction =
   | { type: 'SET_OLD_EXPERIENCE'; payload: number }
   | { type: 'SET_SHOW_LEVEL_UP'; payload: boolean }
   | { type: 'SET_SKIP_COMBAT_CHECK'; payload: boolean }
+  | { type: 'SET_REWARD_ITEM'; payload: RewardItem | null }
   | { type: 'RESET_ADVENTURE_STATE' };
 
 // Create the context
@@ -79,6 +81,7 @@ const initialState: AdventureState = {
   oldExperience: 0,
   showLevelUp: false,
   skipCombatCheck: false,
+  rewardItem: null,
 };
 
 // Reducer function
@@ -112,6 +115,10 @@ function adventureReducer(state: AdventureState, action: AdventureAction): Adven
       return { ...state, showLevelUp: action.payload };
     case 'SET_SKIP_COMBAT_CHECK':
       return { ...state, skipCombatCheck: action.payload };
+    case 'SET_REWARD_ITEM':
+      return { ...state, rewardItem: action.payload };
+    case 'SET_REWARD_ITEM':
+      return { ...state, rewardItem: action.payload };
     case 'RESET_ADVENTURE_STATE':
       return {
         ...state,
@@ -121,6 +128,7 @@ function adventureReducer(state: AdventureState, action: AdventureAction): Adven
         showLevelUp: false,
         combatId: null,
         showCombat: false,
+        rewardItem: null,
       };
     default:
       return state;
@@ -382,7 +390,7 @@ export function AdventureProvider({
       const decisionId = state.selectedDecision.id;
       const currentExperience = state.character.experience;
       
-      const { completeAdventure } = await import('@/app/actions/adventure-updated');
+      const { completeAdventure } = await import('@/app/actions/adventure');
       const result = await completeAdventure({
         character: state.character,
         adventureId: adventureId,
@@ -431,6 +439,11 @@ export function AdventureProvider({
       
       // Set outcome
       dispatch({ type: 'SET_OUTCOME', payload: result.data.outcome });
+      
+      // Set reward item if available
+      if (result.data.rewardItem) {
+        dispatch({ type: 'SET_REWARD_ITEM', payload: result.data.rewardItem });
+      }
       
       // Show level up animation if experience increased enough to level up
       if (result.data.character.experience > currentExperience) {

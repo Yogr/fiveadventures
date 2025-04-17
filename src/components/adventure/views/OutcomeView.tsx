@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { AdventureOutcome, Character, Item } from '@/lib/types';
+import type { AdventureOutcome, Character, Item, RewardItem } from '@/lib/types';
 import { ROUTES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 import AdventureTracker from '@/components/adventure/adventure-tracker';
 import AnimatedText from '@/components/ui/animated-text';
@@ -35,15 +35,17 @@ interface OutcomeViewProps {
   showRewards: boolean;
   showLevelUp: boolean;
   messageOverride?: string;
+  rewardItem?: RewardItem | null;
 }
 
 const OutcomeView: React.FC<OutcomeViewProps> = ({
-  outcome, 
-  character, 
+  outcome,
+  character,
   oldExperience,
   showRewards,
   showLevelUp,
-  messageOverride
+  messageOverride,
+  rewardItem: initialRewardItem
 }) => {
   const { continueToNextAdventure, dispatch } = useAdventure();
   const [adventureIncremented, setAdventureIncremented] = useState(false);
@@ -53,6 +55,9 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
   const [messageComplete, setMessageComplete] = useState(false);
   const [itemComplete, setItemComplete] = useState(!outcome.reward_table_id); // Skip if no item
   const [rewardsComplete, setRewardsComplete] = useState(false);
+  
+  // State for the reward item - initialize with the passed rewardItem if available
+  const [rewardItem, setRewardItem] = useState<RewardItem | null>(initialRewardItem || null);
 
   console.log('Show level up:', showLevelUp); 
   
@@ -99,20 +104,15 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
     });
   }
   
-  // Mock item for demonstration (replace with actual item from reward_table)
-  const mockItem: Item = {
-    id: 1,
-    name: "Enchanted Sword",
-    type: "Weapon",
-    rarity: "Rare",
-    weapon_type: "Slashing",
-    base_damage: 15,
-    base_defense: null,
-    effects: {},
-    value: 500,
-    image_url: "emerald_sword",
-    created_at: new Date().toISOString()
-  };
+  // Log outcome and reward details for debugging
+  useEffect(() => {
+    console.log('Outcome details:', {
+      id: outcome.id,
+      reward_table_id: outcome.reward_table_id,
+      hasRewardTable: !!outcome.reward_table_id,
+      currentRewardItem: rewardItem
+    });
+  }, [outcome.id, outcome.reward_table_id, rewardItem]);
 
   useEffect(() => {
     const incrementAdventure = async () => {
@@ -209,7 +209,7 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
       
       <div className="mb-6 p-4 bg-gray-800 rounded-md">
         <AnimatedText
-          text={outcome.description}
+          text={messageOverride? messageOverride : outcome.description}
           className="text-xl mb-4"
           speed={80}
           onComplete={handleMessageComplete}
@@ -225,10 +225,22 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
               className="mb-4"
             >
               {animationState === 'item' ? (
-                <ItemRewardView
-                  item={mockItem}
-                  onComplete={handleItemComplete}
-                />
+                rewardItem ? (
+                  <ItemRewardView
+                    item={rewardItem.item}
+                    onComplete={handleItemComplete}
+                  />
+                ) : (
+                  // If no item was received, skip to rewards
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onAnimationComplete={handleItemComplete}
+                    className="text-center p-4"
+                  >  
+                  </motion.div>
+                )
               ) : (
                 /* Show the revealed item after animation completes */
                 <div className="flex justify-center mb-6">
@@ -256,18 +268,24 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
                     
                     {/* Item icon in the center */}
                     <div className="relative z-10">
-                      <div className="w-16 h-16 rounded-md flex items-center justify-center mx-auto">
-                        <Image
-                          src={`/image/${mockItem.type.toLowerCase()}/${mockItem.image_url}.png`}
-                          alt={mockItem.name}
-                          width={64}
-                          height={64}
-                          className="object-contain"
-                        />
-                      </div>
-                      <div className="mt-1">
-                        <h4 className="text-lg font-medium text-purple-300" style={{ textShadow: '0 0 4px rgba(0,0,0,0.8)' }}>{mockItem.name}</h4>
-                      </div>
+                      {rewardItem ? (
+                        <>
+                          <div className="w-16 h-16 rounded-md flex items-center justify-center mx-auto">
+                            <Image
+                              src={`/image/${rewardItem.item.type.toLowerCase()}/${rewardItem.item.image_url}.png`}
+                              alt={rewardItem.item.name}
+                              width={64}
+                              height={64}
+                              className="object-contain"
+                            />
+                          </div>
+                          <div className="mt-1">
+                            <h4 className="text-lg font-medium text-purple-300" style={{ textShadow: '0 0 4px rgba(0,0,0,0.8)' }}>{rewardItem.item.name}</h4>
+                          </div>
+                        </>
+                      ) : (
+                        ''
+                      )}
                     </div>
                   </div>
                 </div>

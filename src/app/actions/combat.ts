@@ -128,18 +128,20 @@ export async function startCombatTurn(
       characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 3));
     } else if (action === 'skill' && skillId) {
       // Skill attack
-      const { data: skill, error: skillError } = await supabase
+      const { data: skillData, error: skillError } = await supabase
         .from('skills')
         .select('*')
         .eq('id', skillId)
-        .single();
+        .single()
       
-      if (skillError || !skill) {
+      if (skillError || !skillData) {
         return {
           success: false,
           error: 'Skill not found'
         };
       }
+
+      const skill: Skill = skillData as Skill;
       
       // Check if character has enough energy
       if (character.current_energy < skill.energy_cost) {
@@ -156,7 +158,7 @@ export async function startCombatTurn(
         if (effects.damage_multiplier) {
           // Damage skill
           const baseDamage = 5; // Base damage
-          const statBonus = character.class === 'Wizard' ? character.intelligence : character.strength;
+          const statBonus = getPrimaryStat(character);
           characterDamageDealt = Math.floor(baseDamage * effects.damage_multiplier) + Math.floor(statBonus / 2);
           
           // Apply monster defense
@@ -197,6 +199,32 @@ export async function startCombatTurn(
             completed_at: new Date().toISOString()
           })
           .eq('id', combatId);
+        
+        // Increment daily adventure count when successfully running away
+        console.log('Character ran away - updating adventure count');
+        console.log('Current character state before update:', {
+          daily_adventure_count: character.daily_adventure_count
+        });
+        
+        const newAdventureCount = character.daily_adventure_count + 1;
+        
+        console.log('New character state after update:', {
+          daily_adventure_count: newAdventureCount
+        });
+        
+        const { error: characterUpdateError } = await supabase
+          .from('characters')
+          .update({
+            daily_adventure_count: newAdventureCount,
+            updated_at: new Date().toISOString() // Add updated_at timestamp to ensure the update is detected
+          })
+          .eq('id', character.id);
+        
+        if (characterUpdateError) {
+          console.error('Error updating character after running away:', characterUpdateError);
+        } else {
+          console.log('Character successfully updated after running away');
+        }
         
         // Record the turn
         await supabase
@@ -285,7 +313,8 @@ export async function startCombatTurn(
         .from('characters')
         .update({
           experience: character.experience + monster.experience_reward,
-          gold: character.gold + monster.gold_reward
+          gold: character.gold + monster.gold_reward,
+          daily_adventure_count: character.daily_adventure_count + 1,
         })
         .eq('id', character.id);
       
