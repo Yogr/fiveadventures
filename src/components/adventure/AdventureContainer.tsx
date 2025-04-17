@@ -16,21 +16,21 @@ import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 
 // Inner component that uses both contexts
 const AdventureContainerInner = memo(function AdventureContainerInner() {
-  const { 
-    state, 
-    dispatch, 
-    loadCharacterData, 
+  const {
+    state,
+    dispatch,
+    loadCharacterData,
     loadAreaData,
     handleCombatEnd
   } = useAdventure();
   
-  const { 
-    loading: adventureLoading, 
-    error: adventureError, 
-    character, 
-    areas, 
-    selectedArea, 
-    adventure, 
+  const {
+    loading: adventureLoading,
+    error: adventureError,
+    character,
+    areas,
+    selectedArea,
+    adventure,
     outcome,
     combatId,
     showCombat,
@@ -38,6 +38,39 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
     oldExperience,
     showLevelUp
   } = state;
+
+  // Function to get message override based on combat outcome
+  const getMessageOverride = () => {
+    console.log('AdventureContainer: getMessageOverride called');
+    console.log('AdventureContainer: state.combatResult =', state.combatResult);
+    
+    // If we don't have outcome, return undefined
+    if (!outcome) {
+      console.log('AdventureContainer: No outcome, returning undefined');
+      return undefined;
+    }
+    
+    // Use the combat result stored in state if available
+    if (state.combatResult) {
+      console.log('AdventureContainer: Using combat result from state');
+      if (state.combatResult.ranAway) {
+        const message = `You ran away from the ${state.combatResult.monsterName}!`;
+        console.log('AdventureContainer: Returning message:', message);
+        return message;
+      } else if (state.combatResult.isVictory) {
+        const message = `You were victorious against the ${state.combatResult.monsterName}!`;
+        console.log('AdventureContainer: Returning message:', message);
+        return message;
+      } else {
+        const message = `You were defeated by the ${state.combatResult.monsterName}!`;
+        console.log('AdventureContainer: Returning message:', message);
+        return message;
+      }
+    }
+    
+    console.log('AdventureContainer: No combat result, returning undefined');
+    return undefined;
+  };
   
   // Get adventure state from context
   const { 
@@ -49,9 +82,6 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
   // Combine loading and error states
   const loading = adventureLoading || stateLoading;
   const error = adventureError || stateError;
-  
-  // We no longer need to load areas on mount since they're passed from the server
-  // through AdventureProvider's initialAreas prop
   
   // Load selected area if character exists
   useEffect(() => {
@@ -101,6 +131,10 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
   
   // Show outcome if available
   if (outcome) {
+    console.log('AdventureContainer: Rendering OutcomeView with state.combatResult =', state.combatResult);
+    const messageOverride = getMessageOverride();
+    console.log('AdventureContainer: messageOverride =', messageOverride);
+    
     return (
       <OutcomeView
         outcome={outcome}
@@ -109,7 +143,7 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
         showRewards={showRewards}
         showLevelUp={showLevelUp}
         rewardItem={state.rewardItem}
-        messageOverride={undefined} // TODO: Implement a 'getMessageOverride' function to handle this. It should look to see if we are in combat, and if so, return the combat outcome aka. if defeated, won, or ran away. Otherwise, return undefined.
+        messageOverride={messageOverride}
       />
     );
   }

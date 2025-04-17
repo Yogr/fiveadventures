@@ -28,6 +28,7 @@ interface AdventureState {
   showLevelUp: boolean;
   skipCombatCheck: boolean; // Flag to skip combat check after combat ends
   rewardItem: RewardItem | null;
+  combatResult: { isVictory: boolean; ranAway: boolean; monsterName: string } | null;
 }
 
 // Define action types
@@ -47,6 +48,7 @@ type AdventureAction =
   | { type: 'SET_SHOW_LEVEL_UP'; payload: boolean }
   | { type: 'SET_SKIP_COMBAT_CHECK'; payload: boolean }
   | { type: 'SET_REWARD_ITEM'; payload: RewardItem | null }
+  | { type: 'SET_COMBAT_RESULT'; payload: { isVictory: boolean; ranAway: boolean; monsterName: string } | null }
   | { type: 'RESET_ADVENTURE_STATE' };
 
 // Create the context
@@ -82,6 +84,7 @@ const initialState: AdventureState = {
   showLevelUp: false,
   skipCombatCheck: false,
   rewardItem: null,
+  combatResult: null,
 };
 
 // Reducer function
@@ -117,8 +120,9 @@ function adventureReducer(state: AdventureState, action: AdventureAction): Adven
       return { ...state, skipCombatCheck: action.payload };
     case 'SET_REWARD_ITEM':
       return { ...state, rewardItem: action.payload };
-    case 'SET_REWARD_ITEM':
-      return { ...state, rewardItem: action.payload };
+    case 'SET_COMBAT_RESULT':
+      console.log('AdventureContext: Reducer processing SET_COMBAT_RESULT action with payload:', action.payload);
+      return { ...state, combatResult: action.payload };
     case 'RESET_ADVENTURE_STATE':
       return {
         ...state,
@@ -129,6 +133,7 @@ function adventureReducer(state: AdventureState, action: AdventureAction): Adven
         combatId: null,
         showCombat: false,
         rewardItem: null,
+        combatResult: null,
       };
     default:
       return state;
@@ -464,6 +469,12 @@ export function AdventureProvider({
   // Handle combat end
   const handleCombatEnd = useCallback((result: { isVictory: boolean; ranAway: boolean; monsterName: string }) => {
     console.log('AdventureContext: handleCombatEnd called with result:', result);
+    console.log('AdventureContext: Current state before updates:', {
+      combatId: state.combatId,
+      showCombat: state.showCombat,
+      outcome: state.outcome ? 'exists' : 'null',
+      combatResult: state.combatResult
+    });
     
     // Set flag to skip combat check on next loadAdventureData call
     dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: true });
@@ -471,6 +482,18 @@ export function AdventureProvider({
     // Clear combat state
     dispatch({ type: 'SET_SHOW_COMBAT', payload: false });
     dispatch({ type: 'SET_COMBAT_ID', payload: null });
+    
+    // Store the combat result in state
+    console.log('AdventureContext: Setting combat result in state:', result);
+    dispatch({ type: 'SET_COMBAT_RESULT', payload: result });
+    
+    // Log state after updates (this won't show the actual updated state due to React's state update mechanism)
+    console.log('AdventureContext: State after dispatches (not yet updated):', {
+      combatId: state.combatId,
+      showCombat: state.showCombat,
+      outcome: state.outcome ? 'exists' : 'null',
+      combatResult: state.combatResult
+    });
     
     // If the player ran away, show a different outcome
     if (result.ranAway) {
@@ -527,6 +550,14 @@ export function AdventureProvider({
               gold: response.data.gold,
               adventureCount: response.data.daily_adventure_count
             });
+            
+            // Check if character has gained experience that would cause a level up
+            if (state.character && response.data.experience > state.character.experience) {
+              // Save old experience for level up check
+              dispatch({ type: 'SET_OLD_EXPERIENCE', payload: state.character.experience });
+              // Set showLevelUp flag
+              dispatch({ type: 'SET_SHOW_LEVEL_UP', payload: true });
+            }
             
             // Update character in state directly
             dispatch({ type: 'SET_CHARACTER', payload: response.data });

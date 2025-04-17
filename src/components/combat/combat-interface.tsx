@@ -68,20 +68,54 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   useEffect(() => {
     if (!combat || combatEndingRef.current) return;
     
+    console.log('CombatInterface: Checking if combat is completed:', {
+      id: combat.id,
+      is_completed: combat.is_completed,
+      is_victory: combat.is_victory,
+      turns: Array.isArray(combat.turns) ? combat.turns.length : 0
+    });
+    
     // Check if monster is defeated (HP <= 0)
     const monsterCurrentHP = combat.monster.hitpoints - combat.character_damage_dealt;
     const monsterDefeated = monsterCurrentHP <= 0;
     
+    console.log('CombatInterface: Monster status:', {
+      name: combat.monster.name,
+      totalHP: combat.monster.hitpoints,
+      damageTaken: combat.character_damage_dealt,
+      currentHP: monsterCurrentHP,
+      defeated: monsterDefeated
+    });
+    
     // End combat if server says it's completed or if monster HP is 0 or less
     if ((combat.is_completed && combat.is_victory !== null) || monsterDefeated) {
+      console.log('CombatInterface: Combat is completed or monster is defeated');
+      
       // If monster is defeated but combat not marked as completed, force victory
       // Ensure isVictory is always a boolean, not null
       const isVictory = monsterDefeated ? true : (combat.is_victory === true);
+      console.log('CombatInterface: isVictory =', isVictory);
       
       // Check if this was a "run away" scenario
-      const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) => 
-        turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
-      );
+      console.log('CombatInterface: Checking if player ran away, combat.turns =', combat.turns);
+      
+      // Check if any turn was a successful run
+      // A successful run has effects.success === true
+      // A failed run has effects.success === false
+      const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) => {
+        // Only consider turns where the player successfully ran away
+        const isRunAway = turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true;
+        console.log('CombatInterface: Turn check for run away:', {
+          turn,
+          actor: turn.actor,
+          action: turn.action,
+          success: turn.effects?.success,
+          isRunAway
+        });
+        return isRunAway;
+      });
+      
+      console.log('CombatInterface: ranAway =', ranAway);
       
       // Set combat ending flag to prevent multiple calls
       combatEndingRef.current = true;
@@ -96,6 +130,11 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         // Refresh adventure state
         refreshAdventureState().then(() => {
           // Call onCombatEnd after state is updated
+          console.log('CombatInterface: Calling onCombatEnd with result:', {
+            isVictory: isVictory,
+            ranAway: !!ranAway,
+            monsterName: combat.monster?.name || 'monster'
+          });
           onCombatEnd({
             isVictory: isVictory,
             ranAway: !!ranAway,
@@ -106,6 +145,11 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         console.error('Error updating adventure state:', error);
         
         // Call onCombatEnd even if state update fails
+        console.log('CombatInterface: Calling onCombatEnd after state update failed with result:', {
+          isVictory: isVictory,
+          ranAway: !!ranAway,
+          monsterName: combat.monster?.name || 'monster'
+        });
         onCombatEnd({
           isVictory: isVictory,
           ranAway: !!ranAway,

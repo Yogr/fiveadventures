@@ -17,6 +17,7 @@ export async function getCombat(
   combatId: string
 ): Promise<ApiResponse<Combat>> {
   try {
+    console.log('Combat: Getting combat data for ID:', combatId);
     const supabase = await createClient();
     
     const { data, error } = await supabase
@@ -36,6 +37,14 @@ export async function getCombat(
         error: 'Failed to get combat'
       };
     }
+    
+    console.log('Combat: Retrieved combat data:', {
+      id: data.id,
+      is_completed: data.is_completed,
+      is_victory: data.is_victory,
+      turns: data.turns ? data.turns.length : 0,
+      turn_details: data.turns
+    });
     
     return {
       success: true,
@@ -227,7 +236,8 @@ export async function startCombatTurn(
         }
         
         // Record the turn
-        await supabase
+        console.log('Combat: Recording successful run turn with effects.success = true');
+        const { data: turnData, error: turnError } = await supabase
           .from('combat_turns')
           .insert({
             id: generateId(), // Generate UUID for the record
@@ -236,7 +246,27 @@ export async function startCombatTurn(
             actor: 'character',
             action: 'run',
             effects: { success: true }
-          });
+          })
+          .select();
+          
+        if (turnError) {
+          console.error('Error recording run turn:', turnError);
+        } else {
+          console.log('Successfully recorded run turn:', turnData);
+        }
+        
+        // Get the updated turns array including the new run turn
+        const { data: updatedTurns, error: turnsError } = await supabase
+          .from('combat_turns')
+          .select('*')
+          .eq('combat_id', combatId)
+          .order('turn_number', { ascending: true });
+          
+        if (turnsError) {
+          console.error('Error getting updated turns:', turnsError);
+        }
+        
+        console.log('Combat: Retrieved updated turns after successful run:', updatedTurns);
         
         return {
           success: true,
@@ -244,7 +274,7 @@ export async function startCombatTurn(
             ...combat,
             is_completed: true,
             is_victory: false,
-            turns: turnNumber
+            turns: updatedTurns || []
           } as Combat
         };
       } else {
@@ -266,20 +296,22 @@ export async function startCombatTurn(
       }
     }
     
-    // Record character turn
-    await supabase
-      .from('combat_turns')
-      .insert({
-        id: generateId(), // Generate UUID for the record
-        combat_id: combatId,
-        turn_number: turnNumber,
-        actor: 'character',
-        action,
-        skill_id: skillId,
-        damage_dealt: characterDamageDealt > 0 ? characterDamageDealt : null,
-        healing_done: characterHealingDone > 0 ? characterHealingDone : null,
-        effects: characterEffects
-      });
+    // Record character turn (skip if action is 'run' since we already recorded it)
+    if (action !== 'run') {
+      await supabase
+        .from('combat_turns')
+        .insert({
+          id: generateId(), // Generate UUID for the record
+          combat_id: combatId,
+          turn_number: turnNumber,
+          actor: 'character',
+          action,
+          skill_id: skillId,
+          damage_dealt: characterDamageDealt > 0 ? characterDamageDealt : null,
+          healing_done: characterHealingDone > 0 ? characterHealingDone : null,
+          effects: characterEffects
+        });
+    }
     
     // Apply healing if any
     if (characterHealingDone > 0) {

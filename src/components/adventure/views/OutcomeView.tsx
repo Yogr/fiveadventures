@@ -59,7 +59,9 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
   // State for the reward item - initialize with the passed rewardItem if available
   const [rewardItem, setRewardItem] = useState<RewardItem | null>(initialRewardItem || null);
 
-  console.log('Show level up:', showLevelUp); 
+  console.log('OutcomeView: messageOverride =', messageOverride);
+  console.log('OutcomeView: outcome.description =', outcome.description);
+  console.log('OutcomeView: Show level up:', showLevelUp);
   
   // Create rewards array
   const rewards: Reward[] = [];
