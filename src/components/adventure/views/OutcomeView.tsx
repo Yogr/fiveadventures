@@ -53,6 +53,8 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
   const [messageComplete, setMessageComplete] = useState(false);
   const [itemComplete, setItemComplete] = useState(!outcome.reward_table_id); // Skip if no item
   const [rewardsComplete, setRewardsComplete] = useState(false);
+
+  console.log('Show level up:', showLevelUp); 
   
   // Create rewards array
   const rewards: Reward[] = [];
