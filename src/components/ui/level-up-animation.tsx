@@ -33,26 +33,11 @@ export default function LevelUpAnimation({
   
   useEffect(() => {
     if (leveledUp) {
-      // Start animation after a short delay
-      const animationTimer = setTimeout(() => {
-        setShowAnimation(true);
-      }, 500);
+      // Start animation immediately
+      setShowAnimation(true);
       
-      // Show stats after the level up animation
-      const statsTimer = setTimeout(() => {
-        setShowStats(true);
-      }, 1500);
-      
-      // Call onComplete after all animations
-      const completeTimer = setTimeout(() => {
-        if (onComplete) onComplete();
-      }, 4000);
-      
-      return () => {
-        clearTimeout(animationTimer);
-        clearTimeout(statsTimer);
-        clearTimeout(completeTimer);
-      };
+      // Show stats immediately as well
+      setShowStats(true);
     } else if (onComplete) {
       // If no level up, just call onComplete
       onComplete();
@@ -75,18 +60,25 @@ export default function LevelUpAnimation({
               <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md mx-auto">
                 <h3 className="text-2xl text-green-400 mb-4">Stats Increased</h3>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 mb-6">
                   {statsGained.map((stat, index) => (
-                    <div 
+                    <div
                       key={stat.name}
                       className="bg-gray-700 p-3 rounded-md animate-fadeIn"
-                      style={{ animationDelay: `${index * 200}ms` }}
+                      style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <p className="text-white">{stat.name}</p>
                       <p className="text-green-400 text-xl">{stat.value}</p>
                     </div>
                   ))}
                 </div>
+                
+                <button
+                  onClick={onComplete}
+                  className="pixel-button bg-green-600 hover:bg-green-500 active:bg-green-700 mt-4 w-full"
+                >
+                  Continue
+                </button>
               </div>
             )}
           </div>

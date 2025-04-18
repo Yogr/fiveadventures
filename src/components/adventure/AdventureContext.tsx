@@ -530,15 +530,48 @@ export function AdventureProvider({
         adventureCount: state.character.daily_adventure_count
       });
       
-      // Update adventure state to outcome
-      updateAdventureState(characterId, {
-        current_state: 'outcome',
-        current_adventure_id: null,
-        decision_id: null,
-        outcome_id: null,
-        combat_id: null,
-        day: state.character.last_played_day,
-        adventure_number: state.character.daily_adventure_count
+      // First get the updated character data to ensure we have the correct adventure_number
+      getCharacterById(characterId).then((characterResponse) => {
+        if (characterResponse.success && characterResponse.data) {
+          const updatedCharacter = characterResponse.data;
+          console.log('AdventureContext: Got updated character data for adventure state update:', {
+            adventureCount: updatedCharacter.daily_adventure_count
+          });
+          
+          // Update adventure state to outcome with the correct adventure_number
+          return updateAdventureState(characterId, {
+            current_state: 'outcome',
+            current_adventure_id: null,
+            decision_id: null,
+            outcome_id: null,
+            combat_id: null,
+            day: updatedCharacter.last_played_day,
+            adventure_number: updatedCharacter.daily_adventure_count // Use the updated value
+          });
+        }
+        // If we couldn't get the updated character data, fall back to the original approach
+        // Make sure state.character is still valid
+        if (state.character) {
+          return updateAdventureState(characterId, {
+            current_state: 'outcome',
+            current_adventure_id: null,
+            decision_id: null,
+            outcome_id: null,
+            combat_id: null,
+            day: state.character.last_played_day,
+            adventure_number: state.character.daily_adventure_count
+          });
+        }
+        // If state.character is null, use default values
+        return updateAdventureState(characterId, {
+          current_state: 'outcome',
+          current_adventure_id: null,
+          decision_id: null,
+          outcome_id: null,
+          combat_id: null,
+          day: 1, // Default day
+          adventure_number: 0 // Default adventure number
+        });
       }).then(() => {
         // Refresh character data after updating state
         getCharacterById(characterId).then(response => {
@@ -644,13 +677,17 @@ export function AdventureProvider({
   // We no longer need a character subscription here as the GameNavigation component
   // already handles character updates, and we only need to react to adventure state changes
 
-  // Reset animation state when outcome changes
+  // Reset animation state when outcome ID changes (not on every re-render)
   useEffect(() => {
     if (state.outcome) {
+      // Only reset showRewards, but don't reset showLevelUp
+      // This prevents the level up animation from being reset by re-renders
       dispatch({ type: 'SET_SHOW_REWARDS', payload: false });
-      dispatch({ type: 'SET_SHOW_LEVEL_UP', payload: false });
+      
+      // We no longer reset showLevelUp here, as it should persist
+      // until explicitly set to false by the LevelUpAnimation component
     }
-  }, [state.outcome]);
+  }, [state.outcome?.id]); // Only run when outcome ID changes, not on every outcome change
 
   // Load adventure data when selected area changes
   useEffect(() => {
