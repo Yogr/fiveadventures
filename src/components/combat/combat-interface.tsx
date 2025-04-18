@@ -600,12 +600,12 @@ export default function CombatInterface({ combatId, character: initialCharacter,
             <BuffBar effects={monsterEffects} size="sm" />
           )}
           
-          <div className={`w-16 h-16 mx-auto mb-2 ${combat.monster.is_elite ? 'bg-yellow-900' : 'bg-red-900'} rounded-full flex items-center justify-center monster-avatar ${combat.monster.is_elite ? 'border-2 border-yellow-400' : ''}`}>
+          <div className={`w-20 h-20 mx-auto mb-2 ${combat.monster.is_elite ? 'bg-yellow-900' : 'bg-red-900'} rounded-full flex items-center justify-center monster-avatar ${combat.monster.is_elite ? 'border-2 border-yellow-400' : ''}`}>
             <Image
               src={`/image/enemy/${combat.monster.image_url}.png`}
               alt={combat.monster.name}
-              width={48}
-              height={48}
+              width={80}
+              height={80}
               className="-scale-x-100"
             />
           </div>

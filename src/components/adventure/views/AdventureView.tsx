@@ -29,7 +29,7 @@ const AdventureView = memo(function AdventureView({ adventure, character, area }
     // No need to call router.refresh() here as state updates will trigger re-renders
   };
 
-  const formattedAreaName = area.name.toLowerCase().replace(/\s+/g, '-');
+  const formattedAreaName = area.name.toLowerCase().replace('the ','').replace(/\s+/g, '-');
   
   return (
     <div className="bg-amber-950 bg-opacity-80 p-4 md:p-6 animate-fadeIn rounded-lg border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
@@ -40,7 +40,7 @@ const AdventureView = memo(function AdventureView({ adventure, character, area }
         {/* Adventure image placeholder */}
         <div className="w-full h-36 md:h-48 bg-amber-900 mb-4 md:mb-6 rounded-md flex items-center justify-center">
           <Image
-            src={`/image/adventure/${formattedAreaName}_${adventure.image_url}.png`}
+            src={`/image/adventure/${formattedAreaName}/${adventure.image_url}.png`}
             alt={adventure.title}
             width={200}
             height={128}
