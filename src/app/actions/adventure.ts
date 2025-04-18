@@ -1,12 +1,13 @@
 'use server';
 
-import { 
+import {
   generateAdventureSeed,
   calculateSuccessRate,
   getLevelFromExperience,
   generateId,
   getPrimaryStat,
-  getCurrentGameDay
+  getCurrentGameDay,
+  CLASS_STAT_GROWTH
 } from '@/lib/utils';
 import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 import type {
@@ -348,9 +349,46 @@ export async function completeAdventure({
     // Update character stats
     const newExperience = character.experience + experienceGained;
     const newGold = character.gold + goldGained;
-    const newHitpoints = Math.max(0, Math.min(character.max_hitpoints, character.current_hitpoints + (outcome.hitpoints_change || 0)));
-    const newEnergy = Math.max(0, Math.min(character.max_energy, character.current_energy + (outcome.energy_change || 0)));
+    let newHitpoints = Math.max(0, Math.min(character.max_hitpoints, character.current_hitpoints + (outcome.hitpoints_change || 0)));
+    let newEnergy = Math.max(0, Math.min(character.max_energy, character.current_energy + (outcome.energy_change || 0)));
     const newAdventureCount = character.daily_adventure_count + 1;
+    
+    // Check if character has leveled up
+    const oldLevel = getLevelFromExperience(character.experience);
+    const newLevel = getLevelFromExperience(newExperience);
+    const leveledUp = newLevel > oldLevel;
+    
+    // Calculate new stats if leveled up
+    let newStrength = character.strength;
+    let newIntelligence = character.intelligence;
+    let newAgility = character.agility;
+    let newLuck = character.luck;
+    let newMaxHitpoints = character.max_hitpoints;
+    let newMaxEnergy = character.max_energy;
+    
+    if (leveledUp) {
+      console.log(`Character ${character.name} leveled up from ${oldLevel} to ${newLevel}`);
+      
+      // Get stat growth for character class
+      const statGrowth = CLASS_STAT_GROWTH[character.class as keyof typeof CLASS_STAT_GROWTH];
+      
+      // Calculate levels gained
+      const levelsGained = newLevel - oldLevel;
+      
+      // Update stats based on levels gained and class stat growth
+      newStrength += Math.floor(statGrowth.strength * levelsGained);
+      newIntelligence += Math.floor(statGrowth.intelligence * levelsGained);
+      newAgility += Math.floor(statGrowth.agility * levelsGained);
+      newLuck += Math.floor(statGrowth.luck * levelsGained);
+      newMaxHitpoints += Math.floor(statGrowth.hitpoints * levelsGained);
+      newMaxEnergy += Math.floor(statGrowth.energy * levelsGained);
+      
+      console.log(`New stats: STR ${newStrength}, INT ${newIntelligence}, AGI ${newAgility}, LCK ${newLuck}, HP ${newMaxHitpoints}, MP ${newMaxEnergy}`);
+      
+      // Also heal character to full when leveling up
+      newHitpoints = newMaxHitpoints;
+      newEnergy = newMaxEnergy;
+    }
     
     // Update character in database
     const { error: updateError } = await supabase
@@ -358,6 +396,12 @@ export async function completeAdventure({
       .update({
         experience: newExperience,
         gold: newGold,
+        strength: newStrength,
+        intelligence: newIntelligence,
+        agility: newAgility,
+        luck: newLuck,
+        max_hitpoints: newMaxHitpoints,
+        max_energy: newMaxEnergy,
         current_hitpoints: newHitpoints,
         current_energy: newEnergy,
         daily_adventure_count: newAdventureCount,
@@ -421,6 +465,12 @@ export async function completeAdventure({
           ...character,
           experience: newExperience,
           gold: newGold,
+          strength: newStrength,
+          intelligence: newIntelligence,
+          agility: newAgility,
+          luck: newLuck,
+          max_hitpoints: newMaxHitpoints,
+          max_energy: newMaxEnergy,
           current_hitpoints: newHitpoints,
           current_energy: newEnergy,
           daily_adventure_count: newAdventureCount
