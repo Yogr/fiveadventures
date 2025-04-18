@@ -11,7 +11,6 @@ import AnimatedText from '@/components/ui/animated-text';
 import LevelUpAnimation from '@/components/ui/level-up-animation';
 import ItemRewardView from '@/components/ui/item-reward-view';
 import { useAdventure } from '../AdventureContext';
-import { incrementAdventureNumber } from '@/app/actions/adventure-state';
 
 // Animation states for the reward sequence - simplified
 type AnimationState =
@@ -116,42 +115,21 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
     });
   }, [outcome.id, outcome.reward_table_id, rewardItem]);
 
-  useEffect(() => {
-    const incrementAdventure = async () => {
-      if (!character) return;
-      
-      console.log('Incrementing adventure number for character:', character.id);
-      
-      try {
-        const result = await incrementAdventureNumber(character.id);
-        if (result.success) {
-          console.log('Adventure number incremented successfully:', result.data);
-          setAdventureIncremented(true);
-        } else {
-          console.error('Failed to increment adventure number:', result.error);
-        }
-      } catch (error) {
-          console.error('Error incrementing adventure number:', error);
-      }
-    };
-    
-    if (!adventureIncremented) {
-      setAdventureIncremented(true);
-      console.log('Incrementing adventure number');
-      incrementAdventure();
-    }
-
-  }, []); // Empty dependency array - only run once
-  
   // Check if this was the final adventure (5th adventure)
   // We need to check if the character has completed 4 adventures and is now completing the 5th one
   const isFinalAdventure = character.daily_adventure_count === MAX_ADVENTURES_PER_DAY;
   
+  // Handle continue button click - just navigate to next adventure
   const handleContinue = async () => {
     console.log('Continuing to next adventure');
-    // No need to call router.refresh() here as state updates will trigger re-renders
+    
+    // No need to increment adventure number here - it's already incremented
+    // when the adventure is completed in the completeAdventure function
+    
+    // Continue to next adventure
     await continueToNextAdventure();
   };
+  
   
   // Simplified animation handlers
   const handleMessageComplete = () => {

@@ -106,11 +106,12 @@ export async function getAdventureState(
 }
 
 /**
- * Increments the adventure number for a character
+ * Increments the adventure number for a character and returns comprehensive state
+ * This eliminates the need for subscriptions by returning all necessary data
  */
 export async function incrementAdventureNumber(
   characterId: string
-): Promise<ApiResponse<CharacterAdventureState>> {
+): Promise<ApiResponse<{adventureState: CharacterAdventureState, character: any}>> {
   try {
     const supabase = await createClient();
     
@@ -130,7 +131,7 @@ export async function incrementAdventureNumber(
     }
     
     // Increment adventure number
-    const { data, error } = await supabase
+    const { data: adventureState, error } = await supabase
       .from('character_adventures')
       .update({
         adventure_number: (current.adventure_number || 0) + 1,
@@ -144,7 +145,45 @@ export async function incrementAdventureNumber(
       return { success: false, error: error.message };
     }
     
-    return { success: true, data: data as CharacterAdventureState };
+    // Also get the updated character data
+    const { data: character, error: characterError } = await supabase
+      .from('characters')
+      .select('*')
+      .eq('id', characterId)
+      .single();
+      
+    if (characterError) {
+      console.error('Error getting character data:', characterError);
+      // Still return success with adventure state even if character fetch fails
+      return {
+        success: true,
+        data: {
+          adventureState: adventureState as CharacterAdventureState,
+          character: null
+        }
+      };
+    }
+    
+    // Update the character's daily_adventure_count in the database
+    const { error: updateError } = await supabase
+      .from('characters')
+      .update({
+        daily_adventure_count: (character.daily_adventure_count || 0) + 1
+      })
+      .eq('id', characterId);
+      
+    if (updateError) {
+      console.error('Error updating character daily_adventure_count:', updateError);
+    }
+    
+    // Return both the adventure state and character data
+    return {
+      success: true,
+      data: {
+        adventureState: adventureState as CharacterAdventureState,
+        character: character
+      }
+    };
   } catch (error) {
     console.error('Error incrementing adventure number:', error);
     return { success: false, error: 'Failed to increment adventure number' };

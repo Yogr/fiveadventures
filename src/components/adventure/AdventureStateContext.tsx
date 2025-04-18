@@ -25,7 +25,7 @@ interface AdventureStateContextType {
   loading: boolean;
   error: string | null;
   adventureState: CharacterAdventureState | null;
-  refreshAdventureState: () => Promise<void>;
+  refreshAdventureState: (newState?: CharacterAdventureState) => Promise<void>;
 }
 
 const AdventureStateContext = createContext<AdventureStateContextType | null>(null);
@@ -100,53 +100,34 @@ export function AdventureStateProvider({
     }
   }, [character]);
 
-  // Create a memoized refresh function
-  const refreshAdventureState = useCallback(async () => {
-    await fetchAdventureState();
+  // Create a memoized refresh function that can also accept direct state updates
+  const refreshAdventureState = useCallback(async (newState?: CharacterAdventureState) => {
+    if (newState) {
+      // If we're given a new state directly, use it without fetching
+      console.log('AdventureStateContext: Directly updating state with:', newState);
+      setState(prev => ({
+        ...prev,
+        adventureState: newState,
+        loading: false,
+        error: null
+      }));
+    } else {
+      // Otherwise fetch the latest state from the server
+      await fetchAdventureState();
+    }
   }, [fetchAdventureState]);
 
-  // Set up Supabase subscription for adventure state updates
+  // Initialize adventure state when character changes
   useEffect(() => {
     if (!character) return;
     
-    const characterId = character.id;
-    const supabase = createClient();
-    
-    // First, get the current adventure state
+    // Get the current adventure state
     fetchAdventureState();
     
-    // Subscribe to adventure state updates
-    const subscription = supabase
-      .channel(`character-adventure-state-${characterId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'character_adventures',
-          filter: `character_id=eq.${characterId}`
-        },
-        (payload) => {
-          console.log('AdventureStateContext: Received state update:', payload.new);
-          setState(prev => ({ 
-            ...prev, 
-            adventureState: payload.new as CharacterAdventureState
-          }));
-        }
-      )
-      .subscribe((status, err) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('AdventureStateContext: Successfully subscribed to adventure state updates');
-        } else {
-          console.error('AdventureStateContext: Subscription error:', status, err);
-        }
-      });
+    // No subscription - we'll rely on server action responses to update state
+    console.log('AdventureStateContext: Initialized with character ID:', character.id);
     
-    return () => {
-      console.log('AdventureStateContext: Cleaning up subscription');
-      supabase.removeChannel(subscription);
-    };
-  }, [character?.id]);
+  }, [character?.id, fetchAdventureState]);
 
   // Create the context value
   const contextValue = {
