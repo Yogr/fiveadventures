@@ -71,7 +71,7 @@ export async function getCombat(
 export async function startCombatTurn(
   combatId: string,
   action: string,
-  skillId?: number
+  skill?: Skill | null,
 ): Promise<ApiResponse<Combat>> {
   try {
     const supabase = await createClient();
@@ -130,22 +130,7 @@ export async function startCombatTurn(
       characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 3));
       
       console.log(`Combat: Character basic attack - Base damage: ${baseDamage}, Final damage: ${characterDamageDealt}`);
-    } else if (action === 'skill' && skillId) {
-      // Skill attack
-      const { data: skillData, error: skillError } = await supabase
-        .from('skills')
-        .select('*')
-        .eq('id', skillId)
-        .single()
-      
-      if (skillError || !skillData) {
-        return {
-          success: false,
-          error: 'Skill not found'
-        };
-      }
-
-      const skill: Skill = skillData as Skill;
+    } else if (action === 'skill' && skill) {
       
       // Check if character has enough energy
       if (character.current_energy < skill.energy_cost) {
@@ -328,7 +313,7 @@ export async function startCombatTurn(
           turn_number: turnNumber,
           actor: 'character',
           action,
-          skill_id: skillId,
+          skill_id: skill?.id,
           damage_dealt: characterDamageDealt > 0 ? characterDamageDealt : null,
           healing_done: characterHealingDone > 0 ? characterHealingDone : null,
           effects: characterEffects
@@ -658,9 +643,12 @@ export async function getCharacterSkills(
   try {
     const supabase = await createClient();
 
-    // Get character data to check class
+    console.log('getCharacterSkills: Fetching skills for character ID:', characterId);
+
+    // Get character data to check class and level
     const characterResponse = await getCharacterById(characterId);
     if (!characterResponse.success || !characterResponse.data) {
+      console.error('getCharacterSkills: Character not found');
       return {
         success: false,
         error: 'Character not found'
@@ -668,103 +656,50 @@ export async function getCharacterSkills(
     }
     
     const character = characterResponse.data;
+    console.log('getCharacterSkills: Character info:', {
+      id: character.id,
+      name: character.name,
+      class: character.class,
+      level: character.level
+    });
     
-    // Get skills for character's class
+    // Get skills for character's class AND level_required <= character.level
+    console.log('getCharacterSkills: Querying skills for class and level:', {
+      class: character.class,
+      level_required_lte: character.level
+    });
+    
     const { data: classSkills, error: skillsError } = await supabase
       .from('skills')
       .select('*')
-      .eq('class', character.class);
+      .eq('class', character.class)
+      .lte('level_required', character.level);
     
     if (skillsError) {
-      console.error('Error getting skills:', skillsError);
+      console.error('getCharacterSkills: Error getting skills:', skillsError);
       return {
         success: false,
         error: 'Failed to get skills'
       };
     }
     
-    // Get character's learned skills
-    const { data: characterSkills, error: characterSkillsError } = await supabase
-      .from('character_skills')
-      .select('*, skill:skill_id(*)')
-      .eq('character_id', characterId);
+    console.log('getCharacterSkills: Found class skills:', {
+      count: classSkills?.length || 0,
+      skills: classSkills?.map(s => `${s.name} (level ${s.level_required})`) || []
+    });
     
-    if (characterSkillsError) {
-      console.error('Error getting character skills:', characterSkillsError);
-      // Continue anyway, character might not have any skills yet
-    }
     
-    // Combine skills data
-    const skills = classSkills?.map(skill => {
-      const characterSkill = characterSkills?.find(cs => cs.skill_id === skill.id);
-      return {
-        ...skill,
-        learned: !!characterSkill,
-        level: characterSkill?.level || 0
-      };
-    }) || [];
+    console.log('getCharacterSkills: Returning combined skills data:', {
+      totalSkills: classSkills.length,
+      skillNames: classSkills.map(s => s.name)
+    });
     
     return {
       success: true,
-      data: skills
+      data: classSkills
     };
   } catch (err) {
     console.error('Unexpected error getting character skills:', err);
-    return {
-      success: false,
-      error: 'An unexpected error occurred'
-    };
-  }
-}
-
-// Learn a skill
-export async function learnSkill(
-  characterId: string,
-  skillId: number
-): Promise<ApiResponse<null>> {
-  try {
-    const supabase = await createClient();
-
-    // Check if character already has this skill
-    const { data: existingSkill, error: existingSkillError } = await supabase
-      .from('character_skills')
-      .select('*')
-      .eq('character_id', characterId)
-      .eq('skill_id', skillId)
-      .single();
-    
-    if (existingSkill) {
-      return {
-        success: false,
-        error: 'Character already has this skill'
-      };
-    }
-    
-    // Add skill to character
-    const { error } = await supabase
-      .from('character_skills')
-      .insert({
-        id: generateId(), // Generate UUID for the record
-        character_id: characterId,
-        skill_id: skillId,
-        level: 1,
-        acquired_at: new Date().toISOString()
-      });
-    
-    if (error) {
-      console.error('Error learning skill:', error);
-      return {
-        success: false,
-        error: 'Failed to learn skill'
-      };
-    }
-    
-    return {
-      success: true,
-      data: null
-    };
-  } catch (err) {
-    console.error('Unexpected error learning skill:', err);
     return {
       success: false,
       error: 'An unexpected error occurred'

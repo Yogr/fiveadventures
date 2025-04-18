@@ -5,10 +5,9 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Todo
 -------------
-- Make items damage and defense actually apply in combat
-- Make skills base damage come from the skill definition
-- Get the skill level req into the db
+- Fixing loading character skills
 - Add skills to combat
+- Change the combat UI. Add a combat background for the given area (1 combat bg per area is fine for now). Put the enemy HP bar above his head. Put the actions & skills in a nice manner beneath the combat graphics. Then have the  text read out above and with a transparent background as an overlay
 - CharacterStats panel max HP does not show the real max HP after item stat evaluation - Look for other stat usages that don't use the 'total' values
 - Level up stat display does not reflect the real earnings. We need to connect those dots.
 - Normalize the enemy art sizes
@@ -22,6 +21,7 @@ Todo
    - Day counter
    - Attack damage calculation and application
    - Rewards
+- Make characters start with a base set of equipment
 
 - Add authentication and make sure character linking works
 - Create the various platform apps and actually hook up full auth stuff

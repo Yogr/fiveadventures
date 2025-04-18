@@ -9,6 +9,8 @@ import { getCharacterById } from '@/app/actions/character';
 import { updateAdventureState } from '@/app/actions/adventure-state';
 import { useAdventureState } from '@/components/adventure/AdventureStateContext';
 import LoadingSpinner from '@/components/ui/loading-spinner';
+import BuffBar from '@/components/ui/buff-bar';
+import { extractActiveEffects, calculateTotalDamage, calculateTotalDefense } from '@/lib/character-utils';
 import Image from 'next/image';
 
 interface CombatInterfaceProps {
@@ -28,6 +30,8 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   const [actionInProgress, setActionInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [combatLog, setCombatLog] = useState<string[]>([]);
+  const [characterEffects, setCharacterEffects] = useState<Record<string, any>[]>([]);
+  const [monsterEffects, setMonsterEffects] = useState<Record<string, any>[]>([]);
   const combatEndingRef = useRef(false);
 
   // Load combat data
@@ -37,20 +41,33 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       setError(null);
       
       try {
+        console.log('CombatInterface: Loading combat data for ID:', combatId);
         // Get combat data
         const combatResponse = await getCombat(combatId);
         if (!combatResponse.success || !combatResponse.data) {
+          console.error('CombatInterface: Failed to load combat data:', combatResponse.error);
           setError('Failed to load combat data');
           setLoading(false);
           return;
         }
         
+        console.log('CombatInterface: Combat data loaded successfully');
         setCombat(combatResponse.data);
         
         // Get character skills
+        console.log('CombatInterface: Loading skills for character ID:', character.id);
         const skillsResponse = await getCharacterSkills(character.id);
+        console.log('CombatInterface: Skills response:', {
+          success: skillsResponse.success,
+          count: skillsResponse.data?.length || 0,
+          error: skillsResponse.error,
+          data: skillsResponse.data
+        });
+        
         if (skillsResponse.success && skillsResponse.data) {
-          setSkills(skillsResponse.data.filter(skill => skill.learned));
+          setSkills(skillsResponse.data);
+        } else {
+          console.error('CombatInterface: Failed to load skills:', skillsResponse.error);
         }
         
         setLoading(false);
@@ -63,6 +80,38 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     
     loadCombatData();
   }, [combatId, character.id]);
+
+  // Update active effects whenever combat turns change
+  useEffect(() => {
+    if (!combat || !combat.turns || !Array.isArray(combat.turns)) return;
+    
+    console.log('CombatInterface: Updating active effects from combat turns');
+    
+    // Extract character and monster effects from combat turns
+    const charEffects: Record<string, any>[] = [];
+    const monsterEffs: Record<string, any>[] = [];
+    
+    // Separate effects by actor
+    combat.turns.forEach(turn => {
+      if (turn.effects) {
+        // Make sure effects is an object before adding to array
+        const effectObj = typeof turn.effects === 'object' ? turn.effects : {};
+        if (turn.actor === 'character') {
+          charEffects.push(effectObj as Record<string, any>);
+        } else if (turn.actor === 'monster') {
+          monsterEffs.push(effectObj as Record<string, any>);
+        }
+      }
+    });
+    
+    console.log('CombatInterface: Extracted effects:', {
+      characterEffects: charEffects.length,
+      monsterEffects: monsterEffs.length
+    });
+    
+    setCharacterEffects(charEffects);
+    setMonsterEffects(monsterEffs);
+  }, [combat?.turns]);
 
   // Check if combat is completed
   useEffect(() => {
@@ -211,6 +260,85 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     setCombatLog(prevLog => [...prevLog, message]);
   };
 
+  // Handle monster attack (extracted to reduce code duplication)
+  const handleMonsterAttack = (result: any, currentCombat: Combat) => {
+    if (!result.data || result.data.monster_damage_dealt <= currentCombat.monster_damage_dealt) return;
+    
+    // Short delay before monster attacks
+    setTimeout(() => {
+      const monsterDamage = result.data.monster_damage_dealt - currentCombat.monster_damage_dealt;
+      
+      // Animate monster attacking
+      animateElement('.monster-avatar', 'attacking');
+      
+      // Short delay for attack animation
+      setTimeout(() => {
+        // Animate character being hit
+        animateElement('.character-avatar', 'hit');
+        
+        // Show floating damage number on character
+        createFloatingNumber('character', monsterDamage, 'damage');
+      }, 250);
+      
+      addToCombatLog(`The ${currentCombat.monster.name} attacked you for ${monsterDamage} damage!`);
+      
+      // Update character HP locally instead of fetching from server
+      console.log('CombatInterface: Updating character HP locally after monster attack');
+      
+      // Calculate new HP
+      const newHP = Math.max(0, character.current_hitpoints - monsterDamage);
+      
+      // Update character state locally
+      setCharacter(prevChar => ({
+        ...prevChar,
+        current_hitpoints: newHP
+      }));
+      
+      console.log('CombatInterface: Character HP updated locally:', {
+        old: character.current_hitpoints,
+        new: newHP,
+        damage: monsterDamage
+      });
+    }, 500);
+  };
+
+  // Handle combat completion (extracted to reduce code duplication)
+  const handleCombatCompletion = (result: any, isVictoryAction: boolean) => {
+    if (!combat || !result.data?.is_completed) return;
+    
+    if (result.data.is_victory) {
+      addToCombatLog(`You defeated the ${combat.monster.name}!`);
+      createFloatingNumber('monster', 0, 'effect', 'Defeated!');
+    } else {
+      addToCombatLog(`You were defeated by the ${combat.monster.name}!`);
+      createFloatingNumber('character', 0, 'effect', 'Defeated!');
+    }
+    
+    // Refresh character data after combat ends
+    console.log(`CombatInterface: Refreshing character data after combat ${isVictoryAction ? 'victory' : 'defeat'}`);
+    getCharacterById(character.id).then(response => {
+      if (response.success && response.data) {
+        console.log(`CombatInterface: Character data updated after combat ${isVictoryAction ? 'victory' : 'defeat'}:`, {
+          old: {
+            hp: `${character.current_hitpoints}/${character.max_hitpoints}`,
+            energy: `${character.current_energy}/${character.max_energy}`,
+            gold: character.gold,
+            adventureCount: character.daily_adventure_count
+          },
+          new: {
+            hp: `${response.data.current_hitpoints}/${response.data.max_hitpoints}`,
+            energy: `${response.data.current_energy}/${response.data.max_energy}`,
+            gold: response.data.gold,
+            adventureCount: response.data.daily_adventure_count
+          }
+        });
+        setCharacter(response.data);
+      } else {
+        console.error('CombatInterface: Failed to get character data:', response.error);
+      }
+    });
+  };
+
   // Handle attack action
   const handleAttack = async () => {
     if (!combat || actionInProgress) return;
@@ -230,7 +358,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       }
       
       // Calculate damage dealt
-      const damageDealt = result.data!.character_damage_dealt - combat.character_damage_dealt;
+      const damageDealt = result.data.character_damage_dealt - combat.character_damage_dealt;
       
       // Show floating damage number on monster
       createFloatingNumber('monster', damageDealt, 'damage');
@@ -241,79 +369,11 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       setCombat(result.data);
       addToCombatLog(`You attacked the ${combat.monster.name} for ${damageDealt} damage!`);
       
-      // If monster attacks back
-      if (result.data!.monster_damage_dealt > combat.monster_damage_dealt) {
-        // Short delay before monster attacks
-        setTimeout(() => {
-          const monsterDamage = result.data!.monster_damage_dealt - combat.monster_damage_dealt;
-          
-          // Animate monster attacking
-          animateElement('.monster-avatar', 'attacking');
-          
-          // Short delay for attack animation
-          setTimeout(() => {
-            // Animate character being hit
-            animateElement('.character-avatar', 'hit');
-            
-            // Show floating damage number on character
-            createFloatingNumber('character', monsterDamage, 'damage');
-          }, 250);
-          
-          addToCombatLog(`The ${combat.monster.name} attacked you for ${monsterDamage} damage!`);
-          
-          // Update character HP locally instead of fetching from server
-          console.log('CombatInterface: Updating character HP locally after monster attack');
-          
-          // Calculate new HP
-          const newHP = Math.max(0, character.current_hitpoints - monsterDamage);
-          
-          // Update character state locally
-          setCharacter(prevChar => ({
-            ...prevChar,
-            current_hitpoints: newHP
-          }));
-          
-          console.log('CombatInterface: Character HP updated locally:', {
-            old: character.current_hitpoints,
-            new: newHP,
-            damage: monsterDamage
-          });
-        }, 500);
-      }
+      // Handle monster counter-attack
+      handleMonsterAttack(result, combat);
       
-      if (result.data!.is_completed) {
-        if (result.data!.is_victory) {
-          addToCombatLog(`You defeated the ${combat.monster.name}!`);
-          createFloatingNumber('monster', 0, 'effect', 'Defeated!');
-        } else {
-          addToCombatLog(`You were defeated by the ${combat.monster.name}!`);
-          createFloatingNumber('character', 0, 'effect', 'Defeated!');
-        }
-        
-        // Refresh character data after combat ends
-        console.log('CombatInterface: Refreshing character data after combat victory');
-        getCharacterById(character.id).then(response => {
-          if (response.success && response.data) {
-            console.log('CombatInterface: Character data updated after combat victory:', {
-              old: {
-                hp: `${character.current_hitpoints}/${character.max_hitpoints}`,
-                energy: `${character.current_energy}/${character.max_energy}`,
-                gold: character.gold,
-                adventureCount: character.daily_adventure_count
-              },
-              new: {
-                hp: `${response.data.current_hitpoints}/${response.data.max_hitpoints}`,
-                energy: `${response.data.current_energy}/${response.data.max_energy}`,
-                gold: response.data.gold,
-                adventureCount: response.data.daily_adventure_count
-              }
-            });
-            setCharacter(response.data);
-          } else {
-            console.error('CombatInterface: Failed to get character data:', response.error);
-          }
-        });
-      }
+      // Handle combat completion
+      handleCombatCompletion(result, true);
       
       setActionInProgress(false);
     } catch (err) {
@@ -336,7 +396,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       // Show skill name as effect
       createFloatingNumber('character', 0, 'effect', selectedSkill.name);
       
-      const result = await startCombatTurn(combatId, 'skill', selectedSkill.id);
+      const result = await startCombatTurn(combatId, 'skill', selectedSkill);
       
       if (!result.success || !result.data) {
         setError(result.error || 'Failed to use skill');
@@ -348,8 +408,8 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       addToCombatLog(`You used ${selectedSkill.name}!`);
       
       // If skill dealt damage
-      if (result.data!.character_damage_dealt > combat.character_damage_dealt) {
-        const damageDealt = result.data!.character_damage_dealt - combat.character_damage_dealt;
+      if (result.data.character_damage_dealt > combat.character_damage_dealt) {
+        const damageDealt = result.data.character_damage_dealt - combat.character_damage_dealt;
         
         // Show floating damage number on monster
         createFloatingNumber('monster', damageDealt, 'damage');
@@ -360,79 +420,11 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         addToCombatLog(`You dealt ${damageDealt} damage to the ${combat.monster.name}!`);
       }
       
-      // If monster attacks back
-      if (result.data!.monster_damage_dealt > combat.monster_damage_dealt) {
-        // Short delay before monster attacks
-        setTimeout(() => {
-          const monsterDamage = result.data!.monster_damage_dealt - combat.monster_damage_dealt;
-          
-          // Animate monster attacking
-          animateElement('.monster-avatar', 'attacking');
-          
-          // Short delay for attack animation
-          setTimeout(() => {
-            // Animate character being hit
-            animateElement('.character-avatar', 'hit');
-            
-            // Show floating damage number on character
-            createFloatingNumber('character', monsterDamage, 'damage');
-          }, 250);
-          
-          addToCombatLog(`The ${combat.monster.name} attacked you for ${monsterDamage} damage!`);
-          
-          // Update character HP locally instead of fetching from server
-          console.log('CombatInterface: Updating character HP locally after monster attack');
-          
-          // Calculate new HP
-          const newHP = Math.max(0, character.current_hitpoints - monsterDamage);
-          
-          // Update character state locally
-          setCharacter(prevChar => ({
-            ...prevChar,
-            current_hitpoints: newHP
-          }));
-          
-          console.log('CombatInterface: Character HP updated locally:', {
-            old: character.current_hitpoints,
-            new: newHP,
-            damage: monsterDamage
-          });
-        }, 500);
-      }
+      // Handle monster counter-attack
+      handleMonsterAttack(result, combat);
       
-      if (result.data.is_completed) {
-        if (result.data.is_victory) {
-          addToCombatLog(`You defeated the ${combat.monster.name}!`);
-          createFloatingNumber('monster', 0, 'effect', 'Defeated!');
-        } else {
-          addToCombatLog(`You were defeated by the ${combat.monster.name}!`);
-          createFloatingNumber('character', 0, 'effect', 'Defeated!');
-        }
-        
-        // Refresh character data after combat ends
-        console.log('CombatInterface: Refreshing character data after combat defeat');
-        getCharacterById(character.id).then(response => {
-          if (response.success && response.data) {
-            console.log('CombatInterface: Character data updated after combat defeat:', {
-              old: {
-                hp: `${character.current_hitpoints}/${character.max_hitpoints}`,
-                energy: `${character.current_energy}/${character.max_energy}`,
-                gold: character.gold,
-                adventureCount: character.daily_adventure_count
-              },
-              new: {
-                hp: `${response.data.current_hitpoints}/${response.data.max_hitpoints}`,
-                energy: `${response.data.current_energy}/${response.data.max_energy}`,
-                gold: response.data.gold,
-                adventureCount: response.data.daily_adventure_count
-              }
-            });
-            setCharacter(response.data);
-          } else {
-            console.error('CombatInterface: Failed to get character data:', response.error);
-          }
-        });
-      }
+      // Handle combat completion
+      handleCombatCompletion(result, false);
       
       setSelectedSkill(null);
       setActionInProgress(false);
@@ -463,52 +455,15 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       
       setCombat(result.data);
       
-      if (result.data!.is_completed) {
+      if (result.data.is_completed) {
         addToCombatLog(`You successfully ran away from the ${combat.monster.name}!`);
         createFloatingNumber('character', 0, 'effect', 'Escaped!');
       } else {
         addToCombatLog('You failed to run away!');
         createFloatingNumber('character', 0, 'effect', 'Failed!');
         
-        // If monster attacks after failed run
-        if (result.data!.monster_damage_dealt > combat.monster_damage_dealt) {
-          // Short delay before monster attacks
-          setTimeout(() => {
-            const monsterDamage = result.data!.monster_damage_dealt - combat.monster_damage_dealt;
-            
-            // Animate monster attacking
-            animateElement('.monster-avatar', 'attacking');
-            
-            // Short delay for attack animation
-            setTimeout(() => {
-              // Animate character being hit
-              animateElement('.character-avatar', 'hit');
-              
-              // Show floating damage number on character
-              createFloatingNumber('character', monsterDamage, 'damage');
-            }, 250);
-            
-            addToCombatLog(`The ${combat.monster.name} attacked you for ${monsterDamage} damage!`);
-            
-            // Update character HP locally instead of fetching from server
-            console.log('CombatInterface: Updating character HP locally after monster attack');
-            
-            // Calculate new HP
-            const newHP = Math.max(0, character.current_hitpoints - monsterDamage);
-            
-            // Update character state locally
-            setCharacter(prevChar => ({
-              ...prevChar,
-              current_hitpoints: newHP
-            }));
-            
-            console.log('CombatInterface: Character HP updated locally:', {
-              old: character.current_hitpoints,
-              new: newHP,
-              damage: monsterDamage
-            });
-          }, 500);
-        }
+        // Handle monster counter-attack after failed run
+        handleMonsterAttack(result, combat);
       }
       
       setActionInProgress(false);
@@ -557,6 +512,27 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   const characterHealthPercent = Math.max(0, Math.min(100, (character.current_hitpoints / character.max_hitpoints) * 100));
   const monsterHealthPercent = Math.max(0, Math.min(100, ((combat.monster.hitpoints - combat.character_damage_dealt) / combat.monster.hitpoints) * 100));
   
+  // Render action button
+  const renderActionButton = (icon: string, label: string, onClick: () => void) => (
+    <div className="flex flex-col items-center">
+      <button 
+        onClick={onClick}
+        disabled={actionInProgress}
+        className="pixel-button flex flex-col items-center justify-center p-2 rounded-md bg-gray-800 hover:bg-gray-700 active:bg-gray-900 disabled:opacity-50 w-20 h-20"
+      >
+        <div className="relative w-12 h-12 mb-1">
+          <Image
+            src={`/image/ui/${icon}.png`}
+            alt={label}
+            fill
+            className="object-contain"
+          />
+        </div>
+        <span className="text-sm">{label}</span>
+      </button>
+    </div>
+  );
+  
   return (
     <div className="bg-gray-900 bg-opacity-80 p-4 pt-2 pb-3 animate-fadeIn rounded-lg">
       <h2 className="text-xl mb-2 text-red-400 text-center">Battle!</h2>
@@ -565,6 +541,11 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         {/* Character - Left Side */}
         <div className="bg-gray-800 p-3 rounded-md relative">
           <h3 className="text-lg mb-1">{character.name}</h3>
+          
+          {/* Character buff bar */}
+          {characterEffects.length > 0 && (
+            <BuffBar effects={characterEffects} size="sm" />
+          )}
           
           <div className="w-16 h-16 mx-auto mb-2 bg-blue-900 rounded-full flex items-center justify-center character-avatar">
             <Image
@@ -614,14 +595,19 @@ export default function CombatInterface({ combatId, character: initialCharacter,
             )}
           </h3>
           
+          {/* Monster buff bar */}
+          {monsterEffects.length > 0 && (
+            <BuffBar effects={monsterEffects} size="sm" />
+          )}
+          
           <div className={`w-16 h-16 mx-auto mb-2 ${combat.monster.is_elite ? 'bg-yellow-900' : 'bg-red-900'} rounded-full flex items-center justify-center monster-avatar ${combat.monster.is_elite ? 'border-2 border-yellow-400' : ''}`}>
             <Image
-                src={`/image/enemy/${combat.monster.image_url}.png`}
-                alt={combat.monster.name}
-                width={48}
-                height={48}
-                className="-scale-x-100"
-              />
+              src={`/image/enemy/${combat.monster.image_url}.png`}
+              alt={combat.monster.name}
+              width={48}
+              height={48}
+              className="-scale-x-100"
+            />
           </div>
           
           <div className="mb-2">
@@ -646,63 +632,59 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         {/* Damage numbers will be added dynamically via JavaScript */}
       </div>
       
-      {/* Actions - Moved above combat log */}
+      {/* Actions - Icon-based buttons */}
       {!combat.is_completed && (
-        <div className="grid grid-cols-2 gap-2 mb-2">
-          <div>
-            <button 
-              onClick={handleAttack}
-              disabled={actionInProgress}
-              className="pixel-button w-full py-1 bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:opacity-50 attack-button"
-            >
-              Attack
-            </button>
-          </div>
-          
-          <div>
-            <button 
-              onClick={handleRun}
-              disabled={actionInProgress}
-              className="pixel-button w-full py-1 bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-700 disabled:opacity-50"
-            >
-              Run Away
-            </button>
-          </div>
+        <div className="grid grid-cols-2 gap-4 mb-3">
+          {renderActionButton('attack', 'Attack', handleAttack)}
+          {renderActionButton('flee', 'Run Away', handleRun)}
         </div>
       )}
       
-      {/* Skills - Also moved above combat log */}
-      {!combat.is_completed && skills.length > 0 && (
-        <div className="bg-gray-800 p-2 rounded-md mb-2">
-          <h3 className="text-lg mb-1">Skills</h3>
+      {/* Skills - Icon-based grid */}
+      {!combat.is_completed && (
+        <div className="bg-gray-800 p-3 rounded-md mb-3">
+          <h3 className="text-lg mb-2">Skills {skills.length > 0 ? `(${skills.length})` : '(None Available)'}</h3>
           
-          <div className="grid grid-cols-2 gap-1">
-            {skills.map((skill) => (
-              <button 
-                key={skill.id}
-                className={`p-1 border rounded-md text-left text-sm ${
-                  selectedSkill?.id === skill.id
-                    ? 'border-blue-500 bg-blue-900 bg-opacity-30'
-                    : 'border-gray-600 hover:border-gray-400'
-                } ${character.current_energy < skill.energy_cost ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                onClick={() => character.current_energy >= skill.energy_cost && setSelectedSkill(skill)}
-                disabled={character.current_energy < skill.energy_cost || actionInProgress}
-              >
-                <div className="flex justify-between">
-                  <span className="font-bold">{skill.name}</span>
-                  <span className="text-blue-400">{skill.energy_cost}</span>
-                </div>
-                <p className="text-xs text-gray-300 truncate">{skill.description}</p>
-              </button>
-            ))}
-          </div>
+          {skills.length > 0 ? (
+            <div className="grid grid-cols-3 gap-3">
+              {skills.map((skill) => (
+                <button 
+                  key={skill.id}
+                  className={`flex flex-col items-center justify-center p-2 rounded-md ${
+                    selectedSkill?.id === skill.id
+                      ? 'bg-blue-900 bg-opacity-50 border border-blue-500'
+                      : 'bg-gray-700 hover:bg-gray-600'
+                  } ${character.current_energy < skill.energy_cost ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  onClick={() => character.current_energy >= skill.energy_cost && setSelectedSkill(skill)}
+                  disabled={character.current_energy < skill.energy_cost || actionInProgress}
+                  title={`${skill.description} (Energy: ${skill.energy_cost})`}
+                >
+                  <div className="relative w-10 h-10 mb-1">
+                    <Image
+                      src={`/image/skill/${skill.image_url}.png`}
+                      alt={skill.name}
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  <span className="text-xs text-center">{skill.name}</span>
+                  <span className="text-xs text-blue-400">{skill.energy_cost}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-gray-400">
+              <p>No skills available for this character level.</p>
+              <p className="text-xs mt-2">Skills will unlock as you level up.</p>
+            </div>
+          )}
           
           {selectedSkill && (
-            <div className="mt-2 text-center">
+            <div className="mt-3 text-center">
               <button 
                 onClick={handleUseSkill}
                 disabled={actionInProgress}
-                className="pixel-button py-1 text-sm bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50"
+                className="pixel-button py-2 px-4 text-sm bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50"
               >
                 Use {selectedSkill.name}
               </button>
@@ -726,29 +708,29 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       {combat.is_completed && (
         <div className="text-center">
           <h3 className="text-2xl mb-4">
-            {combat.is_victory 
-              ? 'Victory!' 
+            {combat.is_victory
+              ? 'Victory!'
               : 'Defeat!'}
           </h3>
-          
-          <button
-            onClick={() => {
+
+         <button
+           onClick={() => {
               // Check if this was a "run away" scenario
               const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) =>
-                turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
+              turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
               );
-              
+
               // Set combat ending flag to prevent multiple calls
               if (combatEndingRef.current) return;
               combatEndingRef.current = true;
-              
+
               // Create the final result
               const finalResult = {
                 isVictory: combat.is_victory === true,
                 ranAway: !!ranAway,
                 monsterName: combat.monster?.name || 'monster'
               };
-              
+
               // Import the completeCombat function
               import('@/app/actions/combat-end').then(({ completeCombat }) => {
                 // Use the completeCombat function to handle the entire combat end process
@@ -761,29 +743,29 @@ export default function CombatInterface({ combatId, character: initialCharacter,
                       goldGained: result.data.character.gold - character.gold,
                       adventureCount: result.data.character.daily_adventure_count
                     });
-                    
+
                     // Update local character state with the updated data
                     setCharacter(result.data.character);
                   }
-                  
+
                   // Call onCombatEnd to update the UI
                   console.log('CombatInterface: Calling onCombatEnd with result:', finalResult);
                   onCombatEnd(finalResult);
                 }).catch(error => {
                   console.error('CombatInterface: Error in completeCombat:', error);
-                  
+
                   // Call onCombatEnd even if completeCombat fails
-                  console.log('CombatInterface: Calling onCombatEnd after error with result:', finalResult);
+                 console.log('CombatInterface: Calling onCombatEnd after error with result:', finalResult);
                   onCombatEnd(finalResult);
                 });
               });
-            }}
+          }}
             className="pixel-button text-xl"
-          >
+            >
             Continue
           </button>
         </div>
       )}
     </div>
-  );
+ );
 }
