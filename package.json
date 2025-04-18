@@ -17,6 +17,7 @@
     "db:update-monsters": "node scripts/update-monsters-table.js"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.2",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.40.0",
     "dotenv": "^16.4.7",

@@ -1,27 +1,29 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Combat, Character, Skill } from '@/lib/types';
 import { getCombat, startCombatTurn } from '@/app/actions/combat';
 import { getCharacterSkills } from '@/app/actions/combat';
 import { getCharacterById } from '@/app/actions/character';
-import { updateAdventureState } from '@/app/actions/adventure-state';
 import { useAdventureState } from '@/components/adventure/AdventureStateContext';
 import LoadingSpinner from '@/components/ui/loading-spinner';
-import BuffBar from '@/components/ui/buff-bar';
-import { extractActiveEffects, calculateTotalDamage, calculateTotalDefense } from '@/lib/character-utils';
+import { Dialog, Transition } from '@headlessui/react';
 import Image from 'next/image';
+import ActionButton from './action-button';
+import CombatScene from './CombatScene';
+import StatusBar from './status-bar';
 
 interface CombatInterfaceProps {
   combatId: string;
   character: Character;
+  area: { id: string; name: string; image: string };
   onCombatEnd: (result: { isVictory: boolean; ranAway: boolean; monsterName: string }) => void;
 }
 
-export default function CombatInterface({ combatId, character: initialCharacter, onCombatEnd }: CombatInterfaceProps) {
+export default function CombatInterface({ combatId, character: initialCharacter, area, onCombatEnd }: CombatInterfaceProps) {
   const router = useRouter();
-  const { adventureState, refreshAdventureState } = useAdventureState();
+  const { refreshAdventureState } = useAdventureState();
   const [loading, setLoading] = useState(true);
   const [character, setCharacter] = useState<Character>(initialCharacter);
   const [combat, setCombat] = useState<Combat | null>(null);
@@ -30,6 +32,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   const [actionInProgress, setActionInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [combatLog, setCombatLog] = useState<string[]>([]);
+  const [showMonsterInfo, setShowMonsterInfo] = useState(false);
   const [characterEffects, setCharacterEffects] = useState<Record<string, any>[]>([]);
   const [monsterEffects, setMonsterEffects] = useState<Record<string, any>[]>([]);
   const combatEndingRef = useRef(false);
@@ -128,14 +131,6 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     const monsterCurrentHP = combat.monster.hitpoints - combat.character_damage_dealt;
     const monsterDefeated = monsterCurrentHP <= 0;
     
-    console.log('CombatInterface: Monster status:', {
-      name: combat.monster.name,
-      totalHP: combat.monster.hitpoints,
-      damageTaken: combat.character_damage_dealt,
-      currentHP: monsterCurrentHP,
-      defeated: monsterDefeated
-    });
-    
     // End combat if server says it's completed or if monster HP is 0 or less
     if ((combat.is_completed && combat.is_victory !== null) || monsterDefeated) {
       console.log('CombatInterface: Combat is completed or monster is defeated');
@@ -143,28 +138,12 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       // If monster is defeated but combat not marked as completed, force victory
       // Ensure isVictory is always a boolean, not null
       const isVictory = monsterDefeated ? true : (combat.is_victory === true);
-      console.log('CombatInterface: isVictory =', isVictory);
       
       // Check if this was a "run away" scenario
-      console.log('CombatInterface: Checking if player ran away, combat.turns =', combat.turns);
-      
-      // Check if any turn was a successful run
-      // A successful run has effects.success === true
-      // A failed run has effects.success === false
       const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) => {
         // Only consider turns where the player successfully ran away
-        const isRunAway = turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true;
-        console.log('CombatInterface: Turn check for run away:', {
-          turn_number: turn.turn_number,
-          actor: turn.actor,
-          action: turn.action,
-          success: turn.effects?.success,
-          isRunAway
-        });
-        return isRunAway;
+        return turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true;
       });
-      
-      console.log('CombatInterface: ranAway =', ranAway);
       
       // If player ran away, make sure isVictory is false
       const finalResult = {
@@ -173,8 +152,6 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         monsterName: combat.monster?.name || 'monster'
       };
       
-      console.log('CombatInterface: Final combat result:', finalResult);
-      
       // Set combat ending flag to prevent multiple calls
       combatEndingRef.current = true;
       
@@ -182,32 +159,20 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       import('@/app/actions/combat-end').then(({ completeCombat }) => {
         // Use the completeCombat function to handle the entire combat end process
         completeCombat(combatId, finalResult.isVictory, finalResult.ranAway).then(result => {
-          if (!result.success || !result.data) {
-            console.error('CombatInterface: Error completing combat:', result.error);
-          } else {
-            console.log('CombatInterface: Combat completed successfully:', {
-              experienceGained: result.data.character.experience - character.experience,
-              goldGained: result.data.character.gold - character.gold,
-              adventureCount: result.data.character.daily_adventure_count
-            });
-            
+          if (result.success && result.data) {
             // Update local character state with the updated data
             setCharacter(result.data.character);
           }
           
           // Call onCombatEnd to update the UI
-          console.log('CombatInterface: Calling onCombatEnd with result:', finalResult);
           onCombatEnd(finalResult);
-        }).catch(error => {
-          console.error('CombatInterface: Error in completeCombat:', error);
-          
+        }).catch(() => {
           // Call onCombatEnd even if completeCombat fails
-          console.log('CombatInterface: Calling onCombatEnd after error with result:', finalResult);
           onCombatEnd(finalResult);
         });
       });
     }
-  }, [combat, character.id, onCombatEnd, refreshAdventureState]);
+  }, [combat, character.id, combatId, onCombatEnd, refreshAdventureState]);
 
   // Create a floating damage number
   const createFloatingNumber = (target: 'character' | 'monster', value: number, type: 'damage' | 'heal' | 'effect' = 'damage', text?: string) => {
@@ -257,7 +222,14 @@ export default function CombatInterface({ combatId, character: initialCharacter,
 
   // Add message to combat log
   const addToCombatLog = (message: string) => {
-    setCombatLog(prevLog => [...prevLog, message]);
+    setCombatLog(prevLog => {
+      // Keep only the last 5 messages to avoid cluttering the overlay
+      const newLog = [...prevLog, message];
+      if (newLog.length > 5) {
+        return newLog.slice(newLog.length - 5);
+      }
+      return newLog;
+    });
   };
 
   // Handle monster attack (extracted to reduce code duplication)
@@ -283,9 +255,6 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       addToCombatLog(`The ${currentCombat.monster.name} attacked you for ${monsterDamage} damage!`);
       
       // Update character HP locally instead of fetching from server
-      console.log('CombatInterface: Updating character HP locally after monster attack');
-      
-      // Calculate new HP
       const newHP = Math.max(0, character.current_hitpoints - monsterDamage);
       
       // Update character state locally
@@ -293,12 +262,6 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         ...prevChar,
         current_hitpoints: newHP
       }));
-      
-      console.log('CombatInterface: Character HP updated locally:', {
-        old: character.current_hitpoints,
-        new: newHP,
-        damage: monsterDamage
-      });
     }, 500);
   };
 
@@ -315,26 +278,9 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     }
     
     // Refresh character data after combat ends
-    console.log(`CombatInterface: Refreshing character data after combat ${isVictoryAction ? 'victory' : 'defeat'}`);
     getCharacterById(character.id).then(response => {
       if (response.success && response.data) {
-        console.log(`CombatInterface: Character data updated after combat ${isVictoryAction ? 'victory' : 'defeat'}:`, {
-          old: {
-            hp: `${character.current_hitpoints}/${character.max_hitpoints}`,
-            energy: `${character.current_energy}/${character.max_energy}`,
-            gold: character.gold,
-            adventureCount: character.daily_adventure_count
-          },
-          new: {
-            hp: `${response.data.current_hitpoints}/${response.data.max_hitpoints}`,
-            energy: `${response.data.current_energy}/${response.data.max_energy}`,
-            gold: response.data.gold,
-            adventureCount: response.data.daily_adventure_count
-          }
-        });
         setCharacter(response.data);
-      } else {
-        console.error('CombatInterface: Failed to get character data:', response.error);
       }
     });
   };
@@ -508,264 +454,226 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     );
   }
 
-  // Calculate health percentages
-  const characterHealthPercent = Math.max(0, Math.min(100, (character.current_hitpoints / character.max_hitpoints) * 100));
-  const monsterHealthPercent = Math.max(0, Math.min(100, ((combat.monster.hitpoints - combat.character_damage_dealt) / combat.monster.hitpoints) * 100));
-  
-  // Render action button
-  const renderActionButton = (icon: string, label: string, onClick: () => void) => (
-    <div className="flex flex-col items-center">
-      <button 
-        onClick={onClick}
-        disabled={actionInProgress}
-        className="pixel-button flex flex-col items-center justify-center p-2 rounded-md bg-gray-800 hover:bg-gray-700 active:bg-gray-900 disabled:opacity-50 w-20 h-20"
-      >
-        <div className="relative w-12 h-12 mb-1">
-          <Image
-            src={`/image/ui/${icon}.png`}
-            alt={label}
-            fill
-            className="object-contain"
-          />
-        </div>
-        <span className="text-sm">{label}</span>
-      </button>
-    </div>
-  );
+  // Calculate current monster HP
+  const monsterCurrentHp = Math.max(0, combat.monster.hitpoints - combat.character_damage_dealt);
   
   return (
-    <div className="bg-gray-900 bg-opacity-80 p-4 pt-2 pb-3 animate-fadeIn rounded-lg">
-      <h2 className="text-xl mb-2 text-red-400 text-center">Battle!</h2>
-      
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        {/* Character - Left Side */}
-        <div className="bg-gray-800 p-3 rounded-md relative">
-          <h3 className="text-lg mb-1">{character.name}</h3>
+    <>
+      <div className="animate-fadeIn">
+        {/* Combat Scene Component - Contains background, fighters, and messages */}
+        <CombatScene
+          character={character}
+          combat={combat}
+          characterEffects={characterEffects}
+          monsterEffects={monsterEffects}
+          combatLog={combatLog}
+          areaImage={area.image}
+          onMonsterInfoClick={() => setShowMonsterInfo(true)}
+        />
           
-          {/* Character buff bar */}
-          {characterEffects.length > 0 && (
-            <BuffBar effects={characterEffects} size="sm" />
-          )}
-          
-          <div className="w-16 h-16 mx-auto mb-2 bg-blue-900 rounded-full flex items-center justify-center character-avatar">
-            <Image
-              src={`/image/characters/${character.class.toLowerCase()}.png`}
-              alt={character.name}
-              width={64}
-              height={64}
-            />
-          </div>
-          
-          <div className="mb-2">
-            <div className="flex justify-between mb-1">
-              <span>HP: {character.current_hitpoints}/{character.max_hitpoints}</span>
-              <span>{Math.round(characterHealthPercent)}%</span>
-            </div>
-            <div className="w-full h-4 bg-gray-700 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-red-600 transition-all duration-300" 
-                style={{ width: `${characterHealthPercent}%` }}
-              ></div>
-            </div>
-          </div>
-          
-          <div className="mb-2">
-            <div className="flex justify-between mb-1">
-              <span>Energy: {character.current_energy}/{character.max_energy}</span>
-              <span>{Math.round((character.current_energy / character.max_energy) * 100)}%</span>
-            </div>
-            <div className="w-full h-4 bg-gray-700 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-blue-600 transition-all duration-300" 
-                style={{ width: `${(character.current_energy / character.max_energy) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Monster - Right Side */}
-        <div className="bg-gray-800 p-3 rounded-md relative">
-          <h3 className="text-lg mb-1">
-            {combat.monster.name}
-            {/* Elite monster indicator */}
-            {combat.monster.is_elite && (
-              <span className="ml-2 text-xs text-yellow-400 font-bold border border-yellow-400 rounded-md px-1 py-0.5">
-                ELITE
-              </span>
-            )}
-          </h3>
-          
-          {/* Monster buff bar */}
-          {monsterEffects.length > 0 && (
-            <BuffBar effects={monsterEffects} size="sm" />
-          )}
-          
-          <div className={`w-20 h-20 mx-auto mb-2 ${combat.monster.is_elite ? 'bg-yellow-900' : 'bg-red-900'} rounded-full flex items-center justify-center monster-avatar ${combat.monster.is_elite ? 'border-2 border-yellow-400' : ''}`}>
-            <Image
-              src={`/image/enemy/${combat.monster.image_url}.png`}
-              alt={combat.monster.name}
-              width={80}
-              height={80}
-              className="-scale-x-100"
-            />
-          </div>
-          
-          <div className="mb-2">
-            <div className="flex justify-between mb-1">
-              <span>HP: {Math.max(0, combat.monster.hitpoints - combat.character_damage_dealt)}/{combat.monster.hitpoints}</span>
-              <span>{Math.round(monsterHealthPercent)}%</span>
-            </div>
-            <div className="w-full h-4 bg-gray-700 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-red-600 transition-all duration-300" 
-                style={{ width: `${monsterHealthPercent}%` }}
-              ></div>
-            </div>
-          </div>
-          
-          <p className="text-sm mt-2">{combat.monster.description}</p>
-        </div>
-      </div>
+        {/* Control Panel - Directly below Combat Scene with no gap */}
+        <div className="bg-gray-900 bg-opacity-80 py-2 px-3 border-t border-gray-700">
+          {combat.is_completed ? (
+            <div className="text-center py-1 md:py-2">
+              <h3 className="text-xl md:text-2xl mb-2 md:mb-4 text-yellow-400">
+                {combat.is_victory ? 'Victory!' : 'Defeat!'}
+              </h3>
 
-      {/* Floating Damage Numbers Container */}
-      <div id="damage-numbers" className="relative h-0">
-        {/* Damage numbers will be added dynamically via JavaScript */}
-      </div>
-      
-      {/* Actions - Icon-based buttons */}
-      {!combat.is_completed && (
-        <div className="grid grid-cols-2 gap-4 mb-3">
-          {renderActionButton('attack', 'Attack', handleAttack)}
-          {renderActionButton('flee', 'Run Away', handleRun)}
-        </div>
-      )}
-      
-      {/* Skills - Icon-based grid */}
-      {!combat.is_completed && (
-        <div className="bg-gray-800 p-3 rounded-md mb-3">
-          <h3 className="text-lg mb-2">Skills {skills.length > 0 ? `(${skills.length})` : '(None Available)'}</h3>
-          
-          {skills.length > 0 ? (
-            <div className="grid grid-cols-3 gap-3">
-              {skills.map((skill) => (
-                <button 
-                  key={skill.id}
-                  className={`flex flex-col items-center justify-center p-2 rounded-md ${
-                    selectedSkill?.id === skill.id
-                      ? 'bg-blue-900 bg-opacity-50 border border-blue-500'
-                      : 'bg-gray-700 hover:bg-gray-600'
-                  } ${character.current_energy < skill.energy_cost ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                  onClick={() => character.current_energy >= skill.energy_cost && setSelectedSkill(skill)}
-                  disabled={character.current_energy < skill.energy_cost || actionInProgress}
-                  title={`${skill.description} (Energy: ${skill.energy_cost})`}
-                >
-                  <div className="relative w-10 h-10 mb-1">
-                    <Image
-                      src={`/image/skill/${skill.image_url}.png`}
-                      alt={skill.name}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  <span className="text-xs text-center">{skill.name}</span>
-                  <span className="text-xs text-blue-400">{skill.energy_cost}</span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-4 text-gray-400">
-              <p>No skills available for this character level.</p>
-              <p className="text-xs mt-2">Skills will unlock as you level up.</p>
-            </div>
-          )}
-          
-          {selectedSkill && (
-            <div className="mt-3 text-center">
-              <button 
-                onClick={handleUseSkill}
-                disabled={actionInProgress}
-                className="pixel-button py-2 px-4 text-sm bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50"
+              <button
+                onClick={() => {
+                  // Check if this was a "run away" scenario
+                  const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) =>
+                    turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
+                  );
+
+                  // Set combat ending flag to prevent multiple calls
+                  if (combatEndingRef.current) return;
+                  combatEndingRef.current = true;
+
+                  // Create the final result
+                  const finalResult = {
+                    isVictory: combat.is_victory === true,
+                    ranAway: !!ranAway,
+                    monsterName: combat.monster?.name || 'monster'
+                  };
+
+                  // Import the completeCombat function
+                  import('@/app/actions/combat-end').then(({ completeCombat }) => {
+                    // Use the completeCombat function to handle the entire combat end process
+                    completeCombat(combatId, finalResult.isVictory, finalResult.ranAway).then(result => {
+                      if (result.success && result.data) {
+                        // Update local character state with the updated data
+                        setCharacter(result.data.character);
+                      }
+
+                      // Call onCombatEnd to update the UI
+                      onCombatEnd(finalResult);
+                    }).catch(() => {
+                      // Call onCombatEnd even if completeCombat fails
+                      onCombatEnd(finalResult);
+                    });
+                  });
+                }}
+                className="pixel-button text-base md:text-xl"
               >
-                Use {selectedSkill.name}
+                Continue
               </button>
             </div>
+          ) : (
+            <div className="relative">
+              {/* Combined action bar - Attack and skills in one row */}
+              <div className="flex flex-wrap gap-2 items-center justify-center">
+                <ActionButton 
+                  icon="attack"
+                  label="Attack"
+                  onClick={handleAttack}
+                  disabled={actionInProgress}
+                />
+                
+                {skills.length > 0 ? (
+                  skills.map((skill) => (
+                    <ActionButton 
+                      key={skill.id}
+                      icon={`skill/${skill.image_url}`}
+                      label={skill.name}
+                      onClick={() => character.current_energy >= skill.energy_cost && setSelectedSkill(skill)}
+                      disabled={character.current_energy < skill.energy_cost || actionInProgress}
+                      isSelected={selectedSkill?.id === skill.id}
+                      cost={skill.energy_cost}
+                      description={`${skill.description} (Energy: ${skill.energy_cost})`}
+                      isSkill={true}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center px-2 text-gray-400">
+                    <p className="text-sm">No skills available</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Run Away button in bottom right */}
+              <div className="flex justify-end mt-2">
+                <button 
+                  onClick={handleRun}
+                  disabled={actionInProgress}
+                  className="bg-yellow-700 hover:bg-yellow-600 active:bg-yellow-800 px-4 py-1 rounded-full text-sm font-bold text-white shadow-md disabled:opacity-50 flex items-center"
+                >
+                  <div className="w-4 h-4 mr-1">
+                    <Image
+                      src="/image/ui/flee.png"
+                      alt=""
+                      width={16}
+                      height={16}
+                    />
+                  </div>
+                  Run Away
+                </button>
+              </div>
+              
+              {/* Use skill button if skill is selected */}
+              {selectedSkill && (
+                <div className="mt-2 text-center">
+                  <button 
+                    onClick={handleUseSkill}
+                    disabled={actionInProgress}
+                    className="pixel-button py-1 px-3 text-sm bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50"
+                  >
+                    Use {selectedSkill.name}
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
-      )}
-      
-      {/* Combat Log - Now below action buttons and skills */}
-      <div id="combat-log" className="bg-gray-800 p-2 rounded-md mb-3 h-32 overflow-y-auto text-sm">
-        {combatLog.length === 0 ? (
-          <p className="text-gray-400">Battle has begun! Choose your action...</p>
-        ) : (
-          combatLog.map((message, index) => (
-            <p key={index} className="mb-0.5">{message}</p>
-          ))
-        )}
       </div>
       
-      {/* Combat Completed */}
-      {combat.is_completed && (
-        <div className="text-center">
-          <h3 className="text-2xl mb-4">
-            {combat.is_victory
-              ? 'Victory!'
-              : 'Defeat!'}
-          </h3>
-
-         <button
-           onClick={() => {
-              // Check if this was a "run away" scenario
-              const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) =>
-              turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
-              );
-
-              // Set combat ending flag to prevent multiple calls
-              if (combatEndingRef.current) return;
-              combatEndingRef.current = true;
-
-              // Create the final result
-              const finalResult = {
-                isVictory: combat.is_victory === true,
-                ranAway: !!ranAway,
-                monsterName: combat.monster?.name || 'monster'
-              };
-
-              // Import the completeCombat function
-              import('@/app/actions/combat-end').then(({ completeCombat }) => {
-                // Use the completeCombat function to handle the entire combat end process
-                completeCombat(combatId, finalResult.isVictory, finalResult.ranAway).then(result => {
-                  if (!result.success || !result.data) {
-                    console.error('CombatInterface: Error completing combat:', result.error);
-                  } else {
-                    console.log('CombatInterface: Combat completed successfully:', {
-                      experienceGained: result.data.character.experience - character.experience,
-                      goldGained: result.data.character.gold - character.gold,
-                      adventureCount: result.data.character.daily_adventure_count
-                    });
-
-                    // Update local character state with the updated data
-                    setCharacter(result.data.character);
-                  }
-
-                  // Call onCombatEnd to update the UI
-                  console.log('CombatInterface: Calling onCombatEnd with result:', finalResult);
-                  onCombatEnd(finalResult);
-                }).catch(error => {
-                  console.error('CombatInterface: Error in completeCombat:', error);
-
-                  // Call onCombatEnd even if completeCombat fails
-                 console.log('CombatInterface: Calling onCombatEnd after error with result:', finalResult);
-                  onCombatEnd(finalResult);
-                });
-              });
-          }}
-            className="pixel-button text-xl"
+      {/* Monster Info Dialog */}
+      {combat && (
+        <Transition appear show={showMonsterInfo} as={Fragment}>
+          <Dialog as="div" className="relative z-50" onClose={() => setShowMonsterInfo(false)}>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
             >
-            Continue
-          </button>
-        </div>
+              <div className="fixed inset-0 bg-black bg-opacity-75" />
+            </Transition.Child>
+
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-11/12 max-w-sm md:max-w-md transform overflow-hidden rounded-2xl bg-gray-900 border-2 border-gray-700 p-4 md:p-6 text-left align-middle shadow-xl transition-all">
+                    <Dialog.Title as="h3" className="text-lg md:text-xl font-bold text-center text-red-400 mb-3 md:mb-4 border-b border-gray-700 pb-2">
+                      {combat.monster.name}
+                      {combat.monster.is_elite && (
+                        <span className="ml-2 text-xs text-yellow-400 font-bold border border-yellow-400 rounded-md px-1 py-0.5">
+                          ELITE
+                        </span>
+                      )}
+                    </Dialog.Title>
+                    
+                    <div className="flex mb-4">
+                      <div className="mr-4">
+                        <div className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center">
+                          <Image
+                            src={`/image/enemy/${combat.monster.image_url}.png`}
+                            alt={combat.monster.name}
+                            width={80}
+                            height={80}
+                            className="-scale-x-100"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="mb-2">
+                          <StatusBar 
+                            current={monsterCurrentHp} 
+                            max={combat.monster.hitpoints}
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-1 md:gap-2 text-xs md:text-sm">
+                          <div><span className="font-bold">Experience:</span> {combat.monster.experience_reward}</div>
+                          <div><span className="font-bold">Gold:</span> {combat.monster.gold_reward}</div>
+                          {combat.monster.defense && (
+                            <div><span className="font-bold">Defense:</span> {combat.monster.defense}</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-3 md:mt-4">
+                      <h4 className="font-semibold mb-1 md:mb-2">Description</h4>
+                      <p className="text-xs md:text-sm">{combat.monster.description}</p>
+                    </div>
+                    
+                    <div className="mt-4 md:mt-6 flex justify-end">
+                      <button
+                        onClick={() => setShowMonsterInfo(false)}
+                        className="pixel-button px-4 py-1 text-sm"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
+            </div>
+          </Dialog>
+        </Transition>
       )}
-    </div>
- );
+    </>
+  );
 }

@@ -109,11 +109,19 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
   }
   
   // Show combat if available
-  if (showCombat && combatId && character) {
+  if (showCombat && combatId && character && selectedArea) {
+    // Convert area.id from number to string to match the expected type
+    const areaForCombat = {
+      id: String(selectedArea.id),
+      name: selectedArea.name,
+      image: selectedArea.image || 'enchanted-forest' // Default image if none is provided
+    };
+    
     return (
       <CombatInterface 
         combatId={combatId}
         character={character}
+        area={areaForCombat}
         onCombatEnd={handleCombatEnd}
       />
     );
