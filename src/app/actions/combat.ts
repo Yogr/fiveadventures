@@ -1,9 +1,9 @@
 'use server';
 
-import type { 
-  ApiResponse, 
+import type {
+  ApiResponse,
   Combat,
-  Character, 
+  Character,
   Monster,
   Item,
   Skill
@@ -11,6 +11,14 @@ import type {
 import { getCharacterById } from './character';
 import { getPrimaryStat, generateId } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/server';
+import {
+  getTotalStrength,
+  getTotalIntelligence,
+  getTotalAgility,
+  getTotalLuck,
+  calculateTotalDamage,
+  calculateTotalDefense
+} from '@/lib/character-utils';
 
 // Get combat data
 export async function getCombat(
@@ -111,30 +119,17 @@ export async function startCombatTurn(
         .eq('character_id', character.id)
         .single();
       
-      // Get primary stat based on class
-      const primaryStat = getPrimaryStat(character);
+      // Calculate total damage using the same function as in the character display
+      let baseDamage = calculateTotalDamage(character);
       
-      let baseDamage = 5; // Default base damage
-      let statBonus = Math.floor(primaryStat / 2);
-      
-      if (!equipmentError && weaponEquipment && weaponEquipment.weapon) {
-        // Check if weapon is an Item object with base_damage property
-        const weapon = weaponEquipment.weapon as unknown as Item;
-        if (weapon && typeof weapon === 'object' && 'base_damage' in weapon) {
-          baseDamage = weapon.base_damage || 5;
-        }
-        
-        // Base damage with randomness (±20%)
-        const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
-        characterDamageDealt = Math.floor((baseDamage + statBonus) * randomFactor);
-      } else {
-        // Unarmed attack with randomness
-        const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
-        characterDamageDealt = Math.floor((3 + Math.floor(primaryStat / 3)) * randomFactor);
-      }
+      // Add randomness (±20%)
+      const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
+      characterDamageDealt = Math.floor(baseDamage * randomFactor);
       
       // Apply monster defense (reduced impact)
       characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 3));
+      
+      console.log(`Combat: Character basic attack - Base damage: ${baseDamage}, Final damage: ${characterDamageDealt}`);
     } else if (action === 'skill' && skillId) {
       // Skill attack
       const { data: skillData, error: skillError } = await supabase
@@ -164,14 +159,51 @@ export async function startCombatTurn(
       if (skill.effects) {
         const effects = skill.effects as Record<string, any>;
         
+        // Get the skill's attribute if specified, or use the character's primary attribute
+        let attributeValue = 0;
+        let attributeName = skill.attribute || '';
+        
+        if (!attributeName) {
+          // If no attribute specified, use primary stat based on class
+          switch(character.class) {
+            case 'Warrior': attributeName = 'strength'; break;
+            case 'Wizard': attributeName = 'intelligence'; break;
+            case 'Thief': attributeName = 'luck'; break;
+            case 'Ranger': attributeName = 'agility'; break;
+            case 'Cleric': attributeName = 'intelligence'; break;
+            default: attributeName = 'strength';
+          }
+        }
+        
+        // Get the total attribute value including equipment bonuses
+        switch(attributeName) {
+          case 'strength': attributeValue = getTotalStrength(character); break;
+          case 'intelligence': attributeValue = getTotalIntelligence(character); break;
+          case 'agility': attributeValue = getTotalAgility(character); break;
+          case 'luck': attributeValue = getTotalLuck(character); break;
+          default: attributeValue = getPrimaryStat(character);
+        }
+        
         if (effects.damage_multiplier) {
           // Damage skill
-          const baseDamage = 5; // Base damage
-          const statBonus = getPrimaryStat(character);
-          characterDamageDealt = Math.floor(baseDamage * effects.damage_multiplier) + Math.floor(statBonus / 2);
+          // Use weapon damage if available, otherwise use base damage of 5
+          let baseDamage = 5;
+          if (character.equipment?.weapon) {
+            baseDamage = character.equipment.weapon.base_damage || 5;
+          }
+          
+          // Add skill power if available
+          const skillPower = skill.power || 0;
+          
+          // Calculate damage with exponential multiplier based on attribute
+          // Formula: (baseDamage + skillPower) * damageMultiplier * (1 + (attributeValue / 50))
+          const attributeMultiplier = 1 + (attributeValue / 50);
+          characterDamageDealt = Math.floor((baseDamage + skillPower) * effects.damage_multiplier * attributeMultiplier);
           
           // Apply monster defense
           characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 3));
+          
+          console.log(`Combat: Skill attack - Base damage: ${baseDamage}, Skill power: ${skillPower}, Attribute: ${attributeName}(${attributeValue}), Multiplier: ${effects.damage_multiplier}, Final damage: ${characterDamageDealt}`);
         }
         
         if (effects.healing) {
@@ -377,35 +409,13 @@ export async function startCombatTurn(
     let monsterDamageDealt = Math.floor(monster.attack * randomFactor);
     let monsterEffects = null;
     
-    // Apply character defense from equipment
-    const { data: defenseEquipment, error: defenseEquipmentError } = await supabase
-      .from('character_equipment')
-      .select('*, armor:armor_id(*), helmet:helmet_id(*)')
-      .eq('character_id', character.id)
-      .single();
+    // Calculate total defense using the same function as in the character display
+    const totalDefense = calculateTotalDefense(character);
     
-    if (!defenseEquipmentError && defenseEquipment) {
-      let defense = 0;
-      
-      // Check if armor is an Item object with base_defense property
-      if (defenseEquipment.armor) {
-        const armor = defenseEquipment.armor as unknown as Item;
-        if (armor && typeof armor === 'object' && 'base_defense' in armor) {
-          defense += armor.base_defense || 0;
-        }
-      }
-      
-      // Check if helmet is an Item object with base_defense property
-      if (defenseEquipment.helmet) {
-        const helmet = defenseEquipment.helmet as unknown as Item;
-        if (helmet && typeof helmet === 'object' && 'base_defense' in helmet) {
-          defense += helmet.base_defense || 0;
-        }
-      }
-      
-      // Reduced impact of defense
-      monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(defense / 3));
-    }
+    // Reduced impact of defense
+    monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(totalDefense / 3));
+    
+    console.log(`Combat: Monster attack - Damage: ${monsterDamageDealt}, Character defense: ${totalDefense}`);
     
     // Check for monster abilities
     if (monster.abilities) {

@@ -7,6 +7,8 @@
     "energy_cost": 15,
     "cooldown": 5,
     "level_required": 1,
+    "attribute": "strength",
+    "power": 0,
     "effects": {
       "strength_boost": 5,
       "duration": 3
@@ -21,6 +23,8 @@
     "energy_cost": 20,
     "cooldown": 4,
     "level_required": 5,
+    "attribute": "strength",
+    "power": 8,
     "effects": {
       "damage": 8,
       "stun": 1
@@ -35,6 +39,8 @@
     "energy_cost": 25,
     "cooldown": 3,
     "level_required": 10,
+    "attribute": "strength",
+    "power": 15,
     "effects": {
       "damage": 15,
       "multi_target": true
@@ -49,6 +55,8 @@
     "energy_cost": 20,
     "cooldown": 2,
     "level_required": 1,
+    "attribute": "intelligence",
+    "power": 10,
     "effects": {
       "damage_multiplier": 1.5,
       "element": "fire"
@@ -63,6 +71,8 @@
     "energy_cost": 15,
     "cooldown": 3,
     "level_required": 5,
+    "attribute": "intelligence",
+    "power": 12,
     "effects": {
       "damage": 12,
       "slow": 2,
@@ -78,6 +88,8 @@
     "energy_cost": 25,
     "cooldown": 5,
     "level_required": 10,
+    "attribute": "intelligence",
+    "power": 20,
     "effects": {
       "shield": 20,
       "duration": 3
@@ -92,6 +104,8 @@
     "energy_cost": 10,
     "cooldown": 3,
     "level_required": 1,
+    "attribute": "luck",
+    "power": 5,
     "effects": {
       "gold_chance": 75,
       "item_chance": 25
@@ -106,6 +120,8 @@
     "energy_cost": 20,
     "cooldown": 4,
     "level_required": 5,
+    "attribute": "agility",
+    "power": 12,
     "effects": {
       "damage_multiplier": 2.0,
       "requires_stealth": true
@@ -120,6 +136,8 @@
     "energy_cost": 15,
     "cooldown": 5,
     "level_required": 10,
+    "attribute": "agility",
+    "power": 8,
     "effects": {
       "escape_chance": 75,
       "stealth": true
@@ -134,6 +152,8 @@
     "energy_cost": 15,
     "cooldown": 2,
     "level_required": 1,
+    "attribute": "agility",
+    "power": 8,
     "effects": {
       "damage_multiplier": 1.3,
       "ignore_defense": true
@@ -148,6 +168,8 @@
     "energy_cost": 15,
     "cooldown": 4,
     "level_required": 5,
+    "attribute": "agility",
+    "power": 10,
     "effects": {
       "damage": 10,
       "slow": 2
@@ -162,6 +184,8 @@
     "energy_cost": 30,
     "cooldown": 6,
     "level_required": 10,
+    "attribute": "agility",
+    "power": 15,
     "effects": {
       "summon": "animal",
       "duration": 5
@@ -176,6 +200,8 @@
     "energy_cost": 25,
     "cooldown": 3,
     "level_required": 1,
+    "attribute": "intelligence",
+    "power": 30,
     "effects": {
       "healing": 30
     },
@@ -189,6 +215,8 @@
     "energy_cost": 20,
     "cooldown": 2,
     "level_required": 5,
+    "attribute": "intelligence",
+    "power": 15,
     "effects": {
       "damage": 15,
       "bonus_vs_undead": 10
@@ -203,6 +231,8 @@
     "energy_cost": 30,
     "cooldown": 5,
     "level_required": 10,
+    "attribute": "intelligence",
+    "power": 25,
     "effects": {
       "shield": 25,
       "duration": 3

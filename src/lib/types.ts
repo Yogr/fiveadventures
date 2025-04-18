@@ -42,7 +42,10 @@ export type ShopItem = Database['public']['Tables']['shop_items']['Row'] & {
 };
 
 // Skill Types
-export type Skill = Database['public']['Tables']['skills']['Row'];
+export type Skill = Database['public']['Tables']['skills']['Row'] & {
+  attribute?: string;  // The attribute this skill relies on (strength, intelligence, agility, luck)
+  power?: number;      // The base power of the skill
+};
 
 export type SkillEffect = {
   type: 'Damage' | 'Healing' | 'StatBoost' | 'StatusEffect' | 'Special';

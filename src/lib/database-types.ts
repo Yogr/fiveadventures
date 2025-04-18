@@ -293,6 +293,8 @@ export interface Database {
           effects: Json | null
           image_url: string | null
           created_at: string
+          attribute: string | null
+          power: number | null
         }
         Insert: {
           id?: number
@@ -304,6 +306,8 @@ export interface Database {
           effects?: Json | null
           image_url?: string | null
           created_at?: string
+          attribute?: string | null
+          power?: number | null
         }
         Update: {
           id?: number
@@ -315,6 +319,8 @@ export interface Database {
           effects?: Json | null
           image_url?: string | null
           created_at?: string
+          attribute?: string | null
+          power?: number | null
         }
         Relationships: []
       }
