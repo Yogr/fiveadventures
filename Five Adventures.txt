@@ -9,6 +9,8 @@ Todo
 - Make skills base damage come from the skill definition
 - Get the skill level req into the db
 - Add skills to combat
+- CharacterStats panel max HP does not show the real max HP after item stat evaluation - Look for other stat usages that don't use the 'total' values
+- Level up stat display does not reflect the real earnings. We need to connect those dots.
 - Normalize the enemy art sizes
   - Fix any enemy broken image
 - Add images to the adventure tracker

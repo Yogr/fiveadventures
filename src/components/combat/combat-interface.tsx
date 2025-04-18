@@ -106,7 +106,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         // Only consider turns where the player successfully ran away
         const isRunAway = turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true;
         console.log('CombatInterface: Turn check for run away:', {
-          turn,
+          turn_number: turn.turn_number,
           actor: turn.actor,
           action: turn.action,
           success: turn.effects?.success,
@@ -117,43 +117,44 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       
       console.log('CombatInterface: ranAway =', ranAway);
       
+      // If player ran away, make sure isVictory is false
+      const finalResult = {
+        isVictory: ranAway ? false : isVictory,
+        ranAway: !!ranAway,
+        monsterName: combat.monster?.name || 'monster'
+      };
+      
+      console.log('CombatInterface: Final combat result:', finalResult);
+      
       // Set combat ending flag to prevent multiple calls
       combatEndingRef.current = true;
       
-      // Update adventure state to outcome
-      updateAdventureState(character.id, {
-        current_state: 'outcome',
-        combat_id: null
-      }).then(() => {
-        console.log('Combat completed, adventure state updated to outcome');
-        
-        // Refresh adventure state
-        refreshAdventureState().then(() => {
-          // Call onCombatEnd after state is updated
-          console.log('CombatInterface: Calling onCombatEnd with result:', {
-            isVictory: isVictory,
-            ranAway: !!ranAway,
-            monsterName: combat.monster?.name || 'monster'
-          });
-          onCombatEnd({
-            isVictory: isVictory,
-            ranAway: !!ranAway,
-            monsterName: combat.monster?.name || 'monster'
-          });
-        });
-      }).catch(error => {
-        console.error('Error updating adventure state:', error);
-        
-        // Call onCombatEnd even if state update fails
-        console.log('CombatInterface: Calling onCombatEnd after state update failed with result:', {
-          isVictory: isVictory,
-          ranAway: !!ranAway,
-          monsterName: combat.monster?.name || 'monster'
-        });
-        onCombatEnd({
-          isVictory: isVictory,
-          ranAway: !!ranAway,
-          monsterName: combat.monster?.name || 'monster'
+      // Import the completeCombat function
+      import('@/app/actions/combat-end').then(({ completeCombat }) => {
+        // Use the completeCombat function to handle the entire combat end process
+        completeCombat(combatId, finalResult.isVictory, finalResult.ranAway).then(result => {
+          if (!result.success || !result.data) {
+            console.error('CombatInterface: Error completing combat:', result.error);
+          } else {
+            console.log('CombatInterface: Combat completed successfully:', {
+              experienceGained: result.data.character.experience - character.experience,
+              goldGained: result.data.character.gold - character.gold,
+              adventureCount: result.data.character.daily_adventure_count
+            });
+            
+            // Update local character state with the updated data
+            setCharacter(result.data.character);
+          }
+          
+          // Call onCombatEnd to update the UI
+          console.log('CombatInterface: Calling onCombatEnd with result:', finalResult);
+          onCombatEnd(finalResult);
+        }).catch(error => {
+          console.error('CombatInterface: Error in completeCombat:', error);
+          
+          // Call onCombatEnd even if completeCombat fails
+          console.log('CombatInterface: Calling onCombatEnd after error with result:', finalResult);
+          onCombatEnd(finalResult);
         });
       });
     }
@@ -730,10 +731,10 @@ export default function CombatInterface({ combatId, character: initialCharacter,
               : 'Defeat!'}
           </h3>
           
-          <button 
+          <button
             onClick={() => {
               // Check if this was a "run away" scenario
-              const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) => 
+              const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) =>
                 turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true
               );
               
@@ -741,30 +742,39 @@ export default function CombatInterface({ combatId, character: initialCharacter,
               if (combatEndingRef.current) return;
               combatEndingRef.current = true;
               
-              // Update adventure state to outcome
-              updateAdventureState(character.id, {
-                current_state: 'outcome',
-                combat_id: null
-              }).then(() => {
-                console.log('Combat completed, adventure state updated to outcome');
-                
-                // Refresh adventure state
-                refreshAdventureState().then(() => {
-                  // Call onCombatEnd after state is updated
-                  onCombatEnd({
-                    isVictory: combat.is_victory === true,
-                    ranAway: !!ranAway,
-                    monsterName: combat.monster?.name || 'monster'
-                  });
-                });
-              }).catch(error => {
-                console.error('Error updating adventure state:', error);
-                
-                // Call onCombatEnd even if state update fails
-                onCombatEnd({
-                  isVictory: combat.is_victory === true,
-                  ranAway: !!ranAway,
-                  monsterName: combat.monster?.name || 'monster'
+              // Create the final result
+              const finalResult = {
+                isVictory: combat.is_victory === true,
+                ranAway: !!ranAway,
+                monsterName: combat.monster?.name || 'monster'
+              };
+              
+              // Import the completeCombat function
+              import('@/app/actions/combat-end').then(({ completeCombat }) => {
+                // Use the completeCombat function to handle the entire combat end process
+                completeCombat(combatId, finalResult.isVictory, finalResult.ranAway).then(result => {
+                  if (!result.success || !result.data) {
+                    console.error('CombatInterface: Error completing combat:', result.error);
+                  } else {
+                    console.log('CombatInterface: Combat completed successfully:', {
+                      experienceGained: result.data.character.experience - character.experience,
+                      goldGained: result.data.character.gold - character.gold,
+                      adventureCount: result.data.character.daily_adventure_count
+                    });
+                    
+                    // Update local character state with the updated data
+                    setCharacter(result.data.character);
+                  }
+                  
+                  // Call onCombatEnd to update the UI
+                  console.log('CombatInterface: Calling onCombatEnd with result:', finalResult);
+                  onCombatEnd(finalResult);
+                }).catch(error => {
+                  console.error('CombatInterface: Error in completeCombat:', error);
+                  
+                  // Call onCombatEnd even if completeCombat fails
+                  console.log('CombatInterface: Calling onCombatEnd after error with result:', finalResult);
+                  onCombatEnd(finalResult);
                 });
               });
             }}

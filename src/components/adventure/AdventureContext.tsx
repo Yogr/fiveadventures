@@ -10,6 +10,7 @@ import { getAdventure } from '@/app/actions/adventure';
 import { getActiveCharacterCombat } from '@/app/actions/combat';
 import { getSelectedArea } from '@/app/actions/area';
 import { updateAdventureState } from '@/app/actions/adventure-state';
+import { getLevelFromExperience } from '@/lib/utils';
 
 // Define the state shape
 interface AdventureState {
@@ -469,12 +470,6 @@ export function AdventureProvider({
   // Handle combat end
   const handleCombatEnd = useCallback((result: { isVictory: boolean; ranAway: boolean; monsterName: string }) => {
     console.log('AdventureContext: handleCombatEnd called with result:', result);
-    console.log('AdventureContext: Current state before updates:', {
-      combatId: state.combatId,
-      showCombat: state.showCombat,
-      outcome: state.outcome ? 'exists' : 'null',
-      combatResult: state.combatResult
-    });
     
     // Set flag to skip combat check on next loadAdventureData call
     dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: true });
@@ -484,16 +479,12 @@ export function AdventureProvider({
     dispatch({ type: 'SET_COMBAT_ID', payload: null });
     
     // Store the combat result in state
-    console.log('AdventureContext: Setting combat result in state:', result);
     dispatch({ type: 'SET_COMBAT_RESULT', payload: result });
     
-    // Log state after updates (this won't show the actual updated state due to React's state update mechanism)
-    console.log('AdventureContext: State after dispatches (not yet updated):', {
-      combatId: state.combatId,
-      showCombat: state.showCombat,
-      outcome: state.outcome ? 'exists' : 'null',
-      combatResult: state.combatResult
-    });
+    // Always show rewards for victories
+    if (result.isVictory) {
+      dispatch({ type: 'SET_SHOW_REWARDS', payload: true });
+    }
     
     // If the player ran away, show a different outcome
     if (result.ranAway) {
@@ -516,105 +507,87 @@ export function AdventureProvider({
           created_at: new Date().toISOString()
         }
       });
+    } else if (result.isVictory) {
+      // For victories, create an outcome with the rewards
+      // The actual reward values will be set by the completeCombat function
+      console.log('AdventureContext: Player won, creating victory outcome');
+      dispatch({
+        type: 'SET_OUTCOME',
+        payload: {
+          id: 0,
+          decision_id: 0,
+          description: `You defeated the ${result.monsterName}!`,
+          experience_bonus: 0, // Will be updated with actual value
+          gold_bonus: 0, // Will be updated with actual value
+          hitpoints_change: 0,
+          energy_change: 0,
+          has_combat: true,
+          monster_ids: [],
+          stat_requirements: null,
+          reward_table_id: null,
+          success_rate_formula: null,
+          created_at: new Date().toISOString()
+        }
+      });
     }
     
-    // Update adventure state to outcome
-    if (state.character) {
+    // If we have a character and a combat ID, refresh the character data
+    if (state.character && state.combatId) {
       const characterId = state.character.id;
       
-      console.log('AdventureContext: Refreshing character data after combat end');
-      console.log('AdventureContext: Current character state before refresh:', {
-        hp: `${state.character.current_hitpoints}/${state.character.max_hitpoints}`,
-        energy: `${state.character.current_energy}/${state.character.max_energy}`,
-        gold: state.character.gold,
-        adventureCount: state.character.daily_adventure_count
-      });
-      
-      // First get the updated character data to ensure we have the correct adventure_number
-      getCharacterById(characterId).then((characterResponse) => {
-        if (characterResponse.success && characterResponse.data) {
-          const updatedCharacter = characterResponse.data;
-          console.log('AdventureContext: Got updated character data for adventure state update:', {
-            adventureCount: updatedCharacter.daily_adventure_count
-          });
+      // Get the updated character data
+      getCharacterById(characterId).then(response => {
+        if (response.success && response.data) {
+          console.log('AdventureContext: Character data refreshed after combat end');
           
-          // Update adventure state to outcome with the correct adventure_number
-          return updateAdventureState(characterId, {
-            current_state: 'outcome',
-            current_adventure_id: null,
-            decision_id: null,
-            outcome_id: null,
-            combat_id: null,
-            day: updatedCharacter.last_played_day,
-            adventure_number: updatedCharacter.daily_adventure_count // Use the updated value
-          });
-        }
-        // If we couldn't get the updated character data, fall back to the original approach
-        // Make sure state.character is still valid
-        if (state.character) {
-          return updateAdventureState(characterId, {
-            current_state: 'outcome',
-            current_adventure_id: null,
-            decision_id: null,
-            outcome_id: null,
-            combat_id: null,
-            day: state.character.last_played_day,
-            adventure_number: state.character.daily_adventure_count
-          });
-        }
-        // If state.character is null, use default values
-        return updateAdventureState(characterId, {
-          current_state: 'outcome',
-          current_adventure_id: null,
-          decision_id: null,
-          outcome_id: null,
-          combat_id: null,
-          day: 1, // Default day
-          adventure_number: 0 // Default adventure number
-        });
-      }).then(() => {
-        // Refresh character data after updating state
-        getCharacterById(characterId).then(response => {
-          if (response.success && response.data) {
-            console.log('AdventureContext: Character data refreshed after combat end');
-            console.log('AdventureContext: Updated character state after refresh:', {
-              hp: `${response.data.current_hitpoints}/${response.data.max_hitpoints}`,
-              energy: `${response.data.current_energy}/${response.data.max_energy}`,
-              gold: response.data.gold,
-              adventureCount: response.data.daily_adventure_count
-            });
+          // Update character in state
+          dispatch({ type: 'SET_CHARACTER', payload: response.data });
+          
+          // Check for level up
+          if (state.character && response.data.experience > state.character.experience) {
+            const oldLevel = getLevelFromExperience(state.character.experience);
+            const newLevel = getLevelFromExperience(response.data.experience);
             
-            // Check if character has gained experience that would cause a level up
-            if (state.character && response.data.experience > state.character.experience) {
+            if (newLevel > oldLevel) {
+              console.log(`AdventureContext: Character leveled up from ${oldLevel} to ${newLevel}`);
+              
               // Save old experience for level up check
               dispatch({ type: 'SET_OLD_EXPERIENCE', payload: state.character.experience });
               // Set showLevelUp flag
               dispatch({ type: 'SET_SHOW_LEVEL_UP', payload: true });
             }
             
-            // Update character in state directly
-            dispatch({ type: 'SET_CHARACTER', payload: response.data });
-          } else {
-            console.error('AdventureContext: Error refreshing character data after combat:', response.error);
-            // Fall back to loadCharacterData if getCharacterById fails
-            loadCharacterData(characterId)
-              .catch(error => {
-                console.error('AdventureContext: Error refreshing character data after combat:', error);
-              });
+            // If this is a victory, update the outcome with the actual rewards
+            if (result.isVictory && state.outcome) {
+              const experienceGained = response.data.experience - state.character.experience;
+              const goldGained = response.data.gold - (state.character.gold || 0);
+              
+              const updatedOutcome = {
+                ...state.outcome,
+                experience_bonus: experienceGained,
+                gold_bonus: goldGained
+              };
+              
+              console.log('AdventureContext: Updating outcome with actual rewards:', updatedOutcome);
+              dispatch({ type: 'SET_OUTCOME', payload: updatedOutcome });
+            }
           }
-        }).catch(error => {
-          console.error('AdventureContext: Error refreshing character data after combat:', error);
-          // Fall back to loadCharacterData if getCharacterById fails
-          loadCharacterData(characterId)
-            .catch(error => {
-              console.error('AdventureContext: Error refreshing character data after combat:', error);
-            });
+        } else {
+          console.error('AdventureContext: Error refreshing character data after combat:', response.error);
+          loadCharacterData(characterId).catch(error => {
+            console.error('AdventureContext: Error loading character data:', error);
+          });
+        }
+      }).catch(error => {
+        console.error('AdventureContext: Error refreshing character data after combat:', error);
+        loadCharacterData(characterId).catch(error => {
+          console.error('AdventureContext: Error loading character data:', error);
         });
       });
     }
     
-    console.log('AdventureContext: Combat ended, no longer refreshing server components');
-  }, [state.character?.id, loadCharacterData, dispatch]);
+    console.log('AdventureContext: Combat ended');
+  }, [state.character, state.combatId, state.outcome, loadCharacterData, dispatch]);
 
   // Continue to next adventure
   const continueToNextAdventure = useCallback(async () => {

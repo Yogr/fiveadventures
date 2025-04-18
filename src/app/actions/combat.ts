@@ -230,8 +230,10 @@ export async function startCombatTurn(
       const runChance = 50 + character.agility * 2;
       const roll = Math.floor(Math.random() * 100) + 1;
       
+      console.log(`Combat: Run attempt - Roll: ${roll}, Chance: ${runChance}, Success: ${roll <= runChance}`);
+      
       if (roll <= runChance) {
-        // Success - end combat
+        // Success - end combat immediately
         await supabase
           .from('combat')
           .update({
@@ -242,22 +244,15 @@ export async function startCombatTurn(
           .eq('id', combatId);
         
         // Increment daily adventure count when successfully running away
-        console.log('Character ran away - updating adventure count');
-        console.log('Current character state before update:', {
-          daily_adventure_count: character.daily_adventure_count
-        });
+        console.log('Combat: Character successfully ran away - updating adventure count');
         
         const newAdventureCount = character.daily_adventure_count + 1;
-        
-        console.log('New character state after update:', {
-          daily_adventure_count: newAdventureCount
-        });
         
         const { error: characterUpdateError } = await supabase
           .from('characters')
           .update({
             daily_adventure_count: newAdventureCount,
-            updated_at: new Date().toISOString() // Add updated_at timestamp to ensure the update is detected
+            updated_at: new Date().toISOString()
           })
           .eq('id', character.id);
         
@@ -268,11 +263,11 @@ export async function startCombatTurn(
         }
         
         // Record the turn
-        console.log('Combat: Recording successful run turn with effects.success = true');
+        console.log('Combat: Recording successful run turn');
         const { data: turnData, error: turnError } = await supabase
           .from('combat_turns')
           .insert({
-            id: generateId(), // Generate UUID for the record
+            id: generateId(),
             combat_id: combatId,
             turn_number: turnNumber,
             actor: 'character',
@@ -283,23 +278,16 @@ export async function startCombatTurn(
           
         if (turnError) {
           console.error('Error recording run turn:', turnError);
-        } else {
-          console.log('Successfully recorded run turn:', turnData);
         }
         
-        // Get the updated turns array including the new run turn
+        // Get the updated turns
         const { data: updatedTurns, error: turnsError } = await supabase
           .from('combat_turns')
           .select('*')
           .eq('combat_id', combatId)
           .order('turn_number', { ascending: true });
-          
-        if (turnsError) {
-          console.error('Error getting updated turns:', turnsError);
-        }
         
-        console.log('Combat: Retrieved updated turns after successful run:', updatedTurns);
-        
+        // CRITICAL FIX: Return immediately after successful run, monster doesn't get a turn
         return {
           success: true,
           data: {
@@ -311,11 +299,13 @@ export async function startCombatTurn(
         };
       } else {
         // Failed to run
+        console.log('Combat: Run attempt failed, monster gets to attack');
+        
         // Record the turn
         await supabase
           .from('combat_turns')
           .insert({
-            id: generateId(), // Generate UUID for the record
+            id: generateId(),
             combat_id: combatId,
             turn_number: turnNumber,
             actor: 'character',
@@ -372,15 +362,106 @@ export async function startCombatTurn(
         })
         .eq('id', combatId);
       
-      // Award experience and gold
-      await supabase
+      // Award experience and gold - CRITICAL FIX
+      console.log('CRITICAL: About to update character with rewards:', {
+        characterId: character.id,
+        oldExperience: character.experience,
+        experienceReward: monster.experience_reward,
+        newExperience: character.experience + monster.experience_reward,
+        oldGold: character.gold,
+        goldReward: monster.gold_reward,
+        newGold: character.gold + monster.gold_reward
+      });
+      
+      // EMERGENCY FIX: Force direct update with updated_at timestamp to ensure change is detected
+      const { error: updateExpGoldError } = await supabase
         .from('characters')
         .update({
           experience: character.experience + monster.experience_reward,
           gold: character.gold + monster.gold_reward,
-          daily_adventure_count: character.daily_adventure_count + 1,
+          updated_at: new Date().toISOString() // Force update timestamp
         })
         .eq('id', character.id);
+        
+      if (updateExpGoldError) {
+        console.error('EMERGENCY ERROR: Failed to update character experience and gold:', updateExpGoldError);
+        return {
+          success: false,
+          error: 'Failed to update character with rewards'
+        };
+      }
+      
+      // Log the update
+      console.log('EMERGENCY: Character rewards update sent to database:', {
+        characterId: character.id,
+        newExperience: character.experience + monster.experience_reward,
+        newGold: character.gold + monster.gold_reward,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Increment adventure count separately with updated_at timestamp
+      const { error: updateAdventureCountError } = await supabase
+        .from('characters')
+        .update({
+          daily_adventure_count: character.daily_adventure_count + 1,
+          updated_at: new Date().toISOString() // Force update timestamp
+        })
+        .eq('id', character.id);
+        
+      if (updateAdventureCountError) {
+        console.error('Error updating adventure count:', updateAdventureCountError);
+        // Continue anyway, this isn't as critical as the rewards
+      }
+      
+      // Verify the update by fetching the character data
+      const { data: verifiedCharacter, error: verifyError } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('id', character.id)
+        .single();
+        
+      if (verifyError || !verifiedCharacter) {
+        console.error('Error verifying character update:', verifyError);
+      } else {
+        console.log('CRITICAL: Verified character update:', {
+          characterId: verifiedCharacter.id,
+          experience: verifiedCharacter.experience,
+          expectedExperience: character.experience + monster.experience_reward,
+          gold: verifiedCharacter.gold,
+          expectedGold: character.gold + monster.gold_reward,
+          daily_adventure_count: verifiedCharacter.daily_adventure_count
+        });
+        
+        // Double-check if the update was successful
+        if (verifiedCharacter.experience !== character.experience + monster.experience_reward ||
+            verifiedCharacter.gold !== character.gold + monster.gold_reward) {
+          console.error('EMERGENCY ERROR: Character update verification failed!');
+          
+          // One last desperate attempt with a different approach
+          console.log('EMERGENCY: Making one final attempt to update rewards');
+          
+          // Try a different approach - use raw SQL via RPC if available
+          try {
+            // Direct SQL-like update as a last resort
+            const { error: finalUpdateError } = await supabase
+              .from('characters')
+              .update({
+                experience: verifiedCharacter.experience + monster.experience_reward,
+                gold: verifiedCharacter.gold + monster.gold_reward,
+                updated_at: new Date().toISOString() // Force update timestamp
+              })
+              .eq('id', character.id);
+              
+            if (finalUpdateError) {
+              console.error('EMERGENCY ERROR: Final update attempt failed:', finalUpdateError);
+            } else {
+              console.log('EMERGENCY: Final update attempt completed');
+            }
+          } catch (finalError) {
+            console.error('EMERGENCY ERROR: Exception in final update attempt:', finalError);
+          }
+        }
+      }
       
       // Get updated combat
       const { data: updatedCombat, error: updateError } = await supabase
@@ -729,6 +810,7 @@ export async function upgradeSkill(
         error: 'Failed to upgrade skill'
       };
     }
+    
     
     return {
       success: true,
