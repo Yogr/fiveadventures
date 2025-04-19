@@ -109,8 +109,6 @@ export default function GameNavigation({
       .subscribe((status, err) => {
         if (status === 'SUBSCRIBED') {
           console.log('GameNavigation: Successfully subscribed to character updates');
-        } else {
-          console.error('GameNavigation: Subscription error:', status, err);
         }
       });
     
