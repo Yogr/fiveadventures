@@ -268,7 +268,7 @@ async function seedAdventures(filePath) {
 }
 
 // Seed world boss
-async function seedWorldBoss(filePath) {
+async function seedWorldBoss(filePath, rewardsFilePath = null) {
   console.log('Seeding world boss...');
   
   const bosses = readJsonFile(filePath);
@@ -304,6 +304,69 @@ async function seedWorldBoss(filePath) {
   }
   
   console.log('World boss seeding completed.');
+  
+  // Seed world boss rewards if a rewards file is provided
+  if (rewardsFilePath) {
+    await seedWorldBossRewards(rewardsFilePath);
+  }
+}
+
+// Seed world boss rewards
+async function seedWorldBossRewards(filePath) {
+  console.log('Seeding world boss rewards...');
+  
+  const bossRewards = readJsonFile(filePath);
+  
+  if (!bossRewards || !Array.isArray(bossRewards)) {
+    console.error('Invalid world boss rewards data format. Expected an array of reward tables.');
+    return;
+  }
+  
+  for (const rewardTable of bossRewards) {
+    // Insert reward table
+    const { error: tableError } = await supabase
+      .from('reward_tables')
+      .upsert({
+        id: rewardTable.id,
+        name: rewardTable.name,
+        description: rewardTable.description,
+        created_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+    
+    if (tableError) {
+      console.error(`Error inserting world boss reward table ${rewardTable.name}:`, tableError);
+      continue;
+    }
+    
+    console.log(`World boss reward table inserted: ${rewardTable.name} with ID ${rewardTable.id}`);
+    
+    // Insert reward items
+    if (rewardTable.items && Array.isArray(rewardTable.items)) {
+      for (const item of rewardTable.items) {
+        // Create a new object for the reward item
+        const rewardItem = {
+          reward_table_id: rewardTable.id,
+          item_id: item.item_id,
+          chance: item.chance,
+          created_at: new Date().toISOString()
+        };
+        
+        // Insert reward item
+        const { error: itemError } = await supabase
+          .from('reward_items')
+          .upsert(rewardItem, { onConflict: ['reward_table_id', 'item_id'] });
+        
+        if (itemError) {
+          console.error(`Error inserting world boss reward item for table ${rewardTable.name}:`, itemError);
+          continue;
+        }
+      }
+      
+      console.log(`Inserted ${rewardTable.items.length} reward items for world boss table ${rewardTable.name}`);
+    }
+  }
+  
+  console.log('World boss rewards seeding completed.');
 }
 
 // Seed monsters
@@ -539,14 +602,14 @@ async function main() {
 Usage: node seed-data.js <command> <file>
 
 Commands:
-  items <file>         - Seed items from JSON file
-  adventures <file>    - Seed adventures from JSON file
-  worldboss <file>     - Seed world boss from JSON file
-  monsters <file>      - Seed monsters from JSON file
-  rewardtables <file>  - Seed reward tables from JSON file
-  skills <file>        - Seed skills from JSON file
-  areas <file>         - Seed areas from JSON file
-  all <directory>      - Seed all data from directory (looks for items.json, adventures.json, worldboss.json, monsters.json, rewardtables.json, skills.json, areas.json)
+  items <file>                    - Seed items from JSON file
+  adventures <file>               - Seed adventures from JSON file
+  worldboss <file> [rewardsFile]  - Seed world boss and optionally its rewards
+  monsters <file>                 - Seed monsters from JSON file
+  rewardtables <file>             - Seed reward tables from JSON file
+  skills <file>                   - Seed skills from JSON file
+  areas <file>                    - Seed areas from JSON file
+  all <directory>                 - Seed all data from directory
 
 Examples:
   node seed-data.js items ./data/items.json
@@ -563,6 +626,7 @@ Examples:
   
   const command = args[0];
   const filePath = args[1];
+  const secondFilePath = args[2]; // For commands that take two files (like worldboss + rewards)
   
   if (!filePath) {
     console.error('Missing file path.');
@@ -581,7 +645,7 @@ Examples:
         break;
       case 'worldboss':
         await clearAllTables();
-        await seedWorldBoss(filePath);
+        await seedWorldBoss(filePath, secondFilePath);
         break;
       case 'monsters':
         await clearAllTables();
@@ -615,7 +679,10 @@ Examples:
         await seedSkills(path.join(directory, 'skills.json'));
         await seedAreas(path.join(directory, 'areas.json'));
         await seedAdventures(path.join(directory, 'adventures.json'));
-        await seedWorldBoss(path.join(directory, 'worldboss.json'));
+        await seedWorldBoss(
+          path.join(directory, 'worldboss.json'),
+          path.join(directory, 'worldboss-rewards.json')
+        );
         break;
       default:
         console.error(`Unknown command: ${command}`);

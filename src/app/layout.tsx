@@ -1,5 +1,8 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { createClient } from '@/lib/supabase/server';
+import { AudioProviders } from '@/components/sound/AudioProviders';
+import { getUserSettings } from '@/app/actions/user-settings';
 
 export const metadata: Metadata = {
   title: 'Five Adventures',
@@ -11,6 +14,23 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  // Default settings if user is not logged in
+  let musicEnabled = false;
+  let soundEnabled = false;
+  let userId: string | undefined = undefined;
+  
+  // Get user settings if logged in
+  if (session?.user) {
+    userId = session.user.id;
+    const settingsResponse = await getUserSettings(userId);
+    if (settingsResponse.success) {
+      musicEnabled = settingsResponse.data?.musicEnabled || false;
+      soundEnabled = settingsResponse.data?.soundEnabled || false;
+    }
+  }
 
   return (
     <html lang="en">
@@ -20,9 +40,15 @@ export default async function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <main className="min-h-screen">
-          {children}
-        </main>
+        <AudioProviders 
+          userId={userId}
+          initialMusicEnabled={musicEnabled}
+          initialSoundEnabled={soundEnabled}
+        >
+          <main className="min-h-screen">
+            {children}
+          </main>
+        </AudioProviders>
       </body>
     </html>
   );

@@ -35,7 +35,7 @@ export default async function WorldBossLayout({
         currentDay={currentDay}
         character={character}
         user={user ? { email: user.email || '' } : null}
-        showWorldBossCompanion={false}
+        showWorldBossCompanion={false} // Hide on world boss page since we're already there
       />
       
       <div className="p-4">

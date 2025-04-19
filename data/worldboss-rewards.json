@@ -1,0 +1,125 @@
+[
+  {
+    "id": 11,
+    "name": "Ancient Dragon - Common",
+    "description": "Common rewards for defeating the Ancient Dragon",
+    "items": [
+      {"item_id": 5, "chance": 30},
+      {"item_id": 8, "chance": 25},
+      {"item_id": 10, "chance": 25},
+      {"item_id": 15, "chance": 20}
+    ]
+  },
+  {
+    "id": 12,
+    "name": "Ancient Dragon - Rare",
+    "description": "Rare rewards for defeating the Ancient Dragon",
+    "items": [
+      {"item_id": 17, "chance": 30},
+      {"item_id": 19, "chance": 25},
+      {"item_id": 21, "chance": 25},
+      {"item_id": 23, "chance": 20}
+    ]
+  },
+  {
+    "id": 13,
+    "name": "Ancient Dragon - Epic",
+    "description": "Epic rewards for defeating the Ancient Dragon",
+    "items": [
+      {"item_id": 24, "chance": 40},
+      {"item_id": 12, "chance": 30},
+      {"item_id": 20, "chance": 30}
+    ]
+  },
+  {
+    "id": 14,
+    "name": "Ancient Dragon - Legendary",
+    "description": "Legendary rewards for defeating the Ancient Dragon",
+    "items": [
+      {"item_id": 22, "chance": 50},
+      {"item_id": 24, "chance": 50}
+    ]
+  },
+  {
+    "id": 21,
+    "name": "Forest Guardian - Common",
+    "description": "Common rewards for defeating the Forest Guardian",
+    "items": [
+      {"item_id": 3, "chance": 30},
+      {"item_id": 5, "chance": 25},
+      {"item_id": 8, "chance": 25},
+      {"item_id": 13, "chance": 20}
+    ]
+  },
+  {
+    "id": 22,
+    "name": "Forest Guardian - Rare",
+    "description": "Rare rewards for defeating the Forest Guardian",
+    "items": [
+      {"item_id": 16, "chance": 30},
+      {"item_id": 13, "chance": 25},
+      {"item_id": 18, "chance": 25},
+      {"item_id": 20, "chance": 20}
+    ]
+  },
+  {
+    "id": 23,
+    "name": "Forest Guardian - Epic",
+    "description": "Epic rewards for defeating the Forest Guardian",
+    "items": [
+      {"item_id": 19, "chance": 40},
+      {"item_id": 17, "chance": 30},
+      {"item_id": 14, "chance": 30}
+    ]
+  },
+  {
+    "id": 24,
+    "name": "Forest Guardian - Legendary",
+    "description": "Legendary rewards for defeating the Forest Guardian",
+    "items": [
+      {"item_id": 21, "chance": 50},
+      {"item_id": 23, "chance": 50}
+    ]
+  },
+  {
+    "id": 31,
+    "name": "Kraken of the Deep - Common",
+    "description": "Common rewards for defeating the Kraken of the Deep",
+    "items": [
+      {"item_id": 2, "chance": 30},
+      {"item_id": 7, "chance": 25},
+      {"item_id": 9, "chance": 25},
+      {"item_id": 11, "chance": 20}
+    ]
+  },
+  {
+    "id": 32,
+    "name": "Kraken of the Deep - Rare",
+    "description": "Rare rewards for defeating the Kraken of the Deep",
+    "items": [
+      {"item_id": 14, "chance": 30},
+      {"item_id": 16, "chance": 25},
+      {"item_id": 18, "chance": 25},
+      {"item_id": 22, "chance": 20}
+    ]
+  },
+  {
+    "id": 33,
+    "name": "Kraken of the Deep - Epic",
+    "description": "Epic rewards for defeating the Kraken of the Deep",
+    "items": [
+      {"item_id": 21, "chance": 40},
+      {"item_id": 23, "chance": 30},
+      {"item_id": 15, "chance": 30}
+    ]
+  },
+  {
+    "id": 34,
+    "name": "Kraken of the Deep - Legendary",
+    "description": "Legendary rewards for defeating the Kraken of the Deep",
+    "items": [
+      {"item_id": 20, "chance": 50},
+      {"item_id": 22, "chance": 50}
+    ]
+  }
+]

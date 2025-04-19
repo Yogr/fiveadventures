@@ -1,5 +1,51 @@
 [
   {
+    "name": "Iron Sword",
+    "type": "Weapon",
+    "rarity": "Common",
+    "weapon_type": "Slashing",
+    "base_damage": 5,
+    "effects": {
+      "stat_boosts": {
+        "strength": 1
+      }
+    },
+    "value": 10,
+    "image_url": "sword"
+  },
+  {
+    "name": "Dagger",
+    "type": "Weapon",
+    "rarity": "Common",
+    "weapon_type": "Piercing",
+    "base_damage": 4,
+    "effects": {
+      "stat_boosts": {
+        "agility": 2
+      },
+      "critical_hit": {
+        "chance": 10,
+        "multiplier": 1.5
+      }
+    },
+    "value": 12,
+    "image_url": "stiletto"
+  },
+  {
+    "name": "Short Bow",
+    "type": "Weapon",
+    "rarity": "Common",
+    "weapon_type": "Piercing",
+    "base_damage": 5,
+    "effects": {
+      "stat_boosts": {
+        "agility": 2
+      }
+    },
+    "value": 15,
+    "image_url": "short_bow"
+  },
+  {
     "name": "Steel Longsword",
     "type": "Weapon",
     "rarity": "Common",

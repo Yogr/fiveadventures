@@ -7,6 +7,7 @@ import ShopItem from './shop-item';
 import SellBar from './sell-bar';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import Image from 'next/image';
+import { useAudio } from '@/lib/audio-utils';
 
 interface ShopContainerProps {
   initialGold: number;
@@ -24,6 +25,15 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
   const [gold, setGold] = useState(initialGold);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Get audio utilities
+  const { playSceneMusic } = useAudio();
+  
+  // Play shop music when component mounts
+  useEffect(() => {
+    playSceneMusic('shop');
+    // No cleanup needed as music will be changed by the next scene
+  }, [playSceneMusic]);
   
   // Check if an item is equipped
   const isItemEquipped = (itemId: number) => {

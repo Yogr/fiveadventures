@@ -10,6 +10,24 @@ import type { CharacterClass, ApiResponse, Character, CharacterEquipment } from 
 import { cookies } from 'next/headers';
 import { COOKIE_NAMES } from '@/lib/constants';
 
+// Helper function to get default weapon based on character class
+function getDefaultWeapon(characterClass: CharacterClass): string {
+  switch (characterClass) {
+    case 'Warrior':
+      return 'Iron Sword';
+    case 'Thief':
+      return 'Dagger';
+    case 'Cleric':
+      return 'Iron Mace';
+    case 'Ranger':
+      return 'Short Bow';
+    case 'Wizard':
+      return 'Apprentice Wand';
+    default:
+      return 'Iron Sword'; // Default fallback
+  }
+}
+
 // Set character ID cookie (server action)
 export async function setCharacterIdCookie(characterId: string): Promise<void> {
   const cookieStore = await cookies();
@@ -98,11 +116,41 @@ export async function createCharacter({
       };
     }
     
-    // Create empty equipment record for the character
+    // Get default equipment based on character class
+    // All characters get Leather Armor, plus a class-specific weapon
+    const defaultEquipment = {
+      armor: "Leather Armor",
+      weapon: getDefaultWeapon(characterClass)
+    };
+
+    // Get item IDs from the database
+    const { data: armorData, error: armorError } = await supabase
+      .from('items')
+      .select('id')
+      .eq('name', defaultEquipment.armor)
+      .single();
+    
+    if (armorError) {
+      console.error('Error fetching armor data:', armorError);
+    }
+
+    const { data: weaponData, error: weaponError } = await supabase
+      .from('items')
+      .select('id')
+      .eq('name', defaultEquipment.weapon)
+      .single();
+    
+    if (weaponError) {
+      console.error('Error fetching weapon data:', weaponError);
+    }
+
+    // Create equipment record for the character with default items
     const { error: equipmentError } = await supabase
       .from('character_equipment')
       .insert({
         character_id: characterId,
+        weapon_id: weaponData?.id || null,
+        armor_id: armorData?.id || null,
         updated_at: new Date().toISOString()
       });
     

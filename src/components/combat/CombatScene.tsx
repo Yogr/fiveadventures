@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import FighterDisplay from './fighter-display';
 import CombatMessagePanel from './CombatMessagePanel';
 import Image from 'next/image';
 import type { Character, Combat } from '@/lib/types';
 import { getTotalMaxHitpoints } from '@/lib/character-utils';
+import { useAudio } from '@/lib/audio-utils';
 
 interface CombatSceneProps {
   character: Character;
@@ -26,6 +27,15 @@ export default function CombatScene({
   areaImage,
   onMonsterInfoClick
 }: CombatSceneProps) {
+  // Get audio utilities
+  const { playSceneMusic } = useAudio();
+  
+  // Play combat music when component mounts
+  useEffect(() => {
+    playSceneMusic('combat');
+    // No cleanup needed as music will be changed by the next scene
+  }, [playSceneMusic]);
+
   // Calculate current monster HP
   const monsterCurrentHp = Math.max(0, combat.monster.hitpoints - combat.character_damage_dealt);
   

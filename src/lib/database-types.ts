@@ -16,6 +16,8 @@ export interface Database {
           auth_provider: string
           created_at: string
           last_login: string
+          music_enabled: boolean
+          sound_enabled: boolean
         }
         Insert: {
           id: string
@@ -23,6 +25,8 @@ export interface Database {
           auth_provider: string
           created_at?: string
           last_login?: string
+          music_enabled?: boolean
+          sound_enabled?: boolean
         }
         Update: {
           id?: string
@@ -30,6 +34,8 @@ export interface Database {
           auth_provider?: string
           created_at?: string
           last_login?: string
+          music_enabled?: boolean
+          sound_enabled?: boolean
         }
         Relationships: []
       }

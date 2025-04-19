@@ -6,6 +6,7 @@ import type { Item, ItemRarity } from '@/lib/types';
 import { buyItem } from '@/app/actions/shop';
 import Image from 'next/image';
 import ItemDetailModal from './item-detail-modal';
+import { useAudio } from '@/lib/audio-utils';
 
 interface ShopItemProps {
   id: string;
@@ -20,6 +21,9 @@ export default function ShopItem({ id, item, price, onPurchase, playerGold }: Sh
   const [error, setError] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   
+  // Get audio utilities
+  const { playUISound, playRewardSound } = useAudio();
+  
   const rarityColor = ITEM_RARITY_COLORS[item.rarity as ItemRarity] || 'text-gray-200';
   const canAfford = playerGold >= price;
   
@@ -32,11 +36,13 @@ export default function ShopItem({ id, item, price, onPurchase, playerGold }: Sh
     
     setIsPurchasing(true);
     setError(null);
+    playUISound(); // Play UI sound when starting the purchase
     
     try {
       const result = await buyItem(id);
       
       if (result.success) {
+        playRewardSound(); // Play reward sound on successful purchase
         onPurchase();
       } else {
         setError(result.error || 'Failed to purchase item');

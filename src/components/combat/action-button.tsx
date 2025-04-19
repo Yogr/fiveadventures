@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { useAudio } from '@/lib/audio-utils';
 
 interface ActionButtonProps {
   icon: string;
@@ -24,6 +25,24 @@ export default function ActionButton({
   description,
   isSkill = false
 }: ActionButtonProps) {
+  // Get audio utilities
+  const { playUISound, playCombatSound } = useAudio();
+  
+  // Handle button click with sound
+  const handleClick = () => {
+    // Play appropriate sound effect
+    if (isSkill) {
+      // For skills, we could use a specific skill sound in the future
+      playCombatSound('attack');
+    } else {
+      // For regular buttons like attack or flee
+      playUISound();
+    }
+    
+    // Call the original onClick handler
+    onClick();
+  };
+  
   // Uniform size for all buttons
   const buttonSize = 'w-16 h-16';
   const textSize = 'text-sm';
@@ -31,7 +50,7 @@ export default function ActionButton({
   return (
     <div className="flex items-center justify-center">
       <button 
-        onClick={onClick}
+        onClick={handleClick}
         disabled={disabled}
         className={`pixel-button relative flex flex-col items-center p-0 rounded-md
           ${isSelected 

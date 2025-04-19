@@ -1,4 +1,22 @@
 import { v4 as uuidv4 } from 'uuid';
+import { useState, useEffect } from 'react';
+
+// Custom hook for debouncing values
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 // Constants for game mechanics
 export const MAX_ADVENTURES_PER_DAY = 5;
