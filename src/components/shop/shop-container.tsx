@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { getShopItems, getInventory } from '@/app/actions/shop';
 import type { ShopItemSimple } from '@/app/actions/shop';
 import ShopItem from './shop-item';
-import InventoryItem from './inventory-item';
+import SellBar from './sell-bar';
 import LoadingSpinner from '@/components/ui/loading-spinner';
+import Image from 'next/image';
 
 interface ShopContainerProps {
   initialGold: number;
@@ -18,7 +19,6 @@ interface ShopContainerProps {
 }
 
 export default function ShopContainer({ initialGold, equipment }: ShopContainerProps) {
-  const [activeTab, setActiveTab] = useState<'shop' | 'inventory'>('shop');
   const [shopItems, setShopItems] = useState<ShopItemSimple[]>([]);
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [gold, setGold] = useState(initialGold);
@@ -44,7 +44,8 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
       // Load shop items
       const shopItems = await getShopItems();
       if (shopItems) {
-        setShopItems(shopItems);
+        // Only take the first 6 items
+        setShopItems(shopItems.slice(0, 6));
       } else {
         setError('Failed to load shop items');
       }
@@ -75,99 +76,101 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
     loadData();
   };
   
-  // Handle sell
-  const handleSell = () => {
-    // Reload data to get updated shop and inventory
-    loadData();
-  };
-  
   return (
-    <div className="bg-gray-800 p-4 rounded-md">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl sm:text-2xl font-bold">Shop</h2>
-        <div className="text-yellow-300 font-medium">{gold} Gold</div>
-      </div>
-      
-      {/* Tab navigation */}
-      <div className="flex border-b border-gray-700 mb-4">
-        <button
-          className={`px-4 py-2 font-medium ${
-            activeTab === 'shop'
-              ? 'text-yellow-400 border-b-2 border-yellow-400'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-          onClick={() => setActiveTab('shop')}
-        >
-          Buy
-        </button>
-        <button
-          className={`px-4 py-2 font-medium ${
-            activeTab === 'inventory'
-              ? 'text-yellow-400 border-b-2 border-yellow-400'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-          onClick={() => setActiveTab('inventory')}
-        >
-          Sell
-        </button>
-      </div>
-      
-      {/* Error message */}
-      {error && (
-        <div className="bg-red-600 text-white p-2 rounded-md mb-4">
-          {error}
+    <div className="relative text-white flex flex-col">
+      {/* Main shop area with background */}
+      <div className="relative">
+        {/* Shop background */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <Image
+            src="/image/ui/shop_bg.png"
+            alt="Shop Background"
+            fill
+            className="object-cover object-top opacity-80 w-full"
+            priority
+          />
         </div>
-      )}
-      
-      {/* Loading state */}
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <LoadingSpinner />
-        </div>
-      ) : (
-        <>
-          {/* Shop items */}
-          {activeTab === 'shop' && (
-            <div>
-              <h3 className="text-lg font-medium mb-3">Available Items</h3>
-              {shopItems.length === 0 ? (
-                <p className="text-gray-400 text-center py-4">No items available in the shop today.</p>
-              ) : (
-                shopItems.map((shopItem) => (
-                  <ShopItem
-                    key={shopItem.id}
-                    id={shopItem.id}
-                    item={shopItem.item}
-                    price={shopItem.price}
-                    onPurchase={handlePurchase}
-                    playerGold={gold}
-                  />
-                ))
-              )}
+        
+        {/* Shop content container */}
+        <div className="relative z-10 container mx-auto px-2 py-3 flex flex-col">
+          {/* Shop header */}
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-xl md:text-2xl font-bold text-yellow-300">Shop</h2>
+            <div className="flex items-center">
+              <span className="text-xl font-medium mr-2">{gold}</span>
+              <div className="w-6 h-6 relative">
+                <Image
+                  src="/image/ui/coin.png"
+                  alt="Gold"
+                  width={24}
+                  height={24}
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Shop content - items and shopkeeper */}
+          {error && (
+            <div className="bg-red-600 text-white p-2 rounded-md mb-4">
+              {error}
             </div>
           )}
           
-          {/* Inventory items */}
-          {activeTab === 'inventory' && (
-            <div>
-              <h3 className="text-lg font-medium mb-3">Your Items</h3>
-              {inventoryItems.length === 0 ? (
-                <p className="text-gray-400 text-center py-4">Your inventory is empty.</p>
-              ) : (
-                inventoryItems.map((invItem) => (
-                  <InventoryItem
-                    key={invItem.id}
-                    id={invItem.id}
-                    item={invItem.item}
-                    isEquipped={isItemEquipped(invItem.item_id)}
-                    onSell={handleSell}
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <div className="flex mb-4">
+              {/* Shopkeeper on the left - taking up 1/3 of the width */}
+              <div className="w-1/3 flex items-end justify-items-end">
+                <div className="h-60 flex items-end">
+                  <Image
+                    src="/image/ui/shopkeeper.png"
+                    alt="Shopkeeper"
+                    width={300}
+                    height={600}
+                    className="object-contain object-bottom scale-y-125"
                   />
-                ))
-              )}
+                </div>
+              </div>
+              
+              {/* Shop items grid on the right - taking up 2/3 of the width */}
+              <div className="w-2/3">
+                <div className="grid grid-cols-3 grid-rows-2 gap-1 w-full">
+                  {shopItems.length === 0 ? (
+                    <p className="text-gray-400 text-center py-4 col-span-3">No items available in the shop today.</p>
+                  ) : (
+                    shopItems.map((shopItem) => (
+                      <ShopItem
+                        key={shopItem.id}
+                        id={shopItem.id}
+                        item={shopItem.item}
+                        price={shopItem.price}
+                        onPurchase={handlePurchase}
+                        playerGold={gold}
+                      />
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           )}
-        </>
-      )}
+        </div>
+      </div>
+      
+      {/* Separate sell bar section */}
+      <div className="container mx-auto px-2 z-10 mt-2">
+        {!isLoading && (
+          <SellBar
+            inventoryItems={inventoryItems}
+            gold={gold}
+            setGold={setGold}
+            isItemEquipped={isItemEquipped}
+            onSellComplete={loadData}
+          />
+        )}
+      </div>
     </div>
   );
 }

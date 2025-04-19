@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { ITEM_RARITY_COLORS } from '@/lib/constants';
 import type { Item, ItemRarity } from '@/lib/types';
 import { buyItem } from '@/app/actions/shop';
+import Image from 'next/image';
+import ItemDetailModal from './item-detail-modal';
 
 interface ShopItemProps {
   id: string;
@@ -16,6 +18,7 @@ interface ShopItemProps {
 export default function ShopItem({ id, item, price, onPurchase, playerGold }: ShopItemProps) {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   
   const rarityColor = ITEM_RARITY_COLORS[item.rarity as ItemRarity] || 'text-gray-200';
   const canAfford = playerGold >= price;
@@ -47,66 +50,79 @@ export default function ShopItem({ id, item, price, onPurchase, playerGold }: Sh
   };
   
   return (
-    <div className="bg-gray-700 rounded-md p-3 mb-3 relative">
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className={`font-medium text-lg ${rarityColor}`}>{item.name}</h3>
-          <p className="text-sm text-gray-300">{item.type} {item.weapon_type ? `(${item.weapon_type})` : ''}</p>
-          
-          {/* Item stats */}
-          <div className="mt-1 text-sm">
-            {item.base_damage && (
-              <p className="text-red-400">Damage: {item.base_damage}</p>
-            )}
-            {item.base_defense && (
-              <p className="text-blue-400">Defense: {item.base_defense}</p>
-            )}
-            
-            {/* Item effects summary */}
-            {item.effects && typeof item.effects === 'object' && !Array.isArray(item.effects) && (
-              <div className="mt-1 text-xs text-gray-300">
-                {item.effects.stat_boosts && typeof item.effects.stat_boosts === 'object' && 
-                  Object.entries(item.effects.stat_boosts as Record<string, number>).map(([stat, value]) => (
-                    <p key={stat} className="text-green-400">
-                      +{value} {stat.charAt(0).toUpperCase() + stat.slice(1)}
-                    </p>
-                  ))
-                }
-                
-                {item.effects.elemental && typeof item.effects.elemental === 'object' && (
-                  <p className="text-purple-400">
-                    +{(item.effects.elemental as any).damage} {(item.effects.elemental as any).type} damage
-                  </p>
-                )}
-                
-                {item.effects.critical_hit && typeof item.effects.critical_hit === 'object' && (
-                  <p className="text-yellow-400">
-                    {(item.effects.critical_hit as any).chance}% chance to deal {(item.effects.critical_hit as any).multiplier}x damage
-                  </p>
-                )}
-              </div>
-            )}
+    <div 
+      className="relative rounded hover:bg-opacity-20 hover:bg-gray-700 transition-colors cursor-pointer"
+      onClick={() => setShowDetailModal(true)}
+    >
+      {/* Item image and rarity border */}
+      <div className={`aspect-square rounded flex items-center justify-center bg-gray-700 border ${rarityColor.replace('text-', 'border-')}`}>
+        {item.image_url ? (
+          <Image
+            src={`/image/${item.type.toLowerCase()}/${item.image_url}.png`}
+            alt={item.name}
+            width={48}
+            height={48}
+            className="object-contain"
+          />
+        ) : (
+          <div className="w-12 h-12 flex items-center justify-center bg-gray-600 rounded">
+            <span className="text-gray-400 text-xs">No img</span>
           </div>
-        </div>
-        
-        <div className="text-right">
-          <p className="text-yellow-300 font-medium">{price} Gold</p>
-          <button
-            onClick={handleBuy}
-            disabled={isPurchasing || !canAfford}
-            className={`mt-2 px-3 py-1 rounded text-sm font-medium ${
-              canAfford 
-                ? 'bg-green-600 hover:bg-green-500 text-white' 
-                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            {isPurchasing ? 'Buying...' : 'Buy'}
-          </button>
-        </div>
+        )}
       </div>
       
+      {/* Ultra compact item name and price with buy button */}
+      <div className="text-center items-center">
+        <h3 className={`font-medium truncate ${rarityColor} text-xs leading-tight`}>{item.name}</h3>
+          <div className="flex items-center width-full justify-center">
+            <span className="text-yellow-300 font-medium text-sm">{price}</span>
+            <div className="w-3 h-3 ml-1 relative">
+              <Image
+                src="/image/ui/coin.png"
+                alt="Gold"
+                width={12}
+                height={12}
+              />
+            </div>
+          </div>
+      </div>
+      
+      {/* Item detail modal */}
+      <ItemDetailModal
+        item={item}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        actionButton={
+          <div className="flex items-center gap-2">
+            <div className="flex items-center">
+              <span className="text-yellow-300 font-medium">{price}</span>
+              <div className="w-4 h-4 ml-1 relative">
+                <Image
+                  src="/image/ui/coin.png"
+                  alt="Gold"
+                  width={16}
+                  height={16}
+                />
+              </div>
+            </div>
+            <button
+              onClick={handleBuy}
+              disabled={isPurchasing || !canAfford}
+              className={`px-4 py-2 rounded text-sm font-medium ${
+                canAfford 
+                  ? 'bg-green-600 hover:bg-green-500 text-white' 
+                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              {isPurchasing ? 'Buying...' : 'Buy'}
+            </button>
+          </div>
+        }
+      />
+      
+      {/* Error message */}
       {error && (
-        <div className="absolute bottom-0 left-0 right-0 bg-red-600 text-white text-center text-sm py-1 rounded-b-md">
+        <div className="absolute inset-x-0 bottom-0 bg-red-600 text-white text-center text-sm py-1 rounded-b-md">
           {error}
         </div>
       )}
