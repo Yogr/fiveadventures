@@ -9,6 +9,7 @@ import {
   getCurrentGameDay,
   CLASS_STAT_GROWTH
 } from '@/lib/utils';
+import { getTotalMaxHitpoints, getTotalMaxEnergy } from '@/lib/character-utils';
 import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 import type {
   ApiResponse,
@@ -349,8 +350,8 @@ export async function completeAdventure({
     // Update character stats
     const newExperience = character.experience + experienceGained;
     const newGold = character.gold + goldGained;
-    let newHitpoints = Math.max(0, Math.min(character.max_hitpoints, character.current_hitpoints + (outcome.hitpoints_change || 0)));
-    let newEnergy = Math.max(0, Math.min(character.max_energy, character.current_energy + (outcome.energy_change || 0)));
+    let newHitpoints = Math.max(0, Math.min(getTotalMaxHitpoints(character), character.current_hitpoints + (outcome.hitpoints_change || 0)));
+    let newEnergy = Math.max(0, Math.min(getTotalMaxEnergy(character), character.current_energy + (outcome.energy_change || 0)));
     const newAdventureCount = character.daily_adventure_count + 1;
     
     // Check if character has leveled up

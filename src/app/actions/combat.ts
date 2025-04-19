@@ -17,7 +17,8 @@ import {
   getTotalAgility,
   getTotalLuck,
   calculateTotalDamage,
-  calculateTotalDefense
+  calculateTotalDefense,
+  getTotalMaxHitpoints
 } from '@/lib/character-utils';
 
 // Get combat data
@@ -325,7 +326,7 @@ export async function startCombatTurn(
       await supabase
         .from('characters')
         .update({
-          current_hitpoints: Math.min(character.max_hitpoints, character.current_hitpoints + characterHealingDone)
+          current_hitpoints: Math.min(getTotalMaxHitpoints(character), character.current_hitpoints + characterHealingDone)
         })
         .eq('id', character.id);
     }

@@ -1,17 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getLevelFromExperience } from '@/lib/utils';
+import { getLevelFromExperience, getLevelUpRewards } from '@/lib/utils';
 
 interface LevelUpAnimationProps {
   oldExperience: number;
   newExperience: number;
+  characterClass: string;
   onComplete?: () => void;
 }
 
 export default function LevelUpAnimation({ 
   oldExperience, 
   newExperience,
+  characterClass,
   onComplete 
 }: LevelUpAnimationProps) {
   const [showAnimation, setShowAnimation] = useState(false);
@@ -20,15 +22,19 @@ export default function LevelUpAnimation({
   const oldLevel = getLevelFromExperience(oldExperience);
   const newLevel = getLevelFromExperience(newExperience);
   const leveledUp = newLevel > oldLevel;
+  const levelsGained = newLevel - oldLevel;
+  
+  // Get real stat gains based on character class and levels gained
+  const statGains = getLevelUpRewards(characterClass, levelsGained);
   
   // Stats gained per level
   const statsGained = [
-    { name: 'Strength', value: '+1' },
-    { name: 'Intelligence', value: '+1' },
-    { name: 'Agility', value: '+1' },
-    { name: 'Luck', value: '+1' },
-    { name: 'Max HP', value: '+5' },
-    { name: 'Max Energy', value: '+3' }
+    { name: 'Strength', value: `+${statGains.strength}` },
+    { name: 'Intelligence', value: `+${statGains.intelligence}` },
+    { name: 'Agility', value: `+${statGains.agility}` },
+    { name: 'Luck', value: `+${statGains.luck}` },
+    { name: 'Max HP', value: `+${statGains.max_hitpoints}` },
+    { name: 'Max Energy', value: `+${statGains.max_energy}` }
   ];
   
   useEffect(() => {

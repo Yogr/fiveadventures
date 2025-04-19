@@ -325,3 +325,29 @@ export const formatNumber = (num: number): string => {
   }
   return num.toString();
 };
+
+// Calculate the stats gained when leveling up
+export const getLevelUpRewards = (
+  characterClass: string,
+  levelsGained: number
+): { 
+  strength: number; 
+  intelligence: number; 
+  agility: number; 
+  luck: number; 
+  max_hitpoints: number; 
+  max_energy: number;
+} => {
+  // Get stat growth for character class
+  const statGrowth = CLASS_STAT_GROWTH[characterClass as keyof typeof CLASS_STAT_GROWTH] || CLASS_STAT_GROWTH.Warrior;
+  
+  // Calculate stat increases based on levels gained
+  return {
+    strength: Math.floor(statGrowth.strength * levelsGained),
+    intelligence: Math.floor(statGrowth.intelligence * levelsGained),
+    agility: Math.floor(statGrowth.agility * levelsGained),
+    luck: Math.floor(statGrowth.luck * levelsGained),
+    max_hitpoints: Math.floor(statGrowth.hitpoints * levelsGained),
+    max_energy: Math.floor(statGrowth.energy * levelsGained)
+  };
+};

@@ -5,6 +5,7 @@ import FighterDisplay from './fighter-display';
 import CombatMessagePanel from './CombatMessagePanel';
 import Image from 'next/image';
 import type { Character, Combat } from '@/lib/types';
+import { getTotalMaxHitpoints } from '@/lib/character-utils';
 
 interface CombatSceneProps {
   character: Character;
@@ -55,7 +56,7 @@ export default function CombatScene({
             image={`/image/characters/${character.class.toLowerCase()}.png`}
             imageAlt={character.name}
             currentHp={character.current_hitpoints}
-            maxHp={character.max_hitpoints}
+            maxHp={getTotalMaxHitpoints(character)}
             effects={characterEffects}
           />
         </div>

@@ -167,11 +167,12 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50"
           >
-            <LevelUpAnimation
-              oldExperience={oldExperience}
-              newExperience={character.experience}
-              onComplete={() => dispatch({ type: 'SET_SHOW_LEVEL_UP', payload: false })}
-            />
+          <LevelUpAnimation
+            oldExperience={oldExperience}
+            newExperience={character.experience}
+            characterClass={character.class}
+            onComplete={() => dispatch({ type: 'SET_SHOW_LEVEL_UP', payload: false })}
+          />
           </motion.div>
         )}
       </AnimatePresence>

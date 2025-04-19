@@ -5,6 +5,7 @@ import Image from 'next/image';
 import type { Character } from '@/lib/types';
 import { getRequiredExperience, getLevelFromExperience } from '@/lib/utils';
 import { formatNumber } from '@/lib/utils';
+import { getTotalMaxHitpoints, getTotalMaxEnergy } from '@/lib/character-utils';
 import AdventureTracker from '@/components/adventure/adventure-tracker';
 import CharacterDetailsModal from './character-details-modal';
 import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
@@ -23,8 +24,11 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
     ? ((character.experience - currentLevelExp) / (nextLevelExp - currentLevelExp)) * 100
     : 100;
   
-  const hpPercentage = (character.current_hitpoints / character.max_hitpoints) * 100;
-  const energyPercentage = (character.current_energy / character.max_energy) * 100;
+  const totalMaxHitpoints = getTotalMaxHitpoints(character);
+  const totalMaxEnergy = getTotalMaxEnergy(character);
+  
+  const hpPercentage = (character.current_hitpoints / totalMaxHitpoints) * 100;
+  const energyPercentage = (character.current_energy / totalMaxEnergy) * 100;
   
   return (
     <div className="bg-amber-950 bg-opacity-90 p-2 md:p-3 rounded-lg relative border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
@@ -59,7 +63,7 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
             <div className="flex items-center h-3.5 md:h-4 relative">
               <span className="absolute left-1 text-sm z-10 text-white font-medium">HP</span>
               <span className="absolute right-1 text-sm z-10 text-white font-medium">
-                {formatNumber(character.current_hitpoints)}/{formatNumber(character.max_hitpoints)}
+                {formatNumber(character.current_hitpoints)}/{formatNumber(totalMaxHitpoints)}
               </span>
               <div className="w-full h-full bg-amber-900 rounded-md overflow-hidden">
                 <div 
@@ -75,7 +79,7 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
             <div className="flex items-center h-3.5 md:h-4 relative">
               <span className="absolute left-1 text-sm z-10 text-white font-medium">MP</span>
               <span className="absolute right-1 text-sm z-10 text-white font-medium">
-                {formatNumber(character.current_energy)}/{formatNumber(character.max_energy)}
+                {formatNumber(character.current_energy)}/{formatNumber(totalMaxEnergy)}
               </span>
               <div className="w-full h-full bg-amber-900 rounded-md overflow-hidden">
                 <div 
