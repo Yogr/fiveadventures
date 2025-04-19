@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { Howl } from 'howler';
 import { updateUserSettings } from '@/app/actions/user-settings';
-import { useDebounce } from '@/lib/utils';
+import { useDebounce } from '@/lib/client-utils';
 
 // Define context types
 type SoundContextType = {

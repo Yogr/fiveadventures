@@ -146,7 +146,7 @@ export async function getCharacterBossProgress(
         week: currentWeek,
         attack_count: 0,
         total_damage: 0,
-        has_pending_reward: false,
+        pending_rewards: false,
         last_attack: null
       };
       
@@ -379,7 +379,7 @@ export async function attackWorldBoss(
       const { error: pendingRewardsError } = await supabase
         .from('character_boss_progress')
         .update({
-          has_pending_reward: true
+          pending_rewards: true
         })
         .eq('boss_id', worldBoss.id)
         .eq('week', worldBoss.week);
@@ -463,7 +463,7 @@ export async function processCharacterRewards(): Promise<ApiResponse<boolean>> {
         *,
         boss:boss_id(*)
       `)
-      .eq('has_pending_reward', true);
+      .eq('pending_rewards', true);
     
     if (pendingError) {
       console.error('Error getting pending progress:', pendingError);
@@ -573,7 +573,7 @@ export async function processCharacterRewards(): Promise<ApiResponse<boolean>> {
       const { error: updateProgressError } = await supabase
         .from('character_boss_progress')
         .update({
-          has_pending_reward: false
+          pending_rewards: false
         })
         .eq('id', progress.id);
       
