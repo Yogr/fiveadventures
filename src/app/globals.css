@@ -8,6 +8,30 @@
   --background-end-rgb: 0, 0, 0;
 }
 
+/* Custom Scrollbar - Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #451a03;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #92400e;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b45309;
+}
+
+/* For Firefox */
+* {
+  scrollbar-color: #92400e #451a03;
+  scrollbar-width: thin;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background-image: url('/image/ui/brickbackground.png');

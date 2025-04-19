@@ -32,7 +32,7 @@ const AdventureView = memo(function AdventureView({ adventure, character, area }
   const formattedAreaName = area.name.toLowerCase().replace('the ','').replace(/\s+/g, '-');
   
   return (
-    <div className="bg-amber-950 bg-opacity-80 p-4 md:p-6 animate-fadeIn rounded-lg border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
+    <div className="bg-slate-900 p-4 md:p-6 animate-fadeIn rounded-lg border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
       <div className="mb-4 md:mb-6">
         <h2 className="text-xl md:text-2xl mb-2 text-amber-300">{adventure.title}</h2>
         <p className="text-sm md:text-base mb-4 md:mb-6 text-amber-200">{adventure.description}</p>

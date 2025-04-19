@@ -31,12 +31,12 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
   const energyPercentage = (character.current_energy / totalMaxEnergy) * 100;
   
   return (
-    <div className="bg-amber-950 bg-opacity-90 p-2 md:p-3 rounded-lg relative border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
+    <div className="bg-yellow-950 bg-opacity-90 p-2 md:p-3 rounded-lg relative border-2 border-amber-900 border-t-amber-700 border-l-amber-700">
       <div className="flex items-start">
         {/* Left side with avatar and name */}
         <div className="flex flex-col items-center mr-2">
           {/* Character name */}
-          <h3 className="text-base md:text-lg font-bold text-amber-200 mb-1 self-start">{character.name}</h3>
+          <h3 className="text-base md:text-lg font-medium text-amber-200 mb-1 self-start">{character.name}</h3>
           
           {/* Character avatar */}
           <div className="w-12 h-12 md:w-14 md:h-14 rounded-full flex-shrink-0 border border-amber-700 bg-stone-800 overflow-hidden relative">
