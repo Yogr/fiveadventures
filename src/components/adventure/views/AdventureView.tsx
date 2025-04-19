@@ -4,7 +4,7 @@ import { memo } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Adventure, AdventureDecision, Area, Character } from '@/lib/types';
 import { useAdventure } from '../AdventureContext';
-import Image from 'next/image';
+import AdventureDisplay from './AdventureDisplay';
 
 interface AdventureViewProps {
   adventure: Adventure;
@@ -32,25 +32,16 @@ const AdventureView = memo(function AdventureView({ adventure, character, area }
   const formattedAreaName = area.name.toLowerCase().replace('the ','').replace(/\s+/g, '-');
   
   return (
-    <div className="bg-slate-900 p-4 md:p-6 animate-fadeIn rounded-lg border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
-      <div className="mb-4 md:mb-6">
-        <h2 className="text-xl md:text-2xl mb-2 text-amber-300">{adventure.title}</h2>
-        <p className="text-sm md:text-base mb-4 md:mb-6 text-amber-200">{adventure.description}</p>
-        
-        {/* Adventure image placeholder */}
-        <div className="w-full h-36 md:h-48 bg-amber-900 mb-4 md:mb-6 rounded-md flex items-center justify-center">
-          <Image
-            src={`/image/adventure/${formattedAreaName}/${adventure.image_url}.png`}
-            alt={adventure.title}
-            width={200}
-            height={128}
-            className="object-cover w-full h-full rounded-md"
-          />
-        </div>
-      </div>
+    <div className="bg-yellow-950 p-0 animate-fadeIn rounded-lg border-2 border-amber-900 border-t-amber-700 border-l-amber-700">
+      <AdventureDisplay 
+        title={adventure.title}
+        description={adventure.description}
+        imageUrl={adventure.image_url || "default"}
+        areaName={area.name}
+      />
       
       {/* Decisions */}
-      <div className="mb-4 md:mb-6">
+      <div className="mx-2 mb-4 md:mb-6">
         <h3 className="text-lg md:text-xl mb-2 md:mb-4 text-amber-300">What will you do?</h3>
         
         <div className="space-y-2 md:space-y-4">
@@ -64,13 +55,13 @@ const AdventureView = memo(function AdventureView({ adventure, character, area }
               }`}
               onClick={() => handleDecisionSelect(decision)}
             >
-              <p className="text-sm md:text-base text-amber-200">{decision.description}</p>
+              <p className="text-base text-amber-200">{decision.description}</p>
             </div>
           ))}
         </div>
       </div>
       
-      <div className="flex justify-center">
+      <div className="flex justify-center mb-2">
         <button 
           onClick={handleCompleteAdventure}
           disabled={!selectedDecision || loading}
