@@ -306,40 +306,36 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
         )}
       </div>
       
-      {/* Show "All Adventures Completed" content if this was the final adventure */}
-      {isFinalAdventure && displayRewards && (
-        <div className="mt-8 text-center animate-fadeIn">
-          <h2 className="text-3xl mb-4 text-yellow-400">All Adventures Completed!</h2>
-          <p className="text-xl mb-6">
-            You've completed all {MAX_ADVENTURES_PER_DAY} adventures for today.
-            Return tomorrow for new adventures!
-          </p>
-          
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-6">
-            <Link href={ROUTES.WORLD_BOSS} className="pixel-button bg-red-600 hover:bg-red-500 active:bg-red-700">
-              Fight World Boss
-            </Link>
-            <Link href={ROUTES.INVENTORY} className="pixel-button bg-blue-600 hover:bg-blue-500 active:bg-blue-700">
-              Inventory
-            </Link>
-            <Link href={ROUTES.SHOP} className="pixel-button bg-green-600 hover:bg-green-500 active:bg-green-700">
-              Shop
-            </Link>
+      {/* Navigation buttons */}
+      <div className="flex justify-center mt-6">
+        {/* Show "All Adventures Completed" message if this was the final adventure */}
+        {isFinalAdventure && displayRewards ? (
+          <div className="text-center animate-fadeIn">
+            <h2 className="text-3xl mb-4 text-yellow-400">All Adventures Completed!</h2>
+            <p className="text-xl mb-6">
+              You've completed all {MAX_ADVENTURES_PER_DAY} adventures for today.
+              Return tomorrow for new adventures!
+            </p>
+            
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4">
+              <Link href={ROUTES.WORLD_BOSS} className="pixel-button bg-red-600 hover:bg-red-500 active:bg-red-700">
+                Fight World Boss
+              </Link>
+              <Link href={ROUTES.SHOP} className="pixel-button bg-green-600 hover:bg-green-500 active:bg-green-700">
+                Shop
+              </Link>
+            </div>
           </div>
-        </div>
-      )}
-      
-      {/* Only show continue button if not the final adventure */}
-      {(!isFinalAdventure || !displayRewards) && (
-        <div className="flex justify-center">
+        ) : (
+          /* Show continue button if not the final adventure or rewards aren't displayed yet */
           <button 
             onClick={handleContinue} 
             className="pixel-button text-xl"
           >
             Continue to Next Adventure
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

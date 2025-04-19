@@ -103,7 +103,26 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
     return <NoCharacterView />;
   }
   
-  // All adventures completed for the day
+  // Show outcome if available - this takes precedence over the "all adventures completed" check
+  if (outcome) {
+    console.log('AdventureContainer: Rendering OutcomeView with state.combatResult =', state.combatResult);
+    const messageOverride = getMessageOverride();
+    console.log('AdventureContainer: messageOverride =', messageOverride);
+    
+    return (
+      <OutcomeView
+        outcome={outcome}
+        character={character}
+        oldExperience={oldExperience}
+        showRewards={showRewards}
+        showLevelUp={showLevelUp}
+        rewardItem={state.rewardItem}
+        messageOverride={messageOverride}
+      />
+    );
+  }
+  
+  // All adventures completed for the day - only show this if there's no outcome to display
   if (character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
     return <AllAdventuresCompletedView character={character} />;
   }
@@ -137,24 +156,6 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
     );
   }
   
-  // Show outcome if available
-  if (outcome) {
-    console.log('AdventureContainer: Rendering OutcomeView with state.combatResult =', state.combatResult);
-    const messageOverride = getMessageOverride();
-    console.log('AdventureContainer: messageOverride =', messageOverride);
-    
-    return (
-      <OutcomeView
-        outcome={outcome}
-        character={character}
-        oldExperience={oldExperience}
-        showRewards={showRewards}
-        showLevelUp={showLevelUp}
-        rewardItem={state.rewardItem}
-        messageOverride={messageOverride}
-      />
-    );
-  }
   
   if (!adventure) {
     return (

@@ -26,7 +26,7 @@ export default function ActionButton({
 }: ActionButtonProps) {
   // Uniform size for all buttons
   const buttonSize = 'w-16 h-16';
-  const textSize = 'text-xs';
+  const textSize = 'text-sm';
   
   return (
     <div className="flex items-center justify-center">
@@ -58,7 +58,7 @@ export default function ActionButton({
         
         {/* Text at bottom */}
         <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pb-1">
-          <span className={`${textSize} font-bold text-center text-white text-shadow whitespace-nowrap overflow-hidden text-ellipsis w-full px-1`}>
+          <span className={`${textSize} text-center text-white text-shadow whitespace-nowrap overflow-hidden text-ellipsis w-full px-1`}>
             {label}
           </span>
           {cost !== undefined && (
