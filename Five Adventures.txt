@@ -3,22 +3,22 @@ Five Adventures
 supabase db pw: pgn9MGIvb7hQhhyB
 supabase projectID: ebmwfcmwnnbeyjxeadmj
 
+Bugs
+----------
+Stone Golem no rewards
+Bandit Leader no rewards
+Skill buttons have a 2nd button that needs to be clicked. remove it so just clicking the skill button immediately activates the skill
+Level up shows empty stat gains
+Buffs dont tick down per turn or go away - should they persist between adventure combats?
+
+
+
 Todo
 -------------
-- CharacterStats panel max HP does not show the real max HP after item stat evaluation - Look for other stat usages that don't use the 'total' values
-- Level up stat display does not reflect the real earnings. We need to connect those dots.
-- Re-do Shop page with good graphics
-
 - Add images to the adventure tracker
 - Animate the adventure tracker
-- Get world boss implemented
-   - Hitpoints
-   - Day counter
-   - Attack damage calculation and application
-   - Rewards
-- Make characters start with a base set of equipment
 
-- Add authentication and make sure character linking works
+
 - Create the various platform apps and actually hook up full auth stuff
 
 - Improve adventures and decisions
@@ -26,8 +26,7 @@ Todo
   - Decisions should show a stat icon if they are determined by a stat
   - Make sure the decision outcome randomizer selection makes sense
   - Only show 2 options for most adventures, allow for a 3rd 'unlockable' option if character meets the stat floor
-- Add music
-- Add sounds
+
 - Set up the 'global' adventures
 - Make adventures for other areas
   - Create a thorough adventure template with explicit criteria a.k.a the above adventure improvements. Then have the AI create the adventures for each area.

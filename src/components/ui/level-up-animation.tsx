@@ -67,16 +67,19 @@ export default function LevelUpAnimation({
                 <h3 className="text-2xl text-green-400 mb-4">Stats Increased</h3>
                 
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  {statsGained.map((stat, index) => (
-                    <div
-                      key={stat.name}
-                      className="bg-gray-700 p-3 rounded-md animate-fadeIn"
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      <p className="text-white">{stat.name}</p>
-                      <p className="text-green-400 text-xl">{stat.value}</p>
-                    </div>
-                  ))}
+                  {statsGained
+                    .filter(stat => !stat.value.includes('+0')) // Filter out stats with +0 value
+                    .map((stat, index) => (
+                      <div
+                        key={stat.name}
+                        className="bg-gray-700 p-3 rounded-md animate-fadeIn"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <p className="text-white">{stat.name}</p>
+                        <p className="text-green-400 text-xl">{stat.value}</p>
+                      </div>
+                    ))
+                  }
                 </div>
                 
                 <button

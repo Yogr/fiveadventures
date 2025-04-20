@@ -103,7 +103,27 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
     return <NoCharacterView />;
   }
   
-  // Show outcome if available - this takes precedence over the "all adventures completed" check
+  // Show combat if available - this takes precedence over outcome
+  if (showCombat && combatId && character && selectedArea) {
+    console.log('AdventureContainer: Showing combat interface');
+    // Convert area.id from number to string to match the expected type
+    const areaForCombat = {
+      id: String(selectedArea.id),
+      name: selectedArea.name,
+      image: selectedArea.image || 'enchanted-forest' // Default image if none is provided
+    };
+    
+    return (
+      <CombatInterface 
+        combatId={combatId}
+        character={character}
+        area={areaForCombat}
+        onCombatEnd={handleCombatEnd}
+      />
+    );
+  }
+  
+  // Show outcome if available
   if (outcome) {
     console.log('AdventureContainer: Rendering OutcomeView with state.combatResult =', state.combatResult);
     const messageOverride = getMessageOverride();
@@ -122,28 +142,9 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
     );
   }
   
-  // All adventures completed for the day - only show this if there's no outcome to display
+  // All adventures completed for the day
   if (character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
     return <AllAdventuresCompletedView character={character} />;
-  }
-  
-  // Show combat if available
-  if (showCombat && combatId && character && selectedArea) {
-    // Convert area.id from number to string to match the expected type
-    const areaForCombat = {
-      id: String(selectedArea.id),
-      name: selectedArea.name,
-      image: selectedArea.image || 'enchanted-forest' // Default image if none is provided
-    };
-    
-    return (
-      <CombatInterface 
-        combatId={combatId}
-        character={character}
-        area={areaForCombat}
-        onCombatEnd={handleCombatEnd}
-      />
-    );
   }
   
   // Show area selection if no area has been selected
@@ -155,7 +156,6 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
       />
     );
   }
-  
   
   if (!adventure) {
     return (

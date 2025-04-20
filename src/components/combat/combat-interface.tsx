@@ -536,9 +536,14 @@ export default function CombatInterface({ combatId, character: initialCharacter,
                       key={skill.id}
                       icon={`skill/${skill.image_url}`}
                       label={skill.name}
-                      onClick={() => character.current_energy >= skill.energy_cost && setSelectedSkill(skill)}
+                      onClick={() => {
+                        if (character.current_energy >= skill.energy_cost && !actionInProgress) {
+                          setSelectedSkill(skill);
+                          // Immediately use the skill after setting it
+                          setTimeout(() => handleUseSkill(), 0);
+                        }
+                      }}
                       disabled={character.current_energy < skill.energy_cost || actionInProgress}
-                      isSelected={selectedSkill?.id === skill.id}
                       cost={skill.energy_cost}
                       description={`${skill.description} (Energy: ${skill.energy_cost})`}
                       isSkill={true}
@@ -570,18 +575,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
                 </button>
               </div>
               
-              {/* Use skill button if skill is selected */}
-              {selectedSkill && (
-                <div className="mt-2 text-center">
-                  <button 
-                    onClick={handleUseSkill}
-                    disabled={actionInProgress}
-                    className="pixel-button py-1 px-3 text-sm bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50"
-                  >
-                    Use {selectedSkill.name}
-                  </button>
-                </div>
-              )}
+              {/* Use skill button removed - skills now activate immediately on click */}
             </div>
           )}
         </div>

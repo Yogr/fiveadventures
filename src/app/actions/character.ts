@@ -9,6 +9,7 @@ import {
 import type { CharacterClass, ApiResponse, Character, CharacterEquipment } from '@/lib/types';
 import { cookies } from 'next/headers';
 import { COOKIE_NAMES } from '@/lib/constants';
+import { ensureUserRecordExists } from '@/app/actions/auth';
 
 // Helper function to get default weapon based on character class
 function getDefaultWeapon(characterClass: CharacterClass): string {
@@ -197,10 +198,10 @@ export async function getCharacterById(characterId: string): Promise<ApiResponse
     // If character has a linked user_id, check if the current user is authorized to access it
     if (character.user_id) {
       // Get the current authenticated user
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user } } = await supabase.auth.getUser();
       
       // If no authenticated user or user ID doesn't match, deny access
-      if (!session?.user?.id || session.user.id !== character.user_id) {
+      if (!user?.id || user.id !== character.user_id) {
         return {
           success: false,
           error: 'Unauthorized access to character'
@@ -315,6 +316,17 @@ export async function linkCharacterToUser(
   userId: string
 ): Promise<ApiResponse<null>> {
   try {
+    console.log('linking character to user:', { characterId, userId });
+    
+    // Ensure the user record exists in our users table before attempting to link
+    const userCreated = await ensureUserRecordExists(userId);
+    if (!userCreated) {
+      return {
+        success: false,
+        error: 'Failed to ensure user record exists'
+      };
+    }
+    
     const supabase = await createClient();
 
     // Check if character exists and is unlinked
@@ -397,34 +409,75 @@ export async function getCharacterByUserId(userId: string): Promise<ApiResponse<
 // Get character from cookie or auth session
 export async function getCharacterForUser(): Promise<ApiResponse<Character>> {
   try {
+    console.log('getCharacterForUser: Checking for character in cookie or auth session');
     // First check if user is authenticated
     const supabaseClient = await createClient();
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const userId = user?.id;
     
-    if (session?.user?.id) {
+    
+    console.log('getCharacterForUser: User ID:', userId);
+    if (userId) {
+      // User is authenticated
       // Try to get character by user ID
-      const userCharacterResponse = await getCharacterByUserId(session.user.id);
+      const userCharacterResponse = await getCharacterByUserId(userId);
       
+      console.log('getCharacterForUser: User character response:', userCharacterResponse);
       if (userCharacterResponse.success) {
+        
         // User has a character, return it
         return userCharacterResponse;
       }
-    }
-    
-    // If we get here, either:
-    // 1. User is not authenticated, or
-    // 2. User is authenticated but doesn't have a character
 
-    // Fetch character from cookies
-    const cookieStore = await cookies();
-    const characterId = cookieStore.get(COOKIE_NAMES.CHARACTER_ID)?.value;
-    
-    // Try to get character from the cookie
-    if (characterId) {
-      return getCharacterById(characterId);
+      // Fetch character from cookies
+      const cookieStore = await cookies();
+      const characterId = cookieStore.get(COOKIE_NAMES.CHARACTER_ID)?.value;
+
+      console.log('getCharacterForUser: No user character, is signed in, and has Cookie character ID:', characterId);
+      
+      // If authenticated user doesn't have a character but has a cookie,
+      // check if the cookie character needs to be linked
+      if (characterId) {
+        const characterResponse = await getCharacterById(characterId);
+        console.log('getCharacterForUser: Cookie character response:', characterResponse);
+        if (characterResponse.success && characterResponse.data) {
+          const character = characterResponse.data;
+          
+      console.log('status for character:', character.status);
+      // If character is unlinked, ensure user record exists and link it to the user
+      if (character.status === 'unlinked') {
+        console.log(`Linking unlinked character ${characterId} to user ${userId}`);
+        
+        // Ensure user record exists first with auth provider
+        const authProvider = user?.app_metadata?.provider || 'email';
+        await ensureUserRecordExists(userId, user?.email || '', authProvider);
+        
+        // Link the character to the user
+        const linkResponse = await linkCharacterToUser(characterId, userId);
+        
+        if (linkResponse.success) {
+          // Get the updated character
+          return getCharacterById(characterId);
+        } else {
+          console.error('Failed to link character:', linkResponse.error);
+        }
+      }
+          
+          // Return the character even if it couldn't be linked
+          return characterResponse;
+        }
+      }
+    } else {
+      // Fetch character from cookies
+      const cookieStore = await cookies();
+      const characterId = cookieStore.get(COOKIE_NAMES.CHARACTER_ID)?.value;
+      if (characterId) {
+        // User is not authenticated but has a cookie character
+        return getCharacterById(characterId);
+      }
     }
     
-    // No character ID provided
+    // No character found
     return {
       success: false,
       error: 'No character found'
