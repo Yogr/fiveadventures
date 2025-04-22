@@ -1,25 +1,22 @@
 import { Suspense } from 'react';
 import Image from 'next/image';
-import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import CharacterCreationForm from './character/create/character-creation-form';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import WelcomePopup from '@/components/welcome/welcome-popup';
-import { COOKIE_NAMES, ROUTES } from '@/lib/constants';
+import ContinuePlayingCard from '@/components/character/continue-playing-card';
+import NewCharacterConfirmation from '@/components/character/new-character-confirmation';
+import { COOKIE_NAMES } from '@/lib/constants';
 import { getUser } from './actions/auth';
+import { getCharacterForUser } from './actions/character';
 
 export default async function Home() {
   // Check if user is signed in
   const user = await getUser();
   
-  // Check if the character cookie exists (must await cookies)
-  const cookieStore = await cookies();
-  const characterIdCookie = cookieStore.get(COOKIE_NAMES.CHARACTER_ID);
-  
-  // If user is signed in or has a character cookie, redirect to adventure page
-  if (user || characterIdCookie?.value) {
-    redirect(ROUTES.ADVENTURE);
-  }
+  // Check if character exists
+  const characterResponse = await getCharacterForUser();
+  const hasCharacter = characterResponse.success && characterResponse.data;
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -34,10 +31,22 @@ export default async function Home() {
           />
         </div>
         
-        <div className="bg-amber-950 bg-opacity-90 p-3 sm:p-4 rounded-lg">
-          <Suspense fallback={<LoadingSpinner />}>
-            <CharacterCreationForm />
-          </Suspense>
+        <div className="space-y-6">
+          {hasCharacter ? (
+            <div className="space-y-4">
+              {/* Continue playing with existing character */}
+              <ContinuePlayingCard character={characterResponse.data!} />
+              
+              {/* Option to create a new character */}
+              <NewCharacterConfirmation />
+            </div>
+          ) : (
+            <div className="bg-amber-950 bg-opacity-90 p-3 sm:p-4 rounded-lg">
+              <Suspense fallback={<LoadingSpinner />}>
+                <CharacterCreationForm />
+              </Suspense>
+            </div>
+          )}
         </div>
       </div>
       

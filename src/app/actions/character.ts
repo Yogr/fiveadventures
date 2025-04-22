@@ -407,6 +407,181 @@ export async function getCharacterByUserId(userId: string): Promise<ApiResponse<
 }
 
 
+// Delete existing character for the current user
+export async function deleteExistingCharacter(): Promise<ApiResponse<null>> {
+  try {
+    // First get the character
+    const characterResponse = await getCharacterForUser();
+    
+    if (!characterResponse.success || !characterResponse.data) {
+      return {
+        success: false,
+        error: 'No character found to delete'
+      };
+    }
+    
+    const characterId = characterResponse.data.id;
+    console.log(`Deleting character with ID: ${characterId}`);
+    
+    const supabase = await createClient();
+    
+    // Ensure the stored procedures exist first
+    await ensureDeleteProceduresExist();
+    
+    // Use the complete character delete procedure
+    const { data: success, error } = await supabase.rpc('complete_character_delete', {
+      character_id_param: characterId
+    });
+    
+    if (error) {
+      console.error('Error deleting character with stored procedure:', error);
+      
+      // Try the manual deletion as a fallback
+      console.log('Attempting manual deletion as fallback...');
+      
+      // Define a helper function to safely delete from a table
+      const safeDelete = async (tableName: string, field: string = 'character_id') => {
+        try {
+          const { error } = await supabase
+            .from(tableName)
+            .delete()
+            .eq(field, characterId);
+          
+          if (error) {
+            console.error(`Error deleting from ${tableName}:`, error);
+            return false;
+          }
+          console.log(`Successfully deleted from ${tableName}`);
+          return true;
+        } catch (err) {
+          console.error(`Exception deleting from ${tableName}:`, err);
+          return false;
+        }
+      };
+
+      try {
+        // First we need to get all combat IDs for this character
+        console.log('Getting combat IDs for the character...');
+        const { data: combatIds, error: combatError } = await supabase
+          .from('combat')
+          .select('id')
+          .eq('character_id', characterId);
+        
+        if (combatError) {
+          console.error('Error getting combat IDs:', combatError);
+        } else if (combatIds && combatIds.length > 0) {
+          // Delete combat_turns first - these reference combat.id, not character.id
+          console.log(`Found ${combatIds.length} combat records, deleting related combat_turns...`);
+          
+          for (const combat of combatIds) {
+            try {
+              const { error: turnError } = await supabase
+                .from('combat_turns')
+                .delete()
+                .eq('combat_id', combat.id);
+              
+              if (turnError) {
+                console.error(`Error deleting combat_turns for combat ${combat.id}:`, turnError);
+              } else {
+                console.log(`Successfully deleted combat_turns for combat ${combat.id}`);
+              }
+            } catch (err) {
+              console.error(`Exception deleting combat_turns for combat ${combat.id}:`, err);
+            }
+          }
+        } else {
+          console.log('No combat records found for this character');
+        }
+        
+        // Delete in order, respecting foreign key constraints
+        // Always delete child records before parent records
+        
+        // 1. Delete from tables with no dependencies
+        await safeDelete('character_inventory');
+        await safeDelete('character_skills');
+        await safeDelete('boss_rewards');
+        await safeDelete('character_selected_area');
+        
+        // 2. Delete from tables that might have dependencies (now that combat_turns are gone)
+        await safeDelete('combat');
+        await safeDelete('character_boss_progress');
+        
+        // 3. Delete from tables that depend on level 2
+        await safeDelete('character_adventures');
+        await safeDelete('character_equipment');
+      } catch (err) {
+        console.error('Error during manual deletion process:', err);
+      }
+      
+      // Finally, delete the character record
+      const { error: finalError } = await supabase
+        .from('characters')
+        .delete()
+        .eq('id', characterId);
+      
+      if (finalError) {
+        console.error('Error deleting character through manual process:', finalError);
+        return {
+          success: false,
+          error: 'Failed to delete character: ' + finalError.message
+        };
+      }
+    }
+    
+    // Clear character ID cookie
+    const cookieStore = await cookies();
+    cookieStore.delete(COOKIE_NAMES.CHARACTER_ID);
+    
+    console.log('Character successfully deleted');
+    return {
+      success: true,
+      data: null
+    };
+  } catch (err) {
+    console.error('Unexpected error deleting character:', err);
+    return {
+      success: false,
+      error: 'An unexpected error occurred: ' + (err instanceof Error ? err.message : String(err))
+    };
+  }
+}
+
+// Create a stored procedure to handle the force delete if it doesn't exist
+export async function ensureDeleteProceduresExist(): Promise<ApiResponse<null>> {
+  try {
+    const supabase = await createClient();
+    
+    // Check if the procedure already exists
+    const { error: checkError } = await supabase.rpc('procedure_exists', {
+      procedure_name: 'force_delete_character_combat'
+    });
+    
+    if (checkError) {
+      // Procedure doesn't exist, create it
+      const { error } = await supabase.rpc('create_force_delete_procedures');
+      
+      if (error) {
+        console.error('Error creating delete procedures:', error);
+        return {
+          success: false,
+          error: 'Failed to create delete procedures'
+        };
+      }
+    }
+    
+    return {
+      success: true,
+      data: null
+    };
+  } catch (err) {
+    console.error('Error ensuring delete procedures exist:', err);
+    return {
+      success: false,
+      error: 'Failed to ensure delete procedures exist'
+    };
+  }
+}
+
 // Get character from cookie or auth session
 export async function getCharacterForUser(): Promise<ApiResponse<Character>> {
   try {
