@@ -11,6 +11,7 @@ import AreaSelectionView from './views/AreaSelectionView';
 import NoAdventureView from './views/NoAdventureView';
 import AdventureView from './views/AdventureView';
 import OutcomeView from './views/OutcomeView';
+import PreCombatView from './views/PreCombatView';
 import CombatInterface from '@/components/combat/combat-interface';
 import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 
@@ -33,6 +34,7 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
     adventure,
     outcome,
     combatId,
+    showPreCombat,
     showCombat,
     showRewards,
     oldExperience,
@@ -103,6 +105,17 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
     return <NoCharacterView />;
   }
   
+  // Show pre-combat view if available
+  if (showPreCombat && outcome && combatId && character && selectedArea && !showCombat) {
+    console.log('AdventureContainer: Showing pre-combat view');
+    return (
+      <PreCombatView
+        outcome={outcome}
+        character={character}
+      />
+    );
+  }
+
   // Show combat if available - this takes precedence over outcome
   if (showCombat && combatId && character && selectedArea) {
     console.log('AdventureContainer: Showing combat interface');

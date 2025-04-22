@@ -26,6 +26,8 @@ import type {
 import { getCharacterById } from './character';
 import { createClient } from '@/lib/supabase/server';
 
+// No need for getOutcomeById - we already have the outcome from the decision
+
 // Get a random adventure for a character
 export async function getAdventure(
   character: Character,
@@ -46,7 +48,9 @@ export async function getAdventure(
     const needsNonViolent = character.current_hitpoints <= 0;
     
     // Determine if this should be an elite encounter (5th adventure or greater)
+    // Since daily_adventure_count is 0-indexed, the 5th adventure is when count >= 4
     const isEliteEncounter = character.daily_adventure_count >= 4;
+    console.log(`getAdventure: Character adventure count: ${character.daily_adventure_count}, isEliteEncounter: ${isEliteEncounter}`);
 
     const currentDay = await getCurrentGameDay();
     
@@ -249,32 +253,28 @@ export async function completeAdventure({
     
     const outcome = selectedOutcome;
     
-    // Check if this outcome has combat
-    let combat = null;
-    if (outcome.has_combat && outcome.monster_ids && outcome.monster_ids.length > 0) {
-      // Determine if this should be an elite encounter (5th adventure)
-      const isEliteEncounter = character.daily_adventure_count >= 4;
-      
-      // Select a random monster from the monster_ids array
-      const randomIndex = Math.floor(Math.random() * outcome.monster_ids.length);
-      const selectedMonsterId = outcome.monster_ids[randomIndex];
-      
-      if (selectedMonsterId === undefined) {
-        console.error('No monster ID found at index', randomIndex);
-        return {
-          success: false,
-          error: 'Failed to select monster'
-        };
-      }
-      
-      // If this is an elite encounter, use the elite version of the monster
-      // Elite monster IDs are 100 + the regular monster ID
-      // For example, if the regular monster ID is 1, the elite version is 101
-      const monsterId = isEliteEncounter 
-        ? (typeof selectedMonsterId === 'string' 
-            ? parseInt(selectedMonsterId, 10) + 100 
-            : selectedMonsterId + 100)
-        : selectedMonsterId;
+      // Check if this outcome has combat
+      let combat = null;
+      if (outcome.has_combat && outcome.monster_ids && outcome.monster_ids.length > 0) {
+        // Determine if this should be an elite encounter (5th adventure or greater)
+        // Using >= 4 because any adventure after the 4th should be elite
+        const isEliteEncounter = character.daily_adventure_count >= 4;
+        console.log(`Character adventure count: ${character.daily_adventure_count}, isEliteEncounter: ${isEliteEncounter}`);
+        
+        // Just use the monster IDs directly as specified in the outcome
+        // No manipulation of IDs whatsoever
+        const randomIndex = Math.floor(Math.random() * outcome.monster_ids.length);
+        const monsterId = outcome.monster_ids[randomIndex];
+        
+        if (monsterId === undefined) {
+          console.error('No monster ID found at index', randomIndex);
+          return {
+            success: false,
+            error: 'Failed to select monster'
+          };
+        }
+        
+        console.log(`Selected monster ID ${monsterId} from monster_ids array. Is elite encounter: ${isEliteEncounter}`);
       
       // Create a new combat record
       const { data: newCombat, error: combatError } = await supabase

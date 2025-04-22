@@ -23,6 +23,7 @@ interface AdventureState {
   selectedDecision: AdventureDecision | null;
   outcome: AdventureOutcome | null;
   combatId: string | null;
+  showPreCombat: boolean; // New flag to show pre-combat screen
   showCombat: boolean;
   showRewards: boolean;
   oldExperience: number;
@@ -43,6 +44,7 @@ type AdventureAction =
   | { type: 'SET_SELECTED_DECISION'; payload: AdventureDecision | null }
   | { type: 'SET_OUTCOME'; payload: AdventureOutcome | null }
   | { type: 'SET_COMBAT_ID'; payload: string | null }
+  | { type: 'SET_SHOW_PRE_COMBAT'; payload: boolean } // New action for pre-combat screen
   | { type: 'SET_SHOW_COMBAT'; payload: boolean }
   | { type: 'SET_SHOW_REWARDS'; payload: boolean }
   | { type: 'SET_OLD_EXPERIENCE'; payload: number }
@@ -79,6 +81,7 @@ const initialState: AdventureState = {
   selectedDecision: null,
   outcome: null,
   combatId: null,
+  showPreCombat: false, // Initialize pre-combat flag to false
   showCombat: false,
   showRewards: false,
   oldExperience: 0,
@@ -109,6 +112,8 @@ function adventureReducer(state: AdventureState, action: AdventureAction): Adven
       return { ...state, outcome: action.payload };
     case 'SET_COMBAT_ID':
       return { ...state, combatId: action.payload };
+    case 'SET_SHOW_PRE_COMBAT':
+      return { ...state, showPreCombat: action.payload };
     case 'SET_SHOW_COMBAT':
       return { ...state, showCombat: action.payload };
     case 'SET_SHOW_REWARDS':
@@ -129,6 +134,7 @@ function adventureReducer(state: AdventureState, action: AdventureAction): Adven
         ...state,
         selectedDecision: null,
         outcome: null,
+        showPreCombat: false,
         showRewards: false,
         showLevelUp: false,
         combatId: null,
@@ -293,7 +299,35 @@ export function AdventureProvider({
           }
           
           dispatch({ type: 'SET_COMBAT_ID', payload: activeCombatResponse.data.id });
-          dispatch({ type: 'SET_SHOW_COMBAT', payload: true });
+          
+          // We already have the outcome available from getAdventureState
+          // Check if we're resuming a game with an existing combat
+          const adventureStateResponse = await import('@/app/actions/adventure-state').then(
+            ({ getAdventureState }) => getAdventureState(characterId)
+          );
+          
+          if (adventureStateResponse.success && 
+              adventureStateResponse.data && 
+              adventureStateResponse.data.outcome_id) {
+            // If we have an outcome_id, try to get the outcome from the state
+            console.log('Found outcome ID in adventure state, checking if outcome already exists in state');
+            
+            // If we have an outcome in the state, show pre-combat view
+            // Otherwise proceed directly to combat
+            if (state.outcome) {
+              console.log('Using existing outcome from state:', state.outcome.description);
+              // Show pre-combat view first, then combat
+              dispatch({ type: 'SET_SHOW_COMBAT', payload: false });
+              dispatch({ type: 'SET_SHOW_PRE_COMBAT', payload: true });
+            } else {
+              console.log('No outcome in state, proceeding directly to combat');
+              dispatch({ type: 'SET_SHOW_COMBAT', payload: true });
+            }
+          } else {
+            console.log('No outcome ID found in adventure state, proceeding directly to combat');
+            dispatch({ type: 'SET_SHOW_COMBAT', payload: true });
+          }
+          
           dispatch({ type: 'SET_LOADING', payload: false });
           return;
         }
@@ -303,7 +337,9 @@ export function AdventureProvider({
       }
       
       // If character is in 'outcome' state, don't load a new adventure
-      if (currentState === 'outcome' && hasOutcome) {
+      // UNLESS we're explicitly requesting a new adventure (skip combat check is true)
+      if (currentState === 'outcome' && hasOutcome && !skipCombatCheck) {
+        console.log('AdventureContext: Character in outcome state with outcome, skipping adventure load');
         dispatch({ type: 'SET_LOADING', payload: false });
         return;
       }
@@ -415,11 +451,14 @@ export function AdventureProvider({
       // Save old experience for level up check
       dispatch({ type: 'SET_OLD_EXPERIENCE', payload: currentExperience });
       
+      // First, set the outcome regardless of where we go next
+      dispatch({ type: 'SET_OUTCOME', payload: result.data.outcome });
+      
       // Check if outcome has combat
       if (result.data.outcome.has_combat && result.data.combat) {
-        // Update adventure state to combat
+        // Update adventure state to combat but show pre-combat screen first
         await updateAdventureState(characterId, {
-          current_state: 'combat',
+          current_state: 'combat', // Still use combat state in the database
           current_adventure_id: adventureId,
           decision_id: decisionId,
           outcome_id: result.data.outcome.id,
@@ -428,8 +467,14 @@ export function AdventureProvider({
           adventure_number: state.character.daily_adventure_count
         });
         
+        // First set combat ID
         dispatch({ type: 'SET_COMBAT_ID', payload: result.data.combat.id });
-        dispatch({ type: 'SET_SHOW_COMBAT', payload: true });
+        
+        // Then make sure combat is OFF and pre-combat is ON (order matters!)
+        dispatch({ type: 'SET_SHOW_COMBAT', payload: false });
+        dispatch({ type: 'SET_SHOW_PRE_COMBAT', payload: true });
+        
+        console.log('Setting up pre-combat screen with outcome:', result.data.outcome.description);
       } else {
         // Update adventure state to outcome
         await updateAdventureState(characterId, {
@@ -442,9 +487,6 @@ export function AdventureProvider({
           adventure_number: state.character.daily_adventure_count
         });
       }
-      
-      // Set outcome
-      dispatch({ type: 'SET_OUTCOME', payload: result.data.outcome });
       
       // Set reward item if available
       if (result.data.rewardItem) {
@@ -597,16 +639,11 @@ export function AdventureProvider({
       const characterId = state.character.id;
       
       dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'RESET_ADVENTURE_STATE' });
       
-      // Set flag to skip combat check on next loadAdventureData call
-      dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: true });
+      console.log('AdventureContext: Starting transition to next adventure');
       
-      // Clear combat state
-      dispatch({ type: 'SET_COMBAT_ID', payload: null });
-      
-      // Update adventure state to adventure
-      await updateAdventureState(characterId, {
+      // First, update adventure state in the database
+      const stateUpdateResult = await updateAdventureState(characterId, {
         current_state: 'adventure',
         current_adventure_id: null,
         decision_id: null,
@@ -615,6 +652,25 @@ export function AdventureProvider({
         day: state.character.last_played_day,
         adventure_number: state.character.daily_adventure_count
       });
+      
+      // Verify database update was successful
+      if (!stateUpdateResult.success) {
+        console.error('AdventureContext: Failed to update adventure state in database:', stateUpdateResult.error);
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to update adventure state: ' + stateUpdateResult.error });
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return;
+      }
+      
+      console.log('AdventureContext: Successfully updated adventure state in database to "adventure"');
+      
+      // Only reset client state after successful database update
+      dispatch({ type: 'RESET_ADVENTURE_STATE' });
+      
+      // Set flag to skip combat check on next loadAdventureData call
+      dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: true });
+      
+      // Clear combat state
+      dispatch({ type: 'SET_COMBAT_ID', payload: null });
       
       // Get character data directly and update state
       const { getCharacterById } = await import('@/app/actions/character');
@@ -631,14 +687,28 @@ export function AdventureProvider({
         // Update character in state directly
         dispatch({ type: 'SET_CHARACTER', payload: response.data });
       } else {
+        console.error('AdventureContext: Failed to fetch character data:', response.error);
         // Fall back to loadCharacterData if getCharacterById fails
         await loadCharacterData(characterId);
+      }
+      
+      // Verify current adventure state again before loading new adventure
+      const currentStateResponse = await import('@/app/actions/adventure-state').then(
+        ({ getAdventureState }) => getAdventureState(characterId)
+      );
+      
+      if (!currentStateResponse.success || !currentStateResponse.data) {
+        console.error('AdventureContext: Failed to verify current adventure state:', currentStateResponse.error);
+      } else if (currentStateResponse.data.current_state !== 'adventure') {
+        console.warn('AdventureContext: Current state is not "adventure" as expected:', currentStateResponse.data.current_state);
+      } else {
+        console.log('AdventureContext: Verified current state is "adventure", proceeding to load new adventure');
       }
       
       // Load adventure data
       await loadAdventureData();
       
-      console.log('Continuing to next adventure');
+      console.log('AdventureContext: Successfully transitioned to next adventure');
     } catch (error) {
       console.error('Error loading next adventure:', error);
       dispatch({ type: 'SET_ERROR', payload: 'An unexpected error occurred' });
