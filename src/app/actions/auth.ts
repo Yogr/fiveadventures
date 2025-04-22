@@ -43,8 +43,7 @@ async function ensureUserExists(userId: string, email: string, authProvider: str
     const { error: updateError } = await supabase
       .from('users')
       .update({
-        last_login: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        last_login: new Date().toISOString()
       })
       .eq('id', userId);
       
@@ -110,6 +109,20 @@ export async function signOut() {
   return { success: true }
 }
 
+export async function getUser() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  // If user exists, ensure user exists in our users table
+  if (user) {
+    const authProvider = user.app_metadata?.provider || 'email';
+    await ensureUserExists(user.id, user.email || '', authProvider);
+  }
+  
+  return user
+}
+
+// Deprecated: Use getUser() instead
 export async function getSession() {
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()

@@ -1,8 +1,8 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
 import { AudioProviders } from '@/components/sound/AudioProviders';
 import { getUserSettings } from '@/app/actions/user-settings';
+import { getUser } from '@/app/actions/auth';
 
 export const metadata: Metadata = {
   title: 'Five Adventures',
@@ -14,8 +14,8 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  // Get authenticated user
+  const user = await getUser();
   
   // Default settings if user is not logged in
   let musicEnabled = false;
@@ -23,8 +23,8 @@ export default async function RootLayout({
   let userId: string | undefined = undefined;
   
   // Get user settings if logged in
-  if (session?.user) {
-    userId = session.user.id;
+  if (user) {
+    userId = user.id;
     const settingsResponse = await getUserSettings(userId);
     if (settingsResponse.success) {
       musicEnabled = settingsResponse.data?.musicEnabled || false;

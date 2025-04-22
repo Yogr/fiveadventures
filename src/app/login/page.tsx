@@ -1,7 +1,11 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import AuthForm from '@/components/auth/auth-form'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getUser } from '@/app/actions/auth'
+import { ROUTES } from '@/lib/constants'
+import { cookies } from 'next/headers'
+import { COOKIE_NAMES } from '@/lib/constants'
 
 export const metadata: Metadata = {
   title: 'Login - Five Adventures',
@@ -10,8 +14,16 @@ export const metadata: Metadata = {
 
 export default async function LoginPage() {
   // Check if user is already logged in
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const user = await getUser();
+  
+  // Check if the character cookie exists
+  const cookieStore = await cookies();
+  const characterIdCookie = cookieStore.get(COOKIE_NAMES.CHARACTER_ID);
+  
+  // If user is logged in and has a character, redirect to adventure page
+  if (user && characterIdCookie?.value) {
+    redirect(ROUTES.ADVENTURE);
+  }
   
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-900 text-white">
@@ -32,10 +44,10 @@ export default async function LoginPage() {
           </Link>
         </div>
 
-        {session && (
+        {user && (
           <div className="mt-6 p-4 bg-green-900/30 border border-green-600 rounded-md">
             <p className="text-center text-sm">
-              You are already signed in as <strong>{session.user.email}</strong>
+              You are already signed in as <strong>{user.email}</strong>
             </p>
           </div>
         )}

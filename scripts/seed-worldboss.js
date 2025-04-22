@@ -82,12 +82,12 @@ async function seedWorldBossData() {
         for (const item of rewardTable.items) {
           const { error: itemError } = await supabase
             .from('reward_items')
-            .upsert({
+            .insert({
               reward_table_id: rewardTable.id,
               item_id: item.item_id,
               chance: item.chance,
               created_at: new Date().toISOString()
-            }, { onConflict: ['reward_table_id', 'item_id'] });
+            });
 
           if (itemError) {
             console.error(`Error inserting reward item ${item.item_id} for table ${rewardTable.name}:`, itemError);

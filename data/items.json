@@ -21,11 +21,7 @@
     "base_damage": 4,
     "effects": {
       "stat_boosts": {
-        "agility": 2
-      },
-      "critical_hit": {
-        "chance": 10,
-        "multiplier": 1.5
+        "agility": 1
       }
     },
     "value": 12,
@@ -39,7 +35,7 @@
     "base_damage": 5,
     "effects": {
       "stat_boosts": {
-        "agility": 2
+        "agility": 1
       }
     },
     "value": 15,
@@ -53,7 +49,7 @@
     "base_damage": 8,
     "effects": {
       "stat_boosts": {
-        "strength": 2
+        "strength": 1
       }
     },
     "value": 20,
@@ -65,15 +61,7 @@
     "rarity": "Common",
     "weapon_type": "Blunt",
     "base_damage": 7,
-    "effects": {
-      "stat_boosts": {
-        "strength": 1
-      },
-      "critical_hit": {
-        "chance": 5,
-        "multiplier": 1.5
-      }
-    },
+    "effects": null,
     "value": 18,
     "image_url": "mace"
   },
@@ -85,7 +73,7 @@
     "base_damage": 6,
     "effects": {
       "stat_boosts": {
-        "agility": 2
+        "agility": 1
       }
     },
     "value": 15,
@@ -99,7 +87,7 @@
     "base_damage": 5,
     "effects": {
       "stat_boosts": {
-        "intelligence": 3
+        "intelligence": 1
       }
     },
     "value": 25,
@@ -240,7 +228,7 @@
     "type": "Weapon",
     "rarity": "Rare",
     "weapon_type": "Slashing",
-    "base_damage": 12,
+    "base_damage": 14,
     "effects": {
       "elemental": {
         "type": "Fire",
@@ -258,7 +246,7 @@
     "type": "Weapon",
     "rarity": "Rare",
     "weapon_type": "Magic",
-    "base_damage": 10,
+    "base_damage": 13,
     "effects": {
       "elemental": {
         "type": "Ice",
@@ -276,7 +264,7 @@
     "type": "Weapon",
     "rarity": "Rare",
     "weapon_type": "Piercing",
-    "base_damage": 9,
+    "base_damage": 12,
     "effects": {
       "critical_hit": {
         "chance": 15,
@@ -323,11 +311,20 @@
     "type": "Weapon",
     "rarity": "Epic",
     "weapon_type": "Slashing",
-    "base_damage": 18,
+    "base_damage": 22,
     "effects": {
       "boss_damage_multiplier": 1.5,
+      "elemental": {
+        "type": "Fire",
+        "damage": 8
+      },
       "stat_boosts": {
-        "strength": 5
+        "strength": 6,
+        "hitpoints": 15
+      },
+      "special": {
+        "type": "DragonHunter",
+        "description": "Deals 50% more damage to dragon-type enemies"
       }
     },
     "value": 300,
@@ -338,15 +335,19 @@
     "type": "Weapon",
     "rarity": "Epic",
     "weapon_type": "Magic",
-    "base_damage": 15,
+    "base_damage": 20,
     "effects": {
       "elemental": {
         "type": "Lightning",
         "damage": 10
       },
       "stat_boosts": {
-        "intelligence": 6,
-        "energy": 20
+        "intelligence": 8,
+        "energy": 25
+      },
+      "special": {
+        "type": "ManaEfficiency",
+        "description": "Reduces energy cost of spells by 15%"
       }
     },
     "value": 320,
@@ -373,7 +374,7 @@
     "type": "Weapon",
     "rarity": "Legendary",
     "weapon_type": "Slashing",
-    "base_damage": 25,
+    "base_damage": 30,
     "effects": {
       "elemental": {
         "type": "Light",
@@ -381,9 +382,14 @@
       },
       "boss_damage_multiplier": 2.0,
       "stat_boosts": {
-        "strength": 8,
-        "agility": 5,
-        "luck": 5
+        "strength": 10,
+        "agility": 6,
+        "luck": 6,
+        "hitpoints": 30
+      },
+      "special": {
+        "type": "HeroicStrike",
+        "description": "10% chance to deal triple damage on attack"
       }
     },
     "value": 1000,
@@ -394,19 +400,19 @@
     "type": "Weapon",
     "rarity": "Legendary",
     "weapon_type": "Magic",
-    "base_damage": 22,
+    "base_damage": 28,
     "effects": {
       "elemental": {
         "type": "Arcane",
-        "damage": 20
+        "damage": 18
       },
       "stat_boosts": {
-        "intelligence": 10,
-        "energy": 50
+        "intelligence": 12,
+        "energy": 60
       },
       "special": {
-        "type": "EnergyRegen",
-        "description": "Regenerates 5 energy after each adventure"
+        "type": "SpellMastery",
+        "description": "Spells have a 15% chance to cost no energy and 8% chance to cast twice"
       }
     },
     "value": 1200,

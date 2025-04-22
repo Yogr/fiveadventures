@@ -1,0 +1,641 @@
+[
+  {
+    "title": "The Forest Path",
+    "description": "You encounter a mysterious path leading deep into the forest. Strange sounds echo from within.",
+    "min_experience": 20,
+    "min_gold": 10,
+    "is_violent": true,
+    "image_url": "forest_path",
+    "area_id": 1,
+    "decisions": [
+      {
+        "description": "Follow the well-traveled main path",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 90,
+        "outcomes": [
+          {
+            "description": "You follow the safer path and arrive at a small clearing with a trader's cache. Inside you find some coins and supplies.",
+            "experience_bonus": 20,
+            "gold_bonus": 15,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "energy_change": 0,
+            "is_success": true
+          },
+          {
+            "description": "You follow the path but stumble upon a hunting wolf! It leaps to attack!",
+            "experience_bonus": 15,
+            "gold_bonus": 5,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [1],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Investigate the strange sounds",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "You bravely follow the eerie sounds and encounter a pack of forest wolves! Prepare for combat!",
+            "experience_bonus": 25,
+            "gold_bonus": 20,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [1, 101],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Track and identify the source of the sounds from a distance",
+        "type": "premium",
+        "requirements": {
+          "wisdom": 10
+        },
+        "mastery": {
+          "stat": "wisdom",
+          "value": 18
+        },
+        "icon": "wisdom",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "Your tracking skills allow you to identify the sounds as a pack of wolves. You set a clever trap and catch them off guard! The wolves are defeated and you discover their hidden den with valuables.",
+            "experience_bonus": 40,
+            "gold_bonus": 35,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "is_success": true
+          },
+          {
+            "description": "Despite your tracking skills, the wolves detect your presence and surround you! Prepare for combat!",
+            "experience_bonus": 20,
+            "gold_bonus": 10,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [1, 1, 101],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Village in Need",
+    "description": "You arrive at a small village at the edge of the forest that's being terrorized by bandits. The villagers plead for your help.",
+    "min_experience": 30,
+    "min_gold": 20,
+    "is_violent": true,
+    "image_url": "village_in_need",
+    "area_id": 1,
+    "decisions": [
+      {
+        "description": "Help the villagers fortify their defenses",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 95,
+        "outcomes": [
+          {
+            "description": "You help the villagers build barricades and set up traps. When the bandits return, they're driven off without a fight. The grateful villagers reward you for your assistance.",
+            "experience_bonus": 30,
+            "gold_bonus": 25,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "is_success": true
+          },
+          {
+            "description": "While helping to build defenses, a bandit scout spots you and attacks!",
+            "experience_bonus": 15,
+            "gold_bonus": 10,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [4],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Confront the bandits directly in their hideout",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "You find the bandits' hideout and challenge them directly! Prepare for combat!",
+            "experience_bonus": 50,
+            "gold_bonus": 40,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [4, 104],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Set a clever trap for the bandits",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 14
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 22
+        },
+        "icon": "intelligence",
+        "base_success_rate": 80,
+        "outcomes": [
+          {
+            "description": "Your trap works perfectly! You capture the bandits without a fight and the villagers reward you generously for your cunning solution.",
+            "experience_bonus": 60,
+            "gold_bonus": 50,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "is_success": true
+          },
+          {
+            "description": "The bandits detect part of your trap and become suspicious. They still fall for it, but their leader escapes and confronts you!",
+            "experience_bonus": 30,
+            "gold_bonus": 25,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [104],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Enchanted Grove",
+    "description": "You discover a beautiful grove filled with glowing plants and magical creatures. The air tingles with arcane energy.",
+    "min_experience": 15,
+    "min_gold": 5,
+    "is_violent": false,
+    "image_url": "enchanted_grove",
+    "area_id": 1,
+    "decisions": [
+      {
+        "description": "Gather magical herbs and plants",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 90,
+        "outcomes": [
+          {
+            "description": "You collect several rare magical herbs that can be sold for a good price. The peaceful activity also rejuvenates your spirit.",
+            "experience_bonus": 15,
+            "gold_bonus": 25,
+            "hitpoints_change": 5,
+            "energy_change": 10,
+            "is_success": true
+          },
+          {
+            "description": "While gathering herbs, you accidentally disturb a territorial forest sprite! It lashes out with nature magic!",
+            "experience_bonus": 10,
+            "gold_bonus": 5,
+            "hitpoints_change": -5,
+            "has_combat": true,
+            "monster_ids": [5],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Meditate in the center of the grove",
+        "type": "skill",
+        "requirements": null,
+        "icon": "wisdom",
+        "stat_check": "wisdom",
+        "base_success_rate": 60,
+        "outcomes": [
+          {
+            "description": "As you meditate, you feel the magical energy of the grove flowing through you, healing your wounds and clearing your mind.",
+            "experience_bonus": 25,
+            "gold_bonus": 0,
+            "hitpoints_change": 30,
+            "energy_change": 30,
+            "is_success": true
+          },
+          {
+            "description": "Your meditation falters as you struggle to connect with the grove's energy. You gain minimal benefit from the experience.",
+            "experience_bonus": 5,
+            "gold_bonus": 0,
+            "hitpoints_change": 5,
+            "energy_change": 5,
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Attempt to communicate with the forest sprites",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 12,
+          "charisma": 10
+        },
+        "mastery": {
+          "stat": "charisma",
+          "value": 18
+        },
+        "icon": "charisma",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "The forest sprites respond to your attempts at communication! They share ancient knowledge with you and guide you to a hidden spring with healing properties.",
+            "experience_bonus": 40,
+            "gold_bonus": 35,
+            "hitpoints_change": 50,
+            "energy_change": 30,
+            "is_success": true
+          },
+          {
+            "description": "The sprites misinterpret your intentions and become agitated. They bombard you with tiny spells before fleeing into the forest.",
+            "experience_bonus": 10,
+            "gold_bonus": 0,
+            "hitpoints_change": -10,
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Spider Nest",
+    "description": "While traveling through the forest, you discover a section thick with massive spider webs.",
+    "min_experience": 35,
+    "min_gold": 20,
+    "is_violent": true,
+    "image_url": "mysterious_cave",
+    "area_id": 1,
+    "decisions": [
+      {
+        "description": "Look for a path around the spider territory",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 85,
+        "outcomes": [
+          {
+            "description": "You find a way to skirt the edge of the spiders' territory. Along the way, you find abandoned supplies from other travelers who were too afraid to continue.",
+            "experience_bonus": 25,
+            "gold_bonus": 20,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "is_success": true
+          },
+          {
+            "description": "While attempting to find a way around, you accidentally stumble into a spider's web! A giant spider descends upon you!",
+            "experience_bonus": 15,
+            "gold_bonus": 10,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [3],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Brave the webs and investigate deeper into the nest",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "As you push deeper into the web-covered trees, you disturb a massive spider nest! Giant spiders descend from all directions! Prepare for combat!",
+            "experience_bonus": 50,
+            "gold_bonus": 30,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [3, 103],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Study the webbing patterns to find safe passage to the heart of the nest",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 14,
+          "agility": 12
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 22
+        },
+        "icon": "intelligence",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Your careful observation reveals patterns in the webbing that indicate safe passages. You navigate to the spider queen's chamber and plunder her treasure hoard while she's away!",
+            "experience_bonus": 60,
+            "gold_bonus": 55,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "is_success": true
+          },
+          {
+            "description": "Your analysis of the web patterns seems sound, but you miscalculate - the path leads you straight to the Broodmother Spider and her young!",
+            "experience_bonus": 20,
+            "gold_bonus": 15,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [103],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Healing Spring",
+    "description": "You hear rumors of a magical spring with healing properties hidden in a peaceful valley within the Enchanted Forest.",
+    "min_experience": 15,
+    "min_gold": 5,
+    "is_violent": false,
+    "image_url": "healing_spring",
+    "area_id": 1,
+    "decisions": [
+      {
+        "description": "Drink from the spring",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 95,
+        "outcomes": [
+          {
+            "description": "The water has a sweet, refreshing taste. You feel your wounds healing and your energy returning as the spring's magic flows through you.",
+            "experience_bonus": 10,
+            "gold_bonus": 0,
+            "hitpoints_change": 50,
+            "energy_change": 50,
+            "is_success": true
+          },
+          {
+            "description": "As you approach the spring, you notice the water seems slightly murky. Drinking it provides minimal healing and makes you feel slightly queasy.",
+            "experience_bonus": 5,
+            "gold_bonus": 0,
+            "hitpoints_change": 10,
+            "energy_change": 10,
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Collect water from the spring in vials",
+        "type": "skill",
+        "requirements": null,
+        "icon": "dexterity",
+        "stat_check": "dexterity",
+        "base_success_rate": 65,
+        "outcomes": [
+          {
+            "description": "You carefully fill several vials with the magical water. These could be valuable to alchemists or healers in nearby towns.",
+            "experience_bonus": 15,
+            "gold_bonus": 30,
+            "hitpoints_change": 10,
+            "energy_change": 10,
+            "is_success": true
+          },
+          {
+            "description": "Your hands slip while collecting the water, and most of it spills. You manage to collect only a small amount in your vials.",
+            "experience_bonus": 5,
+            "gold_bonus": 10,
+            "hitpoints_change": 5,
+            "energy_change": 5,
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Study the magical properties of the spring",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 13
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 20
+        },
+        "icon": "intelligence",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "Your arcane knowledge allows you to understand the spring's magical essence. You're able to attune to its power, gaining extraordinary healing and magical insight.",
+            "experience_bonus": 35,
+            "gold_bonus": 10,
+            "hitpoints_change": 100,
+            "energy_change": 100,
+            "is_success": true
+          },
+          {
+            "description": "As you attempt to analyze the spring's magic, you disturb its delicate balance. The water becomes agitated and less effective.",
+            "experience_bonus": 10,
+            "gold_bonus": 0,
+            "hitpoints_change": 20,
+            "energy_change": 20,
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Abandoned Cottage",
+    "description": "You come across an abandoned cottage deep in the forest. Locals claim it once belonged to a hermit who knew the forest's secrets.",
+    "min_experience": 35,
+    "min_gold": 25,
+    "is_violent": true,
+    "image_url": "haunted_manor",
+    "area_id": 1,
+    "decisions": [
+      {
+        "description": "Search the grounds around the cottage",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 90,
+        "outcomes": [
+          {
+            "description": "While exploring the overgrown garden, you find a hidden entrance to a root cellar containing preserved food, tools, and forgotten treasures.",
+            "experience_bonus": 30,
+            "gold_bonus": 35,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "is_success": true
+          },
+          {
+            "description": "As you search the grounds, a goblin scout hiding in the underbrush ambushes you!",
+            "experience_bonus": 15,
+            "gold_bonus": 10,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [2],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Enter the cottage and search for treasures",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "As you search the cottage, you discover it's now being used as a hideout by a group of goblins! They attack as soon as they spot you! Prepare for combat!",
+            "experience_bonus": 45,
+            "gold_bonus": 50,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [2, 102],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Decipher the hermit's notes and hidden markings around the cottage",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 14
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 22
+        },
+        "icon": "intelligence",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "After a thorough search, you find and decipher the hermit's hidden notes. They reveal the location of his most valuable treasures and magical artifacts.",
+            "experience_bonus": 60,
+            "gold_bonus": 65,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "is_success": true
+          },
+          {
+            "description": "While attempting to decipher the hermit's notes, you accidentally trigger a magical trap! You take damage, and the commotion attracts a goblin that was lurking nearby!",
+            "experience_bonus": 20,
+            "gold_bonus": 15,
+            "reward_table_id": 101,
+            "hitpoints_change": -15,
+            "has_combat": true,
+            "monster_ids": [2],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Faerie Queen's Glade",
+    "description": "Deep in the heart of the Enchanted Forest, you discover a hidden glade filled with unusual magical energy and tiny lights dancing in the air.",
+    "min_experience": 40,
+    "min_gold": 30,
+    "is_violent": true,
+    "image_url": "wizards_tower",
+    "area_id": 1,
+    "decisions": [
+      {
+        "description": "Announce your presence and request an audience",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 80,
+        "outcomes": [
+          {
+            "description": "The dancing lights gather around you, revealing themselves as tiny faeries! They lead you to their queen, who tests your worthiness with riddles and rewards you with magical trinkets.",
+            "experience_bonus": 45,
+            "gold_bonus": 40,
+            "reward_table_id": 101,
+            "hitpoints_change": -5,
+            "is_success": true
+          },
+          {
+            "description": "Your announcement is met with suspicion. Several faeries appear, casting irritating magic that stings and disorients you before they vanish.",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "reward_table_id": 101,
+            "hitpoints_change": -15,
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Enter the glade stealthily to observe the faeries",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "Your attempt at stealth fails! The faeries detect your presence and alert their queen. Whisperwind appears with her guardians, angered by your intrusion! Prepare for combat!",
+            "experience_bonus": 50,
+            "gold_bonus": 45,
+            "reward_table_id": 102,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [5, 106],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Leave an offering at the edge of the glade",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 12,
+          "wisdom": 10
+        },
+        "mastery": {
+          "stat": "wisdom",
+          "value": 20
+        },
+        "icon": "wisdom",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "Your thoughtful offering pleases the Faerie Queen! She appears before you and grants you a blessing, sharing some of her magical power and a rare treasure.",
+            "experience_bonus": 55,
+            "gold_bonus": 35,
+            "reward_table_id": 102,
+            "hitpoints_change": 25,
+            "energy_change": 25,
+            "is_success": true
+          },
+          {
+            "description": "Your offering is inspected by suspicious faeries. Finding it inadequate, they become annoyed and summon their queen to deal with the intruder!",
+            "experience_bonus": 25,
+            "gold_bonus": 10,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [5, 5],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  }
+]

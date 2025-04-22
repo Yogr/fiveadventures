@@ -98,6 +98,7 @@ export async function createCharacter({
         intelligence: baseStats.intelligence,
         agility: baseStats.agility,
         luck: baseStats.luck,
+        wisdom: baseStats.wisdom,
         max_hitpoints: baseStats.hitpoints,
         current_hitpoints: baseStats.hitpoints,
         max_energy: baseStats.energy,

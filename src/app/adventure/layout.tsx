@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation';
 import { getCharacterForUser } from '@/app/actions/character';
+import { getUser } from '@/app/actions/auth';
 import { ROUTES } from '@/lib/constants';
 import GameNavigation from '@/components/navigation/game-navigation';
 import { getCurrentGameDay } from '@/lib/utils';
-import { createClient } from '@/lib/supabase/server';
 
 export default async function AdventureLayout({
   children,
@@ -20,10 +20,8 @@ export default async function AdventureLayout({
   
   const character = characterResponse.data;
   
-  // Get user session
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user || null;
+  // Get user
+  const user = await getUser();
   
   const currentDay = getCurrentGameDay();
   

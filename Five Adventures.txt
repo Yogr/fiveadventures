@@ -8,18 +8,33 @@ Bugs
 Stone Golem no rewards
 Bandit Leader no rewards
 Death blows should not allow monsters to return attack
+Buffs need to time out
+If we detect a character in cookies, At the top of the home page, above the character creator dialog, show a 'Continue Playing' button with the name and level of the character found in cookies.
+Flip the queen spider image
 
+Lets create new adventures, decisions, outcomes, monsters, reward tables, items, etc for the next area: Caverns. This area is level 5-10 and should feature things related to 'Caverns'. I'm thinking crystals, ores, rocks, spiders, cave goblins, mud golems, rock golems, ogres, etc.
 
 
 Todo
 -------------
-- Add images to the adventure tracker
-- Animate the adventure tracker
+- Alert non-member users in several places about their character not saving. (Show create account suggestion)
+
 - Leaderboards
   - Daily Cron Job to calculate all character gear scores
+
+- Implement 'Dungeons' - Advanced adventures requiring a key
+  - Each elite enemy defeated grants 1/2 a key
+  - First dungeon will use a key called 'Dungeon Key', but eventually, we may have other dungeons that require their own special keys. Lets just do a unique column in user table that signifies the amount of keys they have.
+  - Dungeons have 3 adventures
+  - Only 1 active dungeon per dungeon per character at a time, if we eventually have more key types and dungeon types then characters can have a single unique row for each dungeon ID and character ID.
+  - Eventually we will have more dungeons, so make sure architecture supports dungeon descriptions and metadata as well as dungeon IDs with their own enemies and rewards etc
+  - Charac
+
 - Guilds
+
 - 'Order of the 7' subscription - $4.99
   - Monthly delivery of 10,000 gold, 20 dungeon keys, removes ads, currency X
+
 - 'Hero Packs'
   - $1.99: 2000 gold, 5 dungeon keys, removes ads for 1 month, 10 currency X
   - $3.99: 4200 gold, 11 dungeon keys, removes ads for 1 month, 25 currency X

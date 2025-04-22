@@ -1,10 +1,25 @@
 import { Suspense } from 'react';
 import Image from 'next/image';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import CharacterCreationForm from './character/create/character-creation-form';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import WelcomePopup from '@/components/welcome/welcome-popup';
+import { COOKIE_NAMES, ROUTES } from '@/lib/constants';
+import { getUser } from './actions/auth';
 
-export default function Home() {
+export default async function Home() {
+  // Check if user is signed in
+  const user = await getUser();
+  
+  // Check if the character cookie exists (must await cookies)
+  const cookieStore = await cookies();
+  const characterIdCookie = cookieStore.get(COOKIE_NAMES.CHARACTER_ID);
+  
+  // If user is signed in or has a character cookie, redirect to adventure page
+  if (user || characterIdCookie?.value) {
+    redirect(ROUTES.ADVENTURE);
+  }
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">

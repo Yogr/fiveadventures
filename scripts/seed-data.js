@@ -75,19 +75,42 @@ const readJsonFile = (filePath) => {
   }
 };
 
+// Helper function to get all JSON files in a directory and subdirectories
+const findAllJsonFiles = (basePath, pattern) => {
+  try {
+    return require('glob').sync(path.join(basePath, pattern));
+  } catch (error) {
+    console.error(`Error finding JSON files: ${error}`);
+    return [];
+  }
+};
+
 // Function to clear all tables in the correct order
 async function clearAllTables() {
   console.log('Clearing all tables...');
   
   // Clear tables in the correct order to respect foreign key constraints
-  // First clear tables with UUID primary keys
+  // First clear tables with UUID primary keys and those with foreign key dependencies
   await clearTables([
-    'character_adventures', 
+    'character_adventures',
     'combat_turns', 
     'combat', 
     'character_inventory', 
     'character_equipment'
   ]);
+  
+  // Special handling for character_boss_progress due to UUID format
+  console.log(`Clearing all rows from character_boss_progress...`);
+  const { error: bossProgressError } = await supabase
+    .from('character_boss_progress')
+    .delete()
+    .filter('id', 'not.is', null);
+  
+  if (bossProgressError) {
+    console.error(`Error clearing table character_boss_progress:`, bossProgressError);
+  } else {
+    console.log(`Table character_boss_progress cleared successfully.`);
+  }
   
   // Then clear tables with numeric primary keys in the correct order
   await clearTables([
@@ -445,7 +468,7 @@ async function seedMonsters(filePath, eliteFilePath = null) {
 
 // Seed reward tables
 async function seedRewardTables(filePath) {
-  console.log('Seeding reward tables...');
+  console.log('Seeding reward tables from:', filePath);
   
   const rewardTables = readJsonFile(filePath);
   
@@ -454,47 +477,71 @@ async function seedRewardTables(filePath) {
     return;
   }
   
-  let nextRewardTableId = await getNextId('reward_tables');
+  console.log(`Found ${rewardTables.length} reward tables to seed`);
   
   for (const rewardTable of rewardTables) {
-    // Generate ID if not provided
-    if (!rewardTable.id) {
-      rewardTable.id = nextRewardTableId++;
-    }
+    // Log details about the reward table
+    console.log(`Processing reward table: ID=${rewardTable.id}, Name=${rewardTable.name}`);
     
-    // Add created_at if not provided
-    if (!rewardTable.created_at) {
-      rewardTable.created_at = new Date().toISOString();
-    }
-    
-    // Extract reward items
-    const { items, ...rewardTableData } = rewardTable;
-    
-    // Insert reward table
-    const { error: tableError } = await supabase
+    // First check if the reward table already exists
+    const { data: existingTable, error: checkError } = await supabase
       .from('reward_tables')
-      .insert(rewardTableData);
+      .select('id')
+      .eq('id', rewardTable.id)
+      .single();
     
-    if (tableError) {
-      console.error(`Error inserting reward table ${rewardTable.name}:`, tableError);
-      continue;
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error(`Error checking if reward table ${rewardTable.name} exists:`, checkError);
     }
     
-    console.log(`Reward table inserted: ${rewardTable.name} with ID ${rewardTable.id}`);
-    
-    // Insert reward items
-    if (items && Array.isArray(items)) {
-      // Reset reward item ID counter for each reward table
-      let rewardItemId = 1;
+    if (existingTable) {
+      console.log(`Reward table ${rewardTable.name} with ID ${rewardTable.id} already exists, skipping insert`);
+    } else {
+      // Add created_at if not provided
+      if (!rewardTable.created_at) {
+        rewardTable.created_at = new Date().toISOString();
+      }
       
-      for (const item of items) {
+      // Extract reward items
+      const { items, ...rewardTableData } = rewardTable;
+      
+      // Insert reward table
+      const { error: tableError } = await supabase
+        .from('reward_tables')
+        .insert(rewardTableData);
+      
+      if (tableError) {
+        console.error(`Error inserting reward table ${rewardTable.name}:`, tableError);
+        continue;
+      }
+      
+      console.log(`Reward table inserted: ${rewardTable.name} with ID ${rewardTable.id}`);
+    }
+    
+    // Always attempt to insert reward items, in case we need to add new ones
+    if (rewardTable.items && Array.isArray(rewardTable.items)) {
+      console.log(`Processing ${rewardTable.items.length} reward items for table ${rewardTable.name}`);
+      
+      // First clear existing items for this table to avoid duplicates
+      const { error: clearError } = await supabase
+        .from('reward_items')
+        .delete()
+        .eq('reward_table_id', rewardTable.id);
+      
+      if (clearError) {
+        console.error(`Error clearing existing reward items for table ${rewardTable.name}:`, clearError);
+      } else {
+        console.log(`Cleared existing reward items for table ${rewardTable.name}`);
+      }
+      
+      // Now insert all items
+      for (const item of rewardTable.items) {
         // Create a new object for the reward item
         const rewardItem = {
-          id: rewardItemId++, // Use a counter that resets for each reward table
           reward_table_id: rewardTable.id,
           item_id: item.item_id,
           chance: item.chance,
-          created_at: item.created_at || new Date().toISOString()
+          created_at: new Date().toISOString()
         };
         
         // Insert reward item
@@ -503,16 +550,19 @@ async function seedRewardTables(filePath) {
           .insert(rewardItem);
         
         if (itemError) {
-          console.error(`Error inserting reward item for table ${rewardTable.name}:`, itemError);
+          console.error(`Error inserting reward item ${item.item_id} for table ${rewardTable.name}:`, itemError);
+          console.error('Reward item data:', rewardItem);
           continue;
+        } else {
+          console.log(`Inserted reward item ${item.item_id} for table ${rewardTable.name}`);
         }
-        
-        console.log(`Reward item inserted for table ${rewardTable.name}: Item ID ${rewardItem.item_id} with ID ${rewardItem.id}`);
       }
+      
+      console.log(`Finished processing reward items for table ${rewardTable.name}`);
     }
   }
   
-  console.log('Reward tables seeding completed.');
+  console.log('Reward tables seeding completed for:', filePath);
 }
 
 // Seed areas
@@ -671,18 +721,155 @@ Examples:
         
         // Seed in the correct order to avoid foreign key constraint violations
         await seedItems(path.join(directory, 'items.json'));
-        await seedMonsters(
-          path.join(directory, 'monsters.json'),
-          path.join(directory, 'elite-monsters.json')
-        );
-        await seedRewardTables(path.join(directory, 'rewardtables.json'));
+        
+        // First seed all reward tables to avoid foreign key constraint violations
+        // Seed global reward tables
+        if (fs.existsSync(path.join(directory, 'rewardtables.json'))) {
+          console.log('Seeding global reward tables...');
+          await seedRewardTables(path.join(directory, 'rewardtables.json'));
+        }
+        
+        // Find and seed area-specific reward tables first
+        console.log('Looking for area-specific reward tables in:', path.join(directory, 'monsters/*/rewardtables.json'));
+        
+        // Some systems normalize paths with forward slashes, others with backslashes
+        // Let's try both patterns to be safe
+        const areaRewardDirsForwardSlash = findAllJsonFiles(directory, 'monsters/*/rewardtables.json');
+        const areaRewardDirsBackSlash = findAllJsonFiles(directory, 'monsters\\*\\rewardtables.json');
+        
+        // Combine and deduplicate results
+        const areaRewardDirs = [...new Set([...areaRewardDirsForwardSlash, ...areaRewardDirsBackSlash])];
+        
+        console.log('Direct file check - Does the specific file exist?');
+        const specificFile = path.join(directory, 'monsters', 'enchanted-forest', 'rewardtables.json');
+        console.log(`Checking if ${specificFile} exists:`, fs.existsSync(specificFile));
+        if (fs.existsSync(specificFile)) {
+            console.log('Found specific file via direct path check');
+            if (!areaRewardDirs.includes(specificFile)) {
+                areaRewardDirs.push(specificFile);
+            }
+        }
+        if (areaRewardDirs && areaRewardDirs.length > 0) {
+          console.log(`Found ${areaRewardDirs.length} area-specific reward table files:`);
+          for (const rewardFile of areaRewardDirs) {
+            console.log(`- Found reward tables file: ${rewardFile}`);
+          }
+          
+          for (const rewardFile of areaRewardDirs) {
+            console.log(`Seeding reward tables from ${rewardFile}...`);
+            const rewardTables = readJsonFile(rewardFile);
+            if (rewardTables && Array.isArray(rewardTables)) {
+              console.log(`Loaded ${rewardTables.length} reward tables from ${rewardFile}`);
+              for (const table of rewardTables) {
+                console.log(`- Table ID: ${table.id}, Name: ${table.name}`);
+              }
+            }
+            await seedRewardTables(rewardFile);
+          }
+        } else {
+          console.log('WARNING: No area-specific reward tables found. This will cause errors for area-specific adventures!');
+        }
+        
+        // Check if we have area-specific monsters
+        console.log('Looking for area-specific monsters in:');
+        console.log(`- Forward slash pattern: ${path.join(directory, 'monsters/*/monsters.json')}`);
+        console.log(`- Backslash pattern: ${path.join(directory, 'monsters\\*\\monsters.json')}`);
+        
+        // Try both forward slash and backslash patterns
+        const monsterDirsForwardSlash = findAllJsonFiles(directory, 'monsters/*/monsters.json');
+        const monsterDirsBackSlash = findAllJsonFiles(directory, 'monsters\\*\\monsters.json');
+        
+        // Combine and deduplicate the results
+        const monsterDirs = [...new Set([...monsterDirsForwardSlash, ...monsterDirsBackSlash])];
+        
+        // Direct file check for Enchanted Forest
+        const enchantedForestMonsterFile = path.join(directory, 'monsters', 'enchanted-forest', 'monsters.json');
+        console.log(`Checking if ${enchantedForestMonsterFile} exists:`, fs.existsSync(enchantedForestMonsterFile));
+        if (fs.existsSync(enchantedForestMonsterFile) && !monsterDirs.includes(enchantedForestMonsterFile)) {
+          console.log('Found Enchanted Forest monster file via direct path check');
+          monsterDirs.push(enchantedForestMonsterFile);
+        }
+        
+        if (monsterDirs && monsterDirs.length > 0) {
+          console.log(`Found ${monsterDirs.length} area-specific monster directories:`);
+          // List all found monster files
+          for (const monsterFile of monsterDirs) {
+            console.log(`- Found monster file: ${monsterFile}`);
+          }
+          
+          // Seed each area's monsters
+          for (const monsterFile of monsterDirs) {
+            console.log(`SEEDING AREA-SPECIFIC MONSTERS FROM: ${monsterFile}`);
+            const areaDir = path.dirname(monsterFile);
+            const eliteFile = path.join(areaDir, 'elite-monsters.json');
+            console.log(`Checking for elite file at: ${eliteFile}`);
+            if (fs.existsSync(eliteFile)) {
+              console.log(`Found elite monsters file: ${eliteFile}`);
+              await seedMonsters(monsterFile, eliteFile);
+            } else {
+              await seedMonsters(monsterFile);
+            }
+          }
+        } else {
+          // Fall back to legacy monster files
+          console.log('No area-specific monster directories found, using legacy monster files');
+          await seedMonsters(
+            path.join(directory, 'monsters.json'),
+            path.join(directory, 'elite-monsters.json')
+          );
+        }
+        
         await seedSkills(path.join(directory, 'skills.json'));
         await seedAreas(path.join(directory, 'areas.json'));
-        await seedAdventures(path.join(directory, 'adventures.json'));
-        await seedWorldBoss(
-          path.join(directory, 'worldboss.json'),
-          path.join(directory, 'worldboss-rewards.json')
-        );
+        
+// Check if we have area-specific adventures
+console.log('Looking for area-specific adventures in:');
+console.log(`- Forward slash pattern: ${path.join(directory, 'adventures/*/adventures.json')}`);
+console.log(`- Backslash pattern: ${path.join(directory, 'adventures\\*\\adventures.json')}`);
+
+// Try both forward slash and backslash patterns
+const adventureDirsForwardSlash = findAllJsonFiles(directory, 'adventures/*/adventures.json');
+const adventureDirsBackSlash = findAllJsonFiles(directory, 'adventures\\*\\adventures.json');
+
+// Combine and deduplicate the results
+const adventureDirs = [...new Set([...adventureDirsForwardSlash, ...adventureDirsBackSlash])];
+
+// Direct file check for common areas
+const enchantedForestAdventureFile = path.join(directory, 'adventures', 'enchanted-forest', 'adventures.json');
+console.log(`Checking if ${enchantedForestAdventureFile} exists:`, fs.existsSync(enchantedForestAdventureFile));
+if (fs.existsSync(enchantedForestAdventureFile) && !adventureDirs.includes(enchantedForestAdventureFile)) {
+  console.log('Found Enchanted Forest adventures file via direct path check');
+  adventureDirs.push(enchantedForestAdventureFile);
+}
+
+if (adventureDirs && adventureDirs.length > 0) {
+  console.log(`Found ${adventureDirs.length} area-specific adventure directories:`);
+  // List all found adventure files
+  for (const adventureFile of adventureDirs) {
+    console.log(`- Found adventure file: ${adventureFile}`);
+  }
+  
+  // Seed each area's adventures
+  for (const adventureFile of adventureDirs) {
+    console.log(`SEEDING AREA-SPECIFIC ADVENTURES FROM: ${adventureFile}`);
+    await seedAdventures(adventureFile);
+  }
+} else {
+  // Fall back to legacy adventure file
+  console.log('No area-specific adventure directories found, using legacy adventure file');
+  if (fs.existsSync(path.join(directory, 'adventures.json'))) {
+    await seedAdventures(path.join(directory, 'adventures.json'));
+  }
+}
+        
+        // Seed world boss data
+        if (fs.existsSync(path.join(directory, 'worldboss.json'))) {
+          const rewardsPath = fs.existsSync(path.join(directory, 'worldboss-rewards.json')) 
+            ? path.join(directory, 'worldboss-rewards.json')
+            : null;
+            
+          await seedWorldBoss(path.join(directory, 'worldboss.json'), rewardsPath);
+        }
         break;
       default:
         console.error(`Unknown command: ${command}`);

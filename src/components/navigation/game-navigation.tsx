@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import WorldBossButtonCompanion from '@/components/worldboss/world-boss-button-companion';
 import CharacterStats from '@/components/character/character-stats';
 import type { Character } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
 import { getCharacterById } from '@/app/actions/character';
+import { signOut } from '@/app/actions/auth';
 
 interface GameNavigationProps {
   activeTab: 'adventure' | 'shop' | 'worldboss';
@@ -170,7 +172,10 @@ export default function GameNavigation({
         <div className="flex items-center justify-end flex-1">
           {user ? (
             <button 
-              onClick={() => window.location.href = '/api/auth/signout'} 
+              onClick={async () => {
+                await signOut();
+                window.location.href = '/';
+              }} 
               className="rounded px-2 py-0.5 text-xs text-center text-white font-medium bg-blue-600 hover:bg-blue-500"
             >
               Logout

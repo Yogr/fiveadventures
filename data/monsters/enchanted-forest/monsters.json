@@ -1,0 +1,135 @@
+[
+  {
+    "id": 1,
+    "name": "Forest Wolf",
+    "description": "A fierce wolf with sharp teeth and keen senses.",
+    "hitpoints": 18,
+    "attack": 4,
+    "defense": 2,
+    "experience_reward": 25,
+    "gold_reward": 15,
+    "difficulty": 1,
+    "attack_type": "Physical",
+    "abilities": {
+      "bite": {
+        "damage": 3,
+        "chance": 25,
+        "description": "A powerful bite that deals extra damage"
+      }
+    },
+    "image_url": "forest_wolf",
+    "reward_table": 101
+  },
+  {
+    "id": 2,
+    "name": "Goblin Scout",
+    "description": "A small, nimble goblin armed with a crude dagger.",
+    "hitpoints": 15,
+    "attack": 5,
+    "defense": 1,
+    "experience_reward": 20,
+    "gold_reward": 20,
+    "difficulty": 1,
+    "attack_type": "Physical",
+    "abilities": {
+      "sneak_attack": {
+        "damage": 4,
+        "chance": 20,
+        "description": "A surprise attack that deals extra damage"
+      }
+    },
+    "image_url": "goblin_scout",
+    "reward_table": 101
+  },
+  {
+    "id": 3,
+    "name": "Giant Spider",
+    "description": "A massive spider with venomous fangs.",
+    "hitpoints": 28,
+    "attack": 6,
+    "defense": 4,
+    "experience_reward": 40,
+    "gold_reward": 30,
+    "difficulty": 2,
+    "attack_type": "Physical",
+    "abilities": {
+      "web": {
+        "immobilize": 1,
+        "chance": 25,
+        "description": "Traps you in a sticky web, preventing movement"
+      },
+      "poison": {
+        "damage_over_time": 2,
+        "duration": 3,
+        "chance": 20,
+        "description": "Injects venom that causes damage over time"
+      }
+    },
+    "image_url": "giant_spider",
+    "reward_table": 101
+  },
+  {
+    "id": 4,
+    "name": "Bandit",
+    "description": "A ruthless outlaw hiding in the forest, preying on travelers.",
+    "hitpoints": 22,
+    "attack": 5,
+    "defense": 3,
+    "experience_reward": 30,
+    "gold_reward": 35,
+    "difficulty": 2,
+    "attack_type": "Physical",
+    "abilities": {
+      "quick_strike": {
+        "damage": 4,
+        "chance": 25,
+        "description": "A fast attack that's hard to dodge"
+      }
+    },
+    "image_url": "bandit",
+    "reward_table": 101
+  },
+  {
+    "id": 5,
+    "name": "Forest Sprite",
+    "description": "A small magical forest creature, mischievous and unpredictable.",
+    "hitpoints": 15,
+    "attack": 3,
+    "defense": 2,
+    "experience_reward": 20,
+    "gold_reward": 25,
+    "difficulty": 1,
+    "attack_type": "Magical",
+    "abilities": {
+      "nature_magic": {
+        "damage": 5,
+        "chance": 30,
+        "description": "Blasts the target with nature energy"
+      }
+    },
+    "image_url": "forest_sprite",
+    "reward_table": 101
+  },
+  {
+    "id": 6,
+    "name": "Woodland Guardian",
+    "description": "A living tree animated by forest magic to protect the ancient woods.",
+    "hitpoints": 35,
+    "attack": 6,
+    "defense": 5,
+    "experience_reward": 45,
+    "gold_reward": 20,
+    "difficulty": 3,
+    "attack_type": "Physical",
+    "abilities": {
+      "root_grab": {
+        "immobilize": 1,
+        "damage": 4,
+        "chance": 25,
+        "description": "Entangles the target with roots, restricting movement"
+      }
+    },
+    "image_url": "forest_guardian",
+    "reward_table": 101
+  }
+]

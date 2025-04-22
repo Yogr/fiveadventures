@@ -7,7 +7,6 @@ import ShopItem from './shop-item';
 import SellBar from './sell-bar';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import Image from 'next/image';
-import { useAudio } from '@/lib/audio-utils';
 
 interface ShopContainerProps {
   initialGold: number;
@@ -25,16 +24,6 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
   const [gold, setGold] = useState(initialGold);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Get audio utilities
-  const { playSceneMusic } = useAudio();
-  
-  // This still calls playSceneMusic, but our audio-utils implementation now prevents
-  // actually changing the music in global music mode, keeping the main theme playing
-  useEffect(() => {
-    // This will only log in the console but won't change music in global mode
-    playSceneMusic('shop');
-  }, [playSceneMusic]);
   
   // Check if an item is equipped
   const isItemEquipped = (itemId: number) => {

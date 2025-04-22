@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { Adventure, AdventureDecision, Area, Character } from '@/lib/types';
 import { useAdventure } from '../AdventureContext';
 import AdventureDisplay from './AdventureDisplay';
+import DecisionCard from '../DecisionCard';
 
 interface AdventureViewProps {
   adventure: Adventure;
@@ -28,8 +29,6 @@ const AdventureView = memo(function AdventureView({ adventure, character, area }
     
     // No need to call router.refresh() here as state updates will trigger re-renders
   };
-
-  const formattedAreaName = area.name.toLowerCase().replace('the ','').replace(/\s+/g, '-');
   
   return (
     <div className="bg-yellow-950 p-0 animate-fadeIn rounded-lg border-2 border-amber-900 border-t-amber-700 border-l-amber-700">
@@ -46,17 +45,13 @@ const AdventureView = memo(function AdventureView({ adventure, character, area }
         
         <div className="space-y-2 md:space-y-4">
           {adventure.decisions?.map((decision: AdventureDecision) => (
-            <div 
+            <DecisionCard
               key={decision.id}
-              className={`p-3 md:p-4 border-2 rounded-md cursor-pointer transition-all ${
-                selectedDecision?.id === decision.id
-                  ? 'border-amber-500 bg-amber-900 bg-opacity-50'
-                  : 'border-amber-800 bg-amber-900 bg-opacity-30 hover:border-amber-600'
-              }`}
-              onClick={() => handleDecisionSelect(decision)}
-            >
-              <p className="text-base text-amber-200">{decision.description}</p>
-            </div>
+              decision={decision}
+              character={character}
+              isSelected={selectedDecision?.id === decision.id}
+              onSelect={() => handleDecisionSelect(decision)}
+            />
           ))}
         </div>
       </div>

@@ -1,0 +1,190 @@
+[
+  {
+    "id": 101,
+    "name": "Alpha Wolf",
+    "description": "A larger wolf that leads the pack. It has a few battle scars but is otherwise an ordinary wolf.",
+    "hitpoints": 30,
+    "attack": 6,
+    "defense": 3,
+    "experience_reward": 35,
+    "gold_reward": 20,
+    "difficulty": 2,
+    "attack_type": "Physical",
+    "abilities": {
+      "bite": {
+        "damage": 4,
+        "chance": 25,
+        "description": "A strong bite that deals extra damage"
+      },
+      "howl": {
+        "attack_boost": 1,
+        "chance": 20,
+        "description": "Howls to boost its attack"
+      }
+    },
+    "image_url": "alpha_wolf",
+    "is_elite": true,
+    "base_monster_id": 1,
+    "reward_table": 101
+  },
+  {
+    "id": 102,
+    "name": "Goblin Chief",
+    "description": "A goblin leader who has claimed some crude jewelry and a slightly better weapon than his peers.",
+    "hitpoints": 25,
+    "attack": 6,
+    "defense": 2,
+    "experience_reward": 30,
+    "gold_reward": 30,
+    "difficulty": 2,
+    "attack_type": "Physical",
+    "abilities": {
+      "sneak_attack": {
+        "damage": 5,
+        "chance": 20,
+        "description": "A surprise attack that deals extra damage"
+      },
+      "rally": {
+        "defense_boost": 1,
+        "chance": 25,
+        "description": "Increases its defense temporarily"
+      }
+    },
+    "image_url": "goblin_chief",
+    "is_elite": true,
+    "base_monster_id": 2,
+    "reward_table": 101
+  },
+  {
+    "id": 103,
+    "name": "Broodmother Spider",
+    "description": "A large spider that guards a clutch of eggs. Its venom is slightly more potent than a regular giant spider.",
+    "hitpoints": 40,
+    "attack": 7,
+    "defense": 4,
+    "experience_reward": 50,
+    "gold_reward": 40,
+    "difficulty": 3,
+    "attack_type": "Physical",
+    "abilities": {
+      "web": {
+        "immobilize": 1,
+        "chance": 25,
+        "description": "Traps you in a sticky web, restricting movement"
+      },
+      "poison": {
+        "damage_over_time": 2,
+        "duration": 3,
+        "chance": 20,
+        "description": "Injects venom that causes damage over time"
+      },
+      "summon_spiderlings": {
+        "damage": 3,
+        "chance": 15,
+        "description": "Summons tiny spiders to attack you"
+      }
+    },
+    "image_url": "spider_queen",
+    "is_elite": true,
+    "base_monster_id": 3,
+    "reward_table": 101
+  },
+  {
+    "id": 104,
+    "name": "Bandit Warlord",
+    "description": "A skilled and ruthless bandit leader who has established a hideout in the forest.",
+    "hitpoints": 45,
+    "attack": 8,
+    "defense": 5,
+    "experience_reward": 55,
+    "gold_reward": 60,
+    "difficulty": 3,
+    "attack_type": "Physical",
+    "abilities": {
+      "precise_strike": {
+        "damage": 10,
+        "ignore_defense": true,
+        "chance": 20,
+        "description": "A precise attack that ignores defense"
+      },
+      "battle_command": {
+        "attack_boost": 2,
+        "chance": 20,
+        "description": "Uses tactical knowledge to improve combat effectiveness"
+      }
+    },
+    "image_url": "bandit",
+    "is_elite": true,
+    "base_monster_id": 4,
+    "reward_table": 101
+  },
+  {
+    "id": 105,
+    "name": "Elderwood Guardian",
+    "description": "An ancient treant that has protected the forest for centuries. Its bark is as tough as steel.",
+    "hitpoints": 60,
+    "attack": 7,
+    "defense": 8,
+    "experience_reward": 65,
+    "gold_reward": 35,
+    "difficulty": 4,
+    "attack_type": "Physical",
+    "abilities": {
+      "root_slam": {
+        "damage": 8,
+        "chance": 25,
+        "description": "Slams roots into the ground, causing damage to all nearby"
+      },
+      "nature's shield": {
+        "defense_boost": 3,
+        "chance": 30,
+        "description": "Hardens its bark, greatly increasing defense"
+      }
+    },
+    "image_url": "forest_guardian",
+    "is_elite": true,
+    "base_monster_id": 6,
+    "reward_table": 101
+  },
+  {
+    "id": 106,
+    "name": "Whisperwind, Queen of the Faeries",
+    "description": "The powerful ruler of the faerie realm within the Enchanted Forest. She wields ancient nature magic and can control the very essence of the forest.",
+    "hitpoints": 70,
+    "attack": 10,
+    "defense": 6,
+    "experience_reward": 100,
+    "gold_reward": 80,
+    "difficulty": 5,
+    "attack_type": "Magical",
+    "abilities": {
+      "nature's wrath": {
+        "damage": 15,
+        "chance": 30,
+        "description": "Calls upon the forest's power to attack enemies"
+      },
+      "enchanting glamour": {
+        "confusion": 2,
+        "chance": 25,
+        "description": "Casts an illusion that confuses the target"
+      },
+      "forest's blessing": {
+        "heal": 10,
+        "chance": 20,
+        "description": "Channels the forest's vitality to heal wounds"
+      },
+      "faerie swarm": {
+        "damage_over_time": 3,
+        "duration": 3,
+        "chance": 15,
+        "description": "Summons a swarm of tiny faeries that harass and damage over time"
+      }
+    },
+    "image_url": "forest_sprite",
+    "is_elite": true,
+    "is_boss": true,
+    "base_monster_id": 5,
+    "reward_table": 102,
+    "rare_item_chance": 10
+  }
+]

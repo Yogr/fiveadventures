@@ -2,24 +2,19 @@
   {
     "id": 101,
     "name": "Alpha Wolf",
-    "description": "A massive wolf with gleaming eyes and battle scars. The leader of its pack.",
-    "hitpoints": 80,
-    "attack": 12,
-    "defense": 5,
-    "experience_reward": 40,
-    "gold_reward": 25,
+    "description": "A larger wolf that leads the pack. It has a few battle scars but is otherwise an ordinary wolf.",
+    "hitpoints": 30,
+    "attack": 6,
+    "defense": 3,
+    "experience_reward": 35,
+    "gold_reward": 20,
     "difficulty": 2,
     "attack_type": "Physical",
     "abilities": {
       "bite": {
-        "damage": 15,
-        "chance": 30,
-        "description": "A powerful bite that deals extra damage"
-      },
-      "howl": {
-        "defense_boost": 3,
+        "damage": 4,
         "chance": 25,
-        "description": "A chilling howl that boosts its defense"
+        "description": "A strong bite that deals extra damage"
       }
     },
     "image_url": "alpha_wolf",
@@ -29,24 +24,19 @@
   {
     "id": 102,
     "name": "Goblin Chief",
-    "description": "A cunning goblin leader adorned with stolen jewelry and wielding a well-crafted sword.",
-    "hitpoints": 65,
-    "attack": 10,
-    "defense": 4,
-    "experience_reward": 35,
-    "gold_reward": 35,
+    "description": "A goblin leader who has claimed some crude jewelry and a slightly better weapon than his peers.",
+    "hitpoints": 25,
+    "attack": 6,
+    "defense": 2,
+    "experience_reward": 30,
+    "gold_reward": 30,
     "difficulty": 2,
     "attack_type": "Physical",
     "abilities": {
       "sneak_attack": {
-        "damage": 18,
-        "chance": 25,
-        "description": "A surprise attack that deals extra damage"
-      },
-      "rally": {
-        "attack_boost": 2,
+        "damage": 5,
         "chance": 20,
-        "description": "Rallies its strength for a more powerful attack"
+        "description": "A surprise attack that deals extra damage"
       }
     },
     "image_url": "goblin_chief",
@@ -56,24 +46,19 @@
   {
     "id": 103,
     "name": "Skeleton Knight",
-    "description": "A towering skeleton clad in ancient, rusted armor and wielding a massive greatsword.",
-    "hitpoints": 90,
-    "attack": 11,
-    "defense": 8,
-    "experience_reward": 45,
-    "gold_reward": 20,
+    "description": "A skeleton wearing tattered armor pieces and wielding a rusty sword. Though called a knight, it's more like a common foot soldier.",
+    "hitpoints": 35,
+    "attack": 7,
+    "defense": 4,
+    "experience_reward": 40,
+    "gold_reward": 15,
     "difficulty": 3,
     "attack_type": "Physical",
     "abilities": {
       "bone_shield": {
-        "defense_boost": 5,
-        "chance": 35,
+        "defense_boost": 2,
+        "chance": 30,
         "description": "Raises its defense temporarily"
-      },
-      "cleave": {
-        "damage": 20,
-        "chance": 20,
-        "description": "A powerful sweeping attack"
       }
     },
     "image_url": "skeleton_knight",
@@ -82,26 +67,20 @@
   },
   {
     "id": 104,
-    "name": "Flame Demon",
-    "description": "A larger, more menacing creature of living flame with a core of molten rock.",
-    "hitpoints": 60,
-    "attack": 15,
-    "defense": 3,
-    "experience_reward": 50,
-    "gold_reward": 40,
+    "name": "Flame Imp",
+    "description": "A larger fire imp with slightly more control over its flames.",
+    "hitpoints": 30,
+    "attack": 8,
+    "defense": 1,
+    "experience_reward": 45,
+    "gold_reward": 35,
     "difficulty": 3,
     "attack_type": "Magical",
     "abilities": {
       "flame_burst": {
-        "damage": 22,
-        "chance": 30,
-        "description": "Erupts in flames, dealing fire damage"
-      },
-      "heat_wave": {
-        "damage_over_time": 5,
-        "duration": 3,
+        "damage": 6,
         "chance": 25,
-        "description": "Creates a wave of heat that causes damage over time"
+        "description": "Erupts in flames, dealing fire damage"
       }
     },
     "image_url": "flame_demon",
@@ -110,31 +89,26 @@
   },
   {
     "id": 105,
-    "name": "Troll Berserker",
-    "description": "An enormous troll with bulging muscles and a perpetual rage. It wields a massive club made from a tree trunk.",
-    "hitpoints": 150,
-    "attack": 18,
-    "defense": 10,
-    "experience_reward": 75,
-    "gold_reward": 60,
+    "name": "Forest Troll",
+    "description": "A larger than average troll that has claimed a small part of the forest as its territory.",
+    "hitpoints": 50,
+    "attack": 9,
+    "defense": 5,
+    "experience_reward": 60,
+    "gold_reward": 45,
     "difficulty": 4,
     "attack_type": "Physical",
     "abilities": {
       "smash": {
-        "damage": 30,
-        "chance": 25,
-        "description": "A powerful smash that deals heavy damage"
-      },
-      "rage": {
-        "attack_boost": 5,
-        "defense_reduction": 2,
+        "damage": 8,
         "chance": 20,
-        "description": "Enters a rage, increasing attack but lowering defense"
+        "description": "A strong attack that deals extra damage"
       }
     },
     "image_url": "troll_berserker",
     "is_elite": true,
-    "base_monster_id": 5
+    "base_monster_id": 5,
+    "rare_item_chance": 5
   },
   {
     "id": 106,
@@ -171,35 +145,31 @@
   {
     "id": 107,
     "name": "Broodmother Spider",
-    "description": "An enormous spider with glowing eyes and dripping venom. Smaller spiders crawl around it.",
-    "hitpoints": 120,
-    "attack": 14,
-    "defense": 9,
-    "experience_reward": 60,
-    "gold_reward": 45,
+    "description": "A large spider that guards a clutch of eggs. Its venom is slightly more potent than a regular giant spider.",
+    "hitpoints": 40,
+    "attack": 7,
+    "defense": 4,
+    "experience_reward": 50,
+    "gold_reward": 40,
     "difficulty": 3,
     "attack_type": "Physical",
     "abilities": {
       "web": {
-        "immobilize": 2,
-        "chance": 30,
-        "description": "Traps you in a sticky web, preventing movement"
+        "immobilize": 1,
+        "chance": 25,
+        "description": "Traps you in a sticky web, restricting movement"
       },
       "poison": {
-        "damage_over_time": 5,
-        "duration": 4,
-        "chance": 25,
-        "description": "Injects potent venom that causes damage over time"
-      },
-      "summon_spiderlings": {
-        "attack_boost": 3,
+        "damage_over_time": 2,
+        "duration": 3,
         "chance": 20,
-        "description": "Summons small spiders to aid in the attack"
+        "description": "Injects venom that causes damage over time"
       }
     },
     "image_url": "broodmother_spider",
     "is_elite": true,
-    "base_monster_id": 7
+    "base_monster_id": 7,
+    "rare_item_chance": 3
   },
   {
     "id": 108,

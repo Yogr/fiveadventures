@@ -90,7 +90,7 @@ export function MusicProvider({
 
   // Play a music track
   const playMusic = useCallback((trackName: string) => {
-    console.log(`Playing music: ${trackName}, enabled: ${musicEnabled}`);
+    //console.log(`Playing music: ${trackName}, enabled: ${musicEnabled}`);
     if (!musicEnabled) return;
     
     // Stop current track if any
@@ -99,9 +99,9 @@ export function MusicProvider({
     }
     
     const music = getMusicTrack(trackName);
-    console.log(`Music track loaded: ${music}`);
+    //console.log(`Music track loaded: ${music}`);
     if (music) {
-      console.log(`Playing music: ${trackName}`);
+      //console.log(`Playing music: ${trackName}`);
       music.play();
       currentHowl.current = music;
       setCurrentTrack(trackName);

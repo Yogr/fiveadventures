@@ -234,6 +234,48 @@ export function getTotalMaxEnergy(character: Character): number {
 }
 
 /**
+ * Get the total wisdom of a character, including bonuses from equipped items and active effects
+ * @param character The character object
+ * @param activeEffects Optional active effects that may modify the character's wisdom
+ */
+export function getTotalWisdom(character: Character, activeEffects?: Record<string, any>[]): number {
+  let totalWisdom = character.wisdom;
+  
+  // Add bonuses from equipped items
+  if (character.equipment) {
+    // Check each equipment slot
+    const equipmentItems = [
+      character.equipment.weapon,
+      character.equipment.helmet,
+      character.equipment.armor,
+      character.equipment.trinket
+    ];
+    
+    // Add stat boosts from each equipped item
+    equipmentItems.forEach(item => {
+      if (item && item.effects) {
+        const effects = item.effects as any;
+        if (effects.stat_boosts && effects.stat_boosts.wisdom) {
+          totalWisdom += effects.stat_boosts.wisdom;
+        }
+      }
+    });
+  }
+  
+  // Add bonuses from active effects (buffs)
+  if (activeEffects && activeEffects.length > 0) {
+    activeEffects.forEach(effect => {
+      // Check for wisdom boost effects
+      if (effect.wisdom_boost) {
+        totalWisdom += effect.wisdom_boost;
+      }
+    });
+  }
+  
+  return totalWisdom;
+}
+
+/**
  * Get all the total stats for a character, including bonuses from equipped items
  */
 export function getTotalStats(character: Character): {
@@ -241,6 +283,7 @@ export function getTotalStats(character: Character): {
   intelligence: number;
   agility: number;
   luck: number;
+  wisdom: number;
   max_hitpoints: number;
   max_energy: number;
 } {
@@ -249,6 +292,7 @@ export function getTotalStats(character: Character): {
     intelligence: getTotalIntelligence(character),
     agility: getTotalAgility(character),
     luck: getTotalLuck(character),
+    wisdom: getTotalWisdom(character),
     max_hitpoints: getTotalMaxHitpoints(character),
     max_energy: getTotalMaxEnergy(character)
   };
@@ -284,40 +328,102 @@ export function getItemStatBoosts(item: Item | null): Record<string, number> {
  * @param activeEffects Optional active effects that may modify the character's damage
  */
 export function calculateTotalDamage(character: Character, activeEffects?: Record<string, any>[]): number {
-  let baseDamage = 5; // Base damage for all characters
+  let baseDamage = 0;
   
-  // Add primary stat contribution based on class
-  switch (character.class) {
-    case 'Warrior':
-      baseDamage += getTotalStrength(character, activeEffects) * 2;
-      break;
-    case 'Wizard':
-      baseDamage += getTotalIntelligence(character, activeEffects) * 2;
-      break;
-    case 'Thief':
-      baseDamage += getTotalAgility(character, activeEffects) * 1.5 + getTotalLuck(character, activeEffects) * 0.5;
-      break;
-    case 'Ranger':
-      baseDamage += getTotalAgility(character, activeEffects) * 2;
-      break;
-    case 'Cleric':
-      baseDamage += getTotalIntelligence(character, activeEffects) * 1.5 + getTotalStrength(character, activeEffects) * 0.5;
-      break;
-    default:
-      baseDamage += getTotalStrength(character, activeEffects);
-  }
-  
-  // Add weapon damage
-  if (character.equipment?.weapon) {
-    baseDamage += character.equipment.weapon.base_damage || 0;
+  // If unarmed, use base damage of 5
+  if (!character.equipment?.weapon) {
+    baseDamage = 5;
+  } else {
+    // Use weapon's base damage as the starting point
+    baseDamage = character.equipment.weapon.base_damage || 5;
     
-    // Add elemental damage if any
-    if (character.equipment.weapon.effects) {
-      const effects = character.equipment.weapon.effects as any;
-      if (effects.elemental && effects.elemental.damage) {
-        baseDamage += effects.elemental.damage;
+    // Add stat-based bonuses based on weapon type and character stats
+    const weapon = character.equipment.weapon;
+    
+    if (weapon.weapon_type === "Slashing" || weapon.weapon_type === "Blunt") {
+      // Strength-based weapons: +1 damage per 4 strength points
+      baseDamage += Math.floor(getTotalStrength(character, activeEffects) / 4);
+    } else if (weapon.weapon_type === "Piercing") {
+      // Agility-based weapons: +1 damage per 4 agility points
+      baseDamage += Math.floor(getTotalAgility(character, activeEffects) / 4);
+    } else if (weapon.weapon_type === "Magic") {
+      if (character.class === 'Cleric') {
+        // Wisdom-based weapons for Clerics: +1 damage per 4 wisdom points
+        baseDamage += Math.floor(getTotalWisdom(character, activeEffects) / 4);
+      } else {
+        // Intelligence-based weapons: +1 damage per 4 intelligence points
+        baseDamage += Math.floor(getTotalIntelligence(character, activeEffects) / 4);
       }
     }
+    
+    // Add small class-based bonuses
+    switch (character.class) {
+      case 'Warrior':
+        if (weapon.weapon_type === "Slashing" || weapon.weapon_type === "Blunt") {
+          baseDamage += 1; // Warriors get +1 with strength weapons
+        }
+        break;
+      case 'Wizard':
+        if (weapon.weapon_type === "Magic") {
+          baseDamage += 1; // Wizards get +1 with magic weapons
+        }
+        break;
+      case 'Thief':
+        if (weapon.weapon_type === "Piercing") {
+          baseDamage += 1; // Thieves get +1 with piercing weapons
+        }
+        break;
+      case 'Ranger':
+        if (weapon.weapon_type === "Piercing") {
+          baseDamage += 1; // Rangers get +1 with piercing weapons
+        }
+        break;
+      case 'Cleric':
+        if (weapon.weapon_type === "Blunt" || weapon.weapon_type === "Magic") {
+          baseDamage += 1; // Clerics get +1 with blunt or magic weapons
+          // Clerics also get wisdom bonus for Blunt weapons
+          if (weapon.weapon_type === "Blunt") {
+            baseDamage += Math.floor(getTotalWisdom(character, activeEffects) / 4);
+          }
+        }
+        break;
+    }
+    
+    // Add elemental damage if any (reduced impact)
+    if (weapon.effects) {
+      const effects = weapon.effects as any;
+      if (effects.elemental && effects.elemental.damage) {
+        baseDamage += Math.ceil(effects.elemental.damage / 2);
+      }
+    }
+  }
+  
+  // Apply active effects that directly modify damage
+  if (activeEffects && activeEffects.length > 0) {
+    activeEffects.forEach(effect => {
+      // Direct damage boosts (like Rage)
+      if (effect.damage_boost) {
+        baseDamage += effect.damage_boost;
+      }
+      
+      // Percentage-based damage boosts
+      if (effect.damage_percent_boost) {
+        baseDamage *= (1 + effect.damage_percent_boost / 100);
+      }
+      
+      // Damage reduction debuffs
+      if (effect.damage_reduction) {
+        baseDamage *= (1 - effect.damage_reduction / 100);
+      }
+      
+      // Special effect: Elemental damage boost
+      if (effect.elemental_boost && character.equipment?.weapon?.effects) {
+        const weaponEffects = character.equipment.weapon.effects as any;
+        if (weaponEffects.elemental && effect.elemental_boost.type === weaponEffects.elemental.type) {
+          baseDamage += effect.elemental_boost.value;
+        }
+      }
+    });
   }
   
   return Math.floor(baseDamage);
@@ -362,6 +468,43 @@ export function calculateTotalDefense(character: Character, activeEffects?: Reco
 }
 
 /**
+ * Calculate the damage reduction percentage from defense
+ * @param defense The total defense value
+ * @param playerLevel The player's level
+ * @param monsterLevel The monster's level
+ */
+export function calculateDamageReduction(defense: number, playerLevel: number, monsterLevel: number): number {
+  // Base reduction percentage from defense
+  let reductionPercentage = defense * 2; // Each point of defense is worth 2% reduction
+  
+  // Level difference adjustment
+  const levelDifference = playerLevel - monsterLevel;
+  if (levelDifference > 0) {
+    // Player has level advantage
+    reductionPercentage += levelDifference * 2; // +2% per level difference
+  } else if (levelDifference < 0) {
+    // Monster has level advantage
+    reductionPercentage += levelDifference * 2; // -2% per level difference
+  }
+  
+  // Soft cap implementation with diminishing returns
+  const softCap = 60; // 60% damage reduction soft cap
+  
+  if (reductionPercentage <= softCap) {
+    // Below soft cap, linear scaling
+    return reductionPercentage / 100;
+  } else {
+    // Above soft cap, diminishing returns
+    // Formula: softCap + (1 - softCap/100) * (1 - e^(-k * (reduction - softCap)))
+    // where k is a constant that controls how quickly diminishing returns kick in
+    const k = 0.05;
+    const excess = reductionPercentage - softCap;
+    const diminishedExcess = (1 - softCap/100) * (1 - Math.exp(-k * excess));
+    return (softCap / 100) + diminishedExcess;
+  }
+}
+
+/**
  * Categorize effects as buffs or debuffs based on their properties
  * @param effect The effect to categorize
  * @returns 'buff', 'debuff', or null if the effect is neutral or cannot be categorized
@@ -373,6 +516,7 @@ export function categorizeEffect(effect: Record<string, any>): 'buff' | 'debuff'
     'intelligence_boost',
     'agility_boost',
     'luck_boost',
+    'wisdom_boost',
     'healing',
     'shield',
     'defense_boost',
@@ -434,4 +578,210 @@ export function extractActiveEffects(combatTurns: any[]): Record<string, any>[] 
   });
   
   return activeEffects;
+}
+
+/**
+ * Calculate the chance for a character to dodge an attack
+ * @param character The character potentially dodging
+ * @param opponent The opponent attacking
+ * @param activeEffects Optional active effects that may modify dodge chance
+ */
+export function calculateDodgeChance(character: Character, opponent: any, activeEffects?: Record<string, any>[]): number {
+  // Base dodge chance based on agility
+  let dodgeChance = getTotalAgility(character, activeEffects) * 1.5; // 1.5% per agility point
+  
+  // Adjust based on level difference
+  const levelDifference = character.level - opponent.level;
+  dodgeChance += levelDifference * 2; // +/-2% per level difference
+  
+  // Apply active effects that modify dodge chance
+  if (activeEffects && activeEffects.length > 0) {
+    activeEffects.forEach(effect => {
+      if (effect.dodge_boost) {
+        dodgeChance += effect.dodge_boost;
+      }
+      
+      if (effect.dodge_reduction) {
+        dodgeChance -= effect.dodge_reduction;
+      }
+      
+      // Immobilize effects prevent dodging
+      if (effect.immobilize) {
+        dodgeChance = 0;
+      }
+    });
+  }
+  
+  // Cap dodge chance between 5% and 40%
+  return Math.min(40, Math.max(5, dodgeChance));
+}
+
+/**
+ * Calculate the chance for an attacker to miss their attack
+ * @param attacker The character or monster attacking
+ * @param defender The character or monster defending
+ * @param attackerEffects Optional active effects on the attacker
+ * @param defenderEffects Optional active effects on the defender
+ */
+export function calculateMissChance(attacker: any, defender: any, attackerEffects?: Record<string, any>[], defenderEffects?: Record<string, any>[]): number {
+  // Base miss chance
+  let missChance = 5; // 5% base miss chance
+  
+  // Defender's agility increases miss chance
+  const defenderAgility = defender.agility || 0;
+  missChance += defenderAgility * 0.5; // +0.5% per agility point
+  
+  // Attacker's luck decreases miss chance
+  const attackerLuck = attacker.luck || 0;
+  missChance -= attackerLuck * 0.5; // -0.5% per luck point
+  
+  // Apply attacker's active effects
+  if (attackerEffects && attackerEffects.length > 0) {
+    attackerEffects.forEach(effect => {
+      if (effect.accuracy_boost) {
+        missChance -= effect.accuracy_boost;
+      }
+      
+      if (effect.accuracy_reduction) {
+        missChance += effect.accuracy_reduction;
+      }
+      
+      // Blind effect significantly increases miss chance
+      if (effect.blind) {
+        missChance += effect.blind;
+      }
+    });
+  }
+  
+  // Apply defender's active effects
+  if (defenderEffects && defenderEffects.length > 0) {
+    defenderEffects.forEach(effect => {
+      if (effect.evasion_boost) {
+        missChance += effect.evasion_boost;
+      }
+    });
+  }
+  
+  // Cap miss chance between 2% and 25%
+  return Math.min(25, Math.max(2, missChance));
+}
+
+/**
+ * Calculate critical hit chance and multiplier
+ * @param character The character potentially landing a critical hit
+ * @param weapon The weapon being used
+ * @param activeEffects Optional active effects that may modify critical chance
+ */
+export function calculateCriticalHit(character: Character, weapon?: Item | null, activeEffects?: Record<string, any>[]): { isCritical: boolean; multiplier: number } {
+  // Base critical chance from luck
+  let critChance = getTotalLuck(character, activeEffects) * 0.5; // 0.5% per luck point
+  let critMultiplier = 1.5; // Default multiplier
+  
+  // Add weapon critical hit bonuses
+  if (weapon?.effects) {
+    const effects = weapon.effects as any;
+    if (effects.critical_hit) {
+      critChance += effects.critical_hit.chance || 0;
+      critMultiplier = effects.critical_hit.multiplier || 1.5;
+    }
+  }
+  
+  // Apply active effects that modify critical chance
+  if (activeEffects && activeEffects.length > 0) {
+    activeEffects.forEach(effect => {
+      if (effect.critical_chance_boost) {
+        critChance += effect.critical_chance_boost;
+      }
+      
+      if (effect.critical_damage_boost) {
+        critMultiplier += effect.critical_damage_boost / 100;
+      }
+    });
+  }
+  
+  // Cap critical chance between 1% and 50%
+  critChance = Math.min(50, Math.max(1, critChance));
+  
+  // Determine if critical hit occurs
+  const roll = Math.random() * 100;
+  const isCritical = roll <= critChance;
+  
+  return {
+    isCritical,
+    multiplier: isCritical ? critMultiplier : 1.0
+  };
+}
+
+/**
+ * Adjust a random roll based on luck
+ * @param character The character making the roll
+ * @param min The minimum possible value
+ * @param max The maximum possible value
+ * @param activeEffects Optional active effects
+ */
+export function luckAdjustedRoll(character: Character, min: number, max: number, activeEffects?: Record<string, any>[]): number {
+  // Generate base random number
+  const baseRoll = Math.floor(Math.random() * (max - min + 1)) + min;
+  
+  // Apply luck bonus (assuming higher is better)
+  const luckBonus = getTotalLuck(character, activeEffects);
+  
+  // Calculate adjusted roll with luck
+  let adjustedRoll = baseRoll + luckBonus;
+  
+  // Cap the roll at the maximum value
+  return Math.min(max, adjustedRoll);
+}
+
+/**
+ * Process active effects at the start of a turn
+ * @param character The character with active effects
+ * @param activeEffects Array of active effects
+ */
+export function processActiveEffects(character: Character, activeEffects: Record<string, any>[]): {
+  remainingEffects: Record<string, any>[];
+  expiredEffects: Record<string, any>[];
+  messages: string[];
+} {
+  const remainingEffects: Record<string, any>[] = [];
+  const expiredEffects: Record<string, any>[] = [];
+  const newMessages: string[] = [];
+  
+  // Process each effect
+  activeEffects.forEach(effect => {
+    // Reduce duration
+    if (effect.duration !== undefined) {
+      effect.duration--;
+      
+      // Check if effect has expired
+      if (effect.duration <= 0) {
+        expiredEffects.push(effect);
+        newMessages.push(`${effect.name} has worn off.`);
+        return;
+      }
+    }
+    
+    // Apply damage over time effects
+    if (effect.damage_over_time) {
+      const dotDamage = effect.damage_over_time;
+      character.current_hitpoints = Math.max(0, character.current_hitpoints - dotDamage);
+      newMessages.push(`${character.name} takes ${dotDamage} damage from ${effect.name}.`);
+    }
+    
+    // Apply healing over time effects
+    if (effect.healing_over_time) {
+      const hotHealing = effect.healing_over_time;
+      character.current_hitpoints = Math.min(character.max_hitpoints, character.current_hitpoints + hotHealing);
+      newMessages.push(`${character.name} heals ${hotHealing} from ${effect.name}.`);
+    }
+    
+    // Keep effect for next turn
+    remainingEffects.push(effect);
+  });
+  
+  return {
+    remainingEffects,
+    expiredEffects,
+    messages: newMessages
+  };
 }

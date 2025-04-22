@@ -6,7 +6,6 @@ import CombatMessagePanel from './CombatMessagePanel';
 import Image from 'next/image';
 import type { Character, Combat } from '@/lib/types';
 import { getTotalMaxHitpoints } from '@/lib/character-utils';
-import { useAudio } from '@/lib/audio-utils';
 
 interface CombatSceneProps {
   character: Character;
@@ -27,15 +26,6 @@ export default function CombatScene({
   areaImage,
   onMonsterInfoClick
 }: CombatSceneProps) {
-  // Get audio utilities
-  const { playSceneMusic } = useAudio();
-  
-  // This still calls playSceneMusic, but our audio-utils implementation now prevents
-  // actually changing the music in global music mode, keeping the main theme playing
-  useEffect(() => {
-    // This will only log in the console but won't change music in global mode
-    playSceneMusic('combat');
-  }, [playSceneMusic]);
 
   // Calculate current monster HP
   const monsterCurrentHp = Math.max(0, combat.monster.hitpoints - combat.character_damage_dealt);

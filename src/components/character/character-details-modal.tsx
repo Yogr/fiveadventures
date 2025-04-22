@@ -6,11 +6,13 @@ import type { Character, Item } from '@/lib/types';
 import ItemView from './item-view';
 import ItemDetailModal from '@/components/ui/item-detail-modal';
 import { getLevelFromExperience, getRequiredExperience } from '@/lib/utils';
+import { STAT_ICONS, STAT_COLORS, STAT_NAMES } from '@/lib/stat-icons';
 import { 
   getTotalStrength, 
   getTotalIntelligence, 
   getTotalAgility, 
   getTotalLuck,
+  getTotalWisdom,
   getTotalMaxHitpoints,
   getTotalMaxEnergy,
   calculateTotalDamage,
@@ -133,8 +135,11 @@ export default function CharacterDetailsModal({
               <div className="w-1/2 pl-2 flex flex-col justify-center">
                 <div className="space-y-1 text-xs">
                   <div className="bg-amber-900 p-1.5 rounded-md">
-                    <div className="flex justify-between">
-                      <span className="text-amber-200">STR</span>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center text-red-400">
+                        <STAT_ICONS.strength className="mr-1 text-sm" />
+                        <span className="text-amber-200">STR</span>
+                      </div>
                       <span className="text-red-400">
                         {getTotalStrength(character)}
                         {getTotalStrength(character) > character.strength && (
@@ -147,8 +152,11 @@ export default function CharacterDetailsModal({
                   </div>
                   
                   <div className="bg-amber-900 p-1.5 rounded-md">
-                    <div className="flex justify-between">
-                      <span className="text-amber-200">INT</span>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center text-blue-400">
+                        <STAT_ICONS.intelligence className="mr-1 text-sm" />
+                        <span className="text-amber-200">INT</span>
+                      </div>
                       <span className="text-blue-400">
                         {getTotalIntelligence(character)}
                         {getTotalIntelligence(character) > character.intelligence && (
@@ -161,9 +169,29 @@ export default function CharacterDetailsModal({
                   </div>
                   
                   <div className="bg-amber-900 p-1.5 rounded-md">
-                    <div className="flex justify-between">
-                      <span className="text-amber-200">AGI</span>
-                      <span className="text-green-400">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center text-purple-400">
+                        <STAT_ICONS.wisdom className="mr-1 text-sm" />
+                        <span className="text-amber-200">WIS</span>
+                      </div>
+                      <span className="text-purple-400">
+                        {getTotalWisdom(character)}
+                        {getTotalWisdom(character) > character.wisdom && (
+                          <span className="text-green-400 text-xs ml-1">
+                            (+{getTotalWisdom(character) - character.wisdom})
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-amber-900 p-1.5 rounded-md">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center text-yellow-400">
+                        <STAT_ICONS.agility className="mr-1 text-sm" />
+                        <span className="text-amber-200">AGI</span>
+                      </div>
+                      <span className="text-yellow-400">
                         {getTotalAgility(character)}
                         {getTotalAgility(character) > character.agility && (
                           <span className="text-green-400 text-xs ml-1">
@@ -175,9 +203,12 @@ export default function CharacterDetailsModal({
                   </div>
                   
                   <div className="bg-amber-900 p-1.5 rounded-md">
-                    <div className="flex justify-between">
-                      <span className="text-amber-200">LCK</span>
-                      <span className="text-yellow-400">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center text-green-400">
+                        <STAT_ICONS.luck className="mr-1 text-sm" />
+                        <span className="text-amber-200">LCK</span>
+                      </div>
+                      <span className="text-green-400">
                         {getTotalLuck(character)}
                         {getTotalLuck(character) > character.luck && (
                           <span className="text-green-400 text-xs ml-1">
@@ -348,8 +379,11 @@ export default function CharacterDetailsModal({
             <div className="w-1/3 pl-3 flex flex-col justify-center">
               <div className="space-y-2 text-sm">
                 <div className="bg-amber-900 p-2 rounded-md">
-                  <div className="flex justify-between">
-                    <span className="text-amber-200">STR</span>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center text-red-400">
+                      <STAT_ICONS.strength className="mr-1 text-sm" />
+                      <span className="text-amber-200">STR</span>
+                    </div>
                     <span className="text-red-400">
                       {getTotalStrength(character)}
                       {getTotalStrength(character) > character.strength && (
@@ -362,8 +396,11 @@ export default function CharacterDetailsModal({
                 </div>
                 
                 <div className="bg-amber-900 p-2 rounded-md">
-                  <div className="flex justify-between">
-                    <span className="text-amber-200">INT</span>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center text-blue-400">
+                      <STAT_ICONS.intelligence className="mr-1 text-sm" />
+                      <span className="text-amber-200">INT</span>
+                    </div>
                     <span className="text-blue-400">
                       {getTotalIntelligence(character)}
                       {getTotalIntelligence(character) > character.intelligence && (
@@ -376,9 +413,29 @@ export default function CharacterDetailsModal({
                 </div>
                 
                 <div className="bg-amber-900 p-2 rounded-md">
-                  <div className="flex justify-between">
-                    <span className="text-amber-200">AGI</span>
-                    <span className="text-green-400">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center text-purple-400">
+                      <STAT_ICONS.wisdom className="mr-1 text-sm" />
+                      <span className="text-amber-200">WIS</span>
+                    </div>
+                    <span className="text-purple-400">
+                      {getTotalWisdom(character)}
+                      {getTotalWisdom(character) > character.wisdom && (
+                        <span className="text-green-400 text-xs ml-1">
+                          (+{getTotalWisdom(character) - character.wisdom})
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="bg-amber-900 p-2 rounded-md">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center text-yellow-400">
+                      <STAT_ICONS.agility className="mr-1 text-sm" />
+                      <span className="text-amber-200">AGI</span>
+                    </div>
+                    <span className="text-yellow-400">
                       {getTotalAgility(character)}
                       {getTotalAgility(character) > character.agility && (
                         <span className="text-green-400 text-xs ml-1">
@@ -390,9 +447,12 @@ export default function CharacterDetailsModal({
                 </div>
                 
                 <div className="bg-amber-900 p-2 rounded-md">
-                  <div className="flex justify-between">
-                    <span className="text-amber-200">LCK</span>
-                    <span className="text-yellow-400">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center text-green-400">
+                      <STAT_ICONS.luck className="mr-1 text-sm" />
+                      <span className="text-amber-200">LCK</span>
+                    </div>
+                    <span className="text-green-400">
                       {getTotalLuck(character)}
                       {getTotalLuck(character) > character.luck && (
                         <span className="text-green-400 text-xs ml-1">

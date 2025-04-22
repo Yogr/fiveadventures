@@ -13,6 +13,10 @@
     "seed:worldboss": "node scripts/seed-data.js worldboss ./data/worldboss.json ./data/worldboss-rewards.json",
     "seed:monsters": "node scripts/seed-data.js monsters ./data/monsters.json",
     "seed:elite-monsters": "node scripts/seed-data.js monsters ./data/monsters.json ./data/elite-monsters.json",
+    "seed:area:enchanted-forest": "node scripts/seed-data.js adventures ./data/adventures/enchanted-forest/adventures.json",
+    "seed:monster:enchanted-forest": "node scripts/seed-data.js monsters ./data/monsters/enchanted-forest/monsters.json ./data/monsters/enchanted-forest/elite-monsters.json",
+    "seed:rewards:enchanted-forest": "node scripts/seed-data.js rewardtables ./data/monsters/enchanted-forest/rewardtables.json",
+    "seed:enchanted-forest": "npm run seed:rewards:enchanted-forest && npm run seed:monster:enchanted-forest && npm run seed:area:enchanted-forest",
     "seed:all": "node scripts/seed-data.js all ./data",
     "db:update-monsters": "node scripts/update-monsters-table.js"
   },

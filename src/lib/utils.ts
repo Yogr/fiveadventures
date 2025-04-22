@@ -11,6 +11,7 @@ export const CLASS_BASE_STATS = {
     intelligence: 3,
     agility: 6,
     luck: 5,
+    wisdom: 4,
     hitpoints: 100,
     energy: 50
   },
@@ -19,6 +20,7 @@ export const CLASS_BASE_STATS = {
     intelligence: 10,
     agility: 5,
     luck: 6,
+    wisdom: 7,
     hitpoints: 70,
     energy: 100
   },
@@ -27,6 +29,7 @@ export const CLASS_BASE_STATS = {
     intelligence: 6,
     agility: 8,
     luck: 10,
+    wisdom: 5,
     hitpoints: 80,
     energy: 70
   },
@@ -35,6 +38,7 @@ export const CLASS_BASE_STATS = {
     intelligence: 6,
     agility: 10,
     luck: 6,
+    wisdom: 6,
     hitpoints: 85,
     energy: 80
   },
@@ -43,6 +47,7 @@ export const CLASS_BASE_STATS = {
     intelligence: 8,
     agility: 4,
     luck: 7,
+    wisdom: 10,
     hitpoints: 90,
     energy: 90
   }
@@ -55,6 +60,7 @@ export const CLASS_STAT_GROWTH = {
     intelligence: 0.3,
     agility: 1,
     luck: 0.5,
+    wisdom: 0.4,
     hitpoints: 10,
     energy: 3
   },
@@ -63,6 +69,7 @@ export const CLASS_STAT_GROWTH = {
     intelligence: 2,
     agility: 0.5,
     luck: 1,
+    wisdom: 1.2,
     hitpoints: 5,
     energy: 8
   },
@@ -71,6 +78,7 @@ export const CLASS_STAT_GROWTH = {
     intelligence: 0.7,
     agility: 1.5,
     luck: 2,
+    wisdom: 0.8,
     hitpoints: 7,
     energy: 5
   },
@@ -79,6 +87,7 @@ export const CLASS_STAT_GROWTH = {
     intelligence: 1,
     agility: 2,
     luck: 1,
+    wisdom: 1,
     hitpoints: 8,
     energy: 6
   },
@@ -87,6 +96,7 @@ export const CLASS_STAT_GROWTH = {
     intelligence: 1.5,
     agility: 0.5,
     luck: 1.2,
+    wisdom: 2,
     hitpoints: 9,
     energy: 7
   }
@@ -168,13 +178,13 @@ export const generateAdventureSeed = (characterId: string, day: number, adventur
 };
 
 // Get primary stat based on character class
-export const getPrimaryStat = (character: { class: string, strength: number, intelligence: number, agility: number, luck: number }): number => {
+export const getPrimaryStat = (character: { class: string, strength: number, intelligence: number, agility: number, luck: number, wisdom: number }): number => {
   switch(character.class) {
     case 'Warrior': return character.strength;
     case 'Wizard': return character.intelligence;
     case 'Thief': return character.luck;
     case 'Ranger': return character.agility;
-    case 'Cleric': return character.intelligence;
+    case 'Cleric': return character.wisdom;
     default: return character.strength; // Fallback
   }
 };
@@ -334,7 +344,8 @@ export const getLevelUpRewards = (
   strength: number; 
   intelligence: number; 
   agility: number; 
-  luck: number; 
+  luck: number;
+  wisdom: number; 
   max_hitpoints: number; 
   max_energy: number;
 } => {
@@ -347,6 +358,7 @@ export const getLevelUpRewards = (
     intelligence: Math.floor(statGrowth.intelligence * levelsGained),
     agility: Math.floor(statGrowth.agility * levelsGained),
     luck: Math.floor(statGrowth.luck * levelsGained),
+    wisdom: Math.floor(statGrowth.wisdom * levelsGained),
     max_hitpoints: Math.floor(statGrowth.hitpoints * levelsGained),
     max_energy: Math.floor(statGrowth.energy * levelsGained)
   };

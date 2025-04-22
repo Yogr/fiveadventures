@@ -36,8 +36,8 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session if expired - required for Server Components
-  const { data: { session } } = await supabase.auth.getSession()
+  // Refresh session if expired and get user info - required for Server Components
+  const { data: { user } } = await supabase.auth.getUser()
 
   // Handle character creation - if the URL contains a characterId query param,
   // set it as a cookie for future requests
@@ -54,7 +54,7 @@ export async function middleware(request: NextRequest) {
     })
 
     // If user is authenticated, link the character to the user
-    if (session?.user?.id) {
+    if (user?.id) {
       // We can't directly call server actions from middleware,
       // so we'll add a header to indicate that this character
       // should be linked to the user

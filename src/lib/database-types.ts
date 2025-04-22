@@ -52,6 +52,7 @@ export interface Database {
           intelligence: number
           agility: number
           luck: number
+          wisdom: number
           max_hitpoints: number
           current_hitpoints: number
           max_energy: number
@@ -74,6 +75,7 @@ export interface Database {
           intelligence?: number
           agility?: number
           luck?: number
+          wisdom?: number
           max_hitpoints?: number
           current_hitpoints?: number
           max_energy?: number
@@ -97,6 +99,7 @@ export interface Database {
           intelligence?: number
           agility?: number
           luck?: number
+          wisdom?: number
           max_hitpoints?: number
           current_hitpoints?: number
           max_energy?: number
@@ -383,6 +386,9 @@ export interface Database {
           image_url: string | null
           is_elite?: boolean
           base_monster_id?: number | null
+          reward_table?: number
+          is_boss?: boolean
+          rare_item_chance?: number
           created_at: string
         }
         Insert: {
@@ -400,6 +406,9 @@ export interface Database {
           image_url?: string | null
           is_elite?: boolean
           base_monster_id?: number | null
+          reward_table?: number
+          is_boss?: boolean
+          rare_item_chance?: number
           created_at?: string
         }
         Update: {
@@ -417,6 +426,9 @@ export interface Database {
           image_url?: string | null
           is_elite?: boolean
           base_monster_id?: number | null
+          reward_table?: number
+          is_boss?: boolean
+          rare_item_chance?: number
           created_at?: string
         }
         Relationships: []

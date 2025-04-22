@@ -87,14 +87,14 @@ export function SoundProvider({
 
   // Play a sound effect
   const playSoundEffect = useCallback((soundName: string) => {
-    console.log(`Playing sound effect: ${soundName}`);
+    //console.log(`Playing sound effect: ${soundName}`);
     if (!soundEnabled) return;
     
     const sound = getSoundEffect(soundName);
-    console.log(`Sound effect instance:`, sound);
+    //console.log(`Sound effect instance:`, sound);
     if (sound) {
       sound.play();
-      console.log(`Sound effect "${soundName}" played`);
+      //console.log(`Sound effect "${soundName}" played`);
     }
   }, [soundEnabled, getSoundEffect]);
 

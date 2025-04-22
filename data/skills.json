@@ -200,7 +200,7 @@
     "energy_cost": 25,
     "cooldown": 3,
     "level_required": 1,
-    "attribute": "intelligence",
+    "attribute": "wisdom",
     "power": 30,
     "effects": {
       "healing": 30
@@ -215,7 +215,7 @@
     "energy_cost": 20,
     "cooldown": 2,
     "level_required": 5,
-    "attribute": "intelligence",
+    "attribute": "wisdom",
     "power": 15,
     "effects": {
       "damage": 15,
@@ -231,7 +231,7 @@
     "energy_cost": 30,
     "cooldown": 5,
     "level_required": 10,
-    "attribute": "intelligence",
+    "attribute": "wisdom",
     "power": 25,
     "effects": {
       "shield": 25,

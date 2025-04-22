@@ -30,7 +30,7 @@ export function GlobalMusicPlayer() {
           
           // Try to play music if enabled
           if (musicEnabled && (!currentTrack || currentTrack !== 'mainTheme')) {
-            console.log('Playing main theme after context resume');
+            //console.log('Playing main theme after context resume');
             // Temporarily disabling music for now.
             //playMusic('mainTheme');
           }

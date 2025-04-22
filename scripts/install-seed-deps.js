@@ -31,6 +31,15 @@ try {
   execSync('npm install @supabase/supabase-js', { stdio: 'inherit' });
 }
 
+// Check if glob is installed
+try {
+  require.resolve('glob');
+  console.log('✅ glob is already installed');
+} catch (e) {
+  console.log('Installing glob...');
+  execSync('npm install glob', { stdio: 'inherit' });
+}
+
 // Create data directory if it doesn't exist
 const dataDir = path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) {
