@@ -19,16 +19,20 @@ const SoundContext = createContext<SoundContextType>({
   playSoundEffect: () => {},
 });
 
-// Define sound effects mapping - these will be placeholders until actual files are provided
+// Define sound effects mapping using the actually available sound files
 const SOUND_EFFECTS: Record<string, string> = {
-  // Examples - these paths don't exist yet, but will be replaced with actual sound files
+  // Map to actual files in public/sounds directory
   attack: '/sounds/attack.mp3',
-  levelUp: '/sounds/level-up.mp3',
   click: '/sounds/click.mp3',
-  reward: '/sounds/reward.mp3',
-  victory: '/sounds/victory.mp3',
-  defeat: '/sounds/defeat.mp3',
-  // Add more sound effects as needed
+  fireball: '/sounds/fireball.mp3',
+  openInventory: '/sounds/open_inventory.mp3',
+  splat: '/sounds/splat.mp3',
+  
+  // Map missing sounds to existing ones as fallbacks
+  levelUp: '/sounds/click.mp3',      // Using click as fallback
+  reward: '/sounds/open_inventory.mp3', // Using open_inventory as fallback
+  victory: '/sounds/fireball.mp3',   // Using fireball as fallback
+  defeat: '/sounds/splat.mp3',       // Using splat as fallback
 };
 
 export function SoundProvider({ 
@@ -64,10 +68,17 @@ export function SoundProvider({
     }
 
     if (!soundHowls.current[soundName]) {
+      console.log(`Creating new Howl instance for sound: ${soundName}`);
       soundHowls.current[soundName] = new Howl({
         src: [SOUND_EFFECTS[soundName]],
         volume: 0.5,
-        preload: false, // Don't preload until needed
+        preload: true,
+        html5: true,
+        onload: () => console.log(`Sound effect loaded: ${soundName}`),
+        onloaderror: (id, error) => console.error(`Error loading sound ${soundName}:`, error),
+        onplayerror: (id, error) => console.error(`Error playing sound ${soundName}:`, error),
+        onplay: () => console.log(`Sound effect started playing: ${soundName}`),
+        onend: () => console.log(`Sound effect ended: ${soundName}`),
       });
     }
 
@@ -76,11 +87,14 @@ export function SoundProvider({
 
   // Play a sound effect
   const playSoundEffect = useCallback((soundName: string) => {
+    console.log(`Playing sound effect: ${soundName}`);
     if (!soundEnabled) return;
     
     const sound = getSoundEffect(soundName);
+    console.log(`Sound effect instance:`, sound);
     if (sound) {
       sound.play();
+      console.log(`Sound effect "${soundName}" played`);
     }
   }, [soundEnabled, getSoundEffect]);
 

@@ -11,6 +11,31 @@ The audio system consists of two main components:
 
 Both systems have their own toggle controls and settings that are saved to the user's profile in the database. These settings are debounced to prevent excessive database writes.
 
+## Global Music Mode
+
+As of the latest update, the game uses a "Global Music Mode" which plays a single main theme track throughout the entire application. This provides a consistent musical experience across all pages and prevents music interruptions during navigation.
+
+Key features:
+- The main theme plays throughout the application (persisting across page navigations)
+- Music only starts after user interaction due to browser autoplay policies
+- Individual components still request their scene-specific music, but these requests are intercepted and logged (without actually changing the music)
+- This design preserves the ability to add scene-specific music in the future
+
+The `GlobalMusicPlayer` component is responsible for playing the main theme when:
+- The app loads and the user has music enabled (after initial user interaction)
+- The user toggles music on via the controls
+
+### Browser Autoplay Policies
+
+All modern browsers have strict autoplay policies that prevent audio from playing without user interaction. Our implementation addresses this by:
+
+1. Setting up event listeners for user interactions (clicks, touches, keypresses)
+2. Unlocking the audio context on first interaction
+3. Only attempting to play music after this unlocking has occurred
+4. Providing detailed console logs to track the audio state
+
+The SoundControls component also tracks user interaction and attempts to play music after the user toggles the music control, ensuring the browser allows audio playback.
+
 ## File Structure
 
 The audio system consists of the following files:

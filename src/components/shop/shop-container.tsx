@@ -29,10 +29,11 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
   // Get audio utilities
   const { playSceneMusic } = useAudio();
   
-  // Play shop music when component mounts
+  // This still calls playSceneMusic, but our audio-utils implementation now prevents
+  // actually changing the music in global music mode, keeping the main theme playing
   useEffect(() => {
+    // This will only log in the console but won't change music in global mode
     playSceneMusic('shop');
-    // No cleanup needed as music will be changed by the next scene
   }, [playSceneMusic]);
   
   // Check if an item is equipped

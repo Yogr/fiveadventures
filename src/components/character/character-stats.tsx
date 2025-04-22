@@ -9,6 +9,7 @@ import { getTotalMaxHitpoints, getTotalMaxEnergy } from '@/lib/character-utils';
 import AdventureTracker from '@/components/adventure/adventure-tracker';
 import CharacterDetailsModal from './character-details-modal';
 import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
+import { useAudio } from '@/lib/audio-utils';
 
 interface CharacterStatsProps {
   character: Character;
@@ -16,6 +17,8 @@ interface CharacterStatsProps {
 
 export default function CharacterStats({ character }: CharacterStatsProps) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+
+  const { playInventoryOpenSound } = useAudio(); // Assuming you have a custom hook for audio
   
   const level = getLevelFromExperience(character.experience);
   const nextLevelExp = getRequiredExperience(level + 1);
@@ -125,7 +128,7 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
           
           {/* Inventory button */}
           <button 
-            onClick={() => setShowDetailsModal(true)}
+            onClick={() => { playInventoryOpenSound(); setShowDetailsModal(true) }}
             className="h-12  w-12 flex items-center justify-center self-center"
             aria-label="Inventory"
           >

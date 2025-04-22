@@ -69,11 +69,19 @@ export function MusicProvider({
     }
 
     if (!musicHowls.current[trackName]) {
+      console.log(`Creating new Howl instance for: ${trackName}`);
       musicHowls.current[trackName] = new Howl({
         src: [MUSIC_TRACKS[trackName]],
-        volume: 0.3,
+        volume: 0.15,
         loop: true,
-        preload: false, // Don't preload until needed
+        preload: true, // Preload audio to ensure it's ready
+        html5: true,   // Use HTML5 Audio for better handling of larger files
+        onload: () => console.log(`Music successfully loaded: ${trackName}`),
+        onloaderror: (id, error) => console.error(`Error loading music ${trackName}:`, error),
+        onplayerror: (id, error) => console.error(`Error playing music ${trackName}:`, error),
+        onplay: () => console.log(`Music started playing: ${trackName}`),
+        onstop: () => console.log(`Music stopped: ${trackName}`),
+        onend: () => console.log(`Music ended: ${trackName}`),
       });
     }
 
@@ -82,6 +90,7 @@ export function MusicProvider({
 
   // Play a music track
   const playMusic = useCallback((trackName: string) => {
+    console.log(`Playing music: ${trackName}, enabled: ${musicEnabled}`);
     if (!musicEnabled) return;
     
     // Stop current track if any
@@ -90,7 +99,9 @@ export function MusicProvider({
     }
     
     const music = getMusicTrack(trackName);
+    console.log(`Music track loaded: ${music}`);
     if (music) {
+      console.log(`Playing music: ${trackName}`);
       music.play();
       currentHowl.current = music;
       setCurrentTrack(trackName);

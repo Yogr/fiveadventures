@@ -7,9 +7,7 @@ Bugs
 ----------
 Stone Golem no rewards
 Bandit Leader no rewards
-Skill buttons have a 2nd button that needs to be clicked. remove it so just clicking the skill button immediately activates the skill
-Level up shows empty stat gains
-Buffs dont tick down per turn or go away - should they persist between adventure combats?
+Death blows should not allow monsters to return attack
 
 
 
@@ -17,6 +15,16 @@ Todo
 -------------
 - Add images to the adventure tracker
 - Animate the adventure tracker
+- Leaderboards
+  - Daily Cron Job to calculate all character gear scores
+- Guilds
+- 'Order of the 7' subscription - $4.99
+  - Monthly delivery of 10,000 gold, 20 dungeon keys, removes ads, currency X
+- 'Hero Packs'
+  - $1.99: 2000 gold, 5 dungeon keys, removes ads for 1 month, 10 currency X
+  - $3.99: 4200 gold, 11 dungeon keys, removes ads for 1 month, 25 currency X
+  - $9.99: 
+  - $19.99: 
 
 
 - Create the various platform apps and actually hook up full auth stuff

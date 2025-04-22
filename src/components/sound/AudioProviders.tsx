@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import { SoundProvider } from './SoundContext';
 import { MusicProvider } from './MusicContext';
 import { SoundControls } from './SoundControls';
+import { GlobalMusicPlayer } from './GlobalMusicPlayer';
+import AudioTestButton from './AudioTestButton';
 
 type AudioProvidersProps = {
   children: ReactNode;
@@ -20,10 +22,7 @@ export function AudioProviders({
 }: AudioProvidersProps) {
   return (
     <SoundProvider userId={userId} initialSoundEnabled={initialSoundEnabled}>
-      <MusicProvider userId={userId} initialMusicEnabled={initialMusicEnabled}>
         {children}
-        <SoundControls />
-      </MusicProvider>
     </SoundProvider>
   );
 }

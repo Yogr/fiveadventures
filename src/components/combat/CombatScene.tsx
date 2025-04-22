@@ -30,10 +30,11 @@ export default function CombatScene({
   // Get audio utilities
   const { playSceneMusic } = useAudio();
   
-  // Play combat music when component mounts
+  // This still calls playSceneMusic, but our audio-utils implementation now prevents
+  // actually changing the music in global music mode, keeping the main theme playing
   useEffect(() => {
+    // This will only log in the console but won't change music in global mode
     playSceneMusic('combat');
-    // No cleanup needed as music will be changed by the next scene
   }, [playSceneMusic]);
 
   // Calculate current monster HP

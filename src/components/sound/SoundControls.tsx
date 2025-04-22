@@ -4,17 +4,25 @@ import { useSound } from './SoundContext';
 import { useMusic } from './MusicContext';
 import { LuVolume2, LuVolumeX } from 'react-icons/lu';
 import { LuMusic, LuMusic2 } from 'react-icons/lu';
+import { useEffect, useRef } from 'react';
 
 export function SoundControls() {
   const { soundEnabled, setSoundEnabled, playSoundEffect } = useSound();
-  const { musicEnabled, setMusicEnabled } = useMusic();
+  const { musicEnabled, setMusicEnabled, playMusic } = useMusic();
+  const userInteractedRef = useRef(false);
+  
+  // Remove this effect to prevent double-playing of music
+  // The GlobalMusicPlayer component will handle playing music when it's enabled
 
   const handleSoundToggle = () => {
-    playSoundEffect('click');
+    console.log('Sound toggle clicked');
+    userInteractedRef.current = true;
+
     setSoundEnabled(!soundEnabled);
   };
 
   const handleMusicToggle = () => {
+    userInteractedRef.current = true;
     if (soundEnabled) {
       playSoundEffect('click');
     }

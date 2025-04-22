@@ -34,6 +34,9 @@ export default function ActionButton({
     if (isSkill) {
       // For skills, we could use a specific skill sound in the future
       playCombatSound('attack');
+    } else if (label === 'Attack') {
+      // For attack button, play a different sound
+      playCombatSound('attack');
     } else {
       // For regular buttons like attack or flee
       playUISound();
