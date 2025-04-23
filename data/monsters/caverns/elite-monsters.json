@@ -1,0 +1,260 @@
+[
+  {
+    "id": 301,
+    "name": "Vampiric Bat Lord",
+    "description": "A massive, intelligent bat that has evolved the ability to drain life energy from its prey. Its wingspan casts a terrifying shadow across the cavern walls.",
+    "hitpoints": 70,
+    "attack": 12,
+    "defense": 6,
+    "experience_reward": 70,
+    "gold_reward": 45,
+    "difficulty": 4,
+    "attack_type": "Physical",
+    "abilities": {
+      "life_drain": {
+        "damage": 10,
+        "heal": 10,
+        "chance": 30,
+        "description": "Drains life energy, healing itself for the same amount"
+      },
+      "supersonic_wave": {
+        "damage": 8,
+        "stun_chance": 25,
+        "chance": 20,
+        "description": "Emits a powerful sonic wave that causes disorientation and damage"
+      },
+      "bat_swarm": {
+        "summon": true,
+        "chance": 15,
+        "description": "Calls a swarm of smaller bats to assist in battle"
+      }
+    },
+    "image_url": "vampiric_bat",
+    "is_elite": true,
+    "base_monster_id": 201,
+    "reward_table": 203,
+    "rare_item_chance": 15
+  },
+  {
+    "id": 302,
+    "name": "Plague Rat Alpha",
+    "description": "The diseased leader of the cave rat packs. Its fur is matted with a glowing green substance, and pustules on its skin burst with toxic gas.",
+    "hitpoints": 65,
+    "attack": 13,
+    "defense": 5,
+    "experience_reward": 65,
+    "gold_reward": 50,
+    "difficulty": 4,
+    "attack_type": "Physical",
+    "abilities": {
+      "virulent_bite": {
+        "damage": 8,
+        "damage_over_time": 4,
+        "duration": 4,
+        "chance": 30,
+        "description": "A diseased bite that causes severe ongoing damage"
+      },
+      "plague_cloud": {
+        "damage": 6,
+        "accuracy_reduction": 20,
+        "chance": 20,
+        "description": "Releases a cloud of toxic spores that damage and reduce accuracy"
+      },
+      "rat_call": {
+        "summon": true,
+        "chance": 15,
+        "description": "Calls lesser rats to join the fight"
+      }
+    },
+    "image_url": "plague_rat",
+    "is_elite": true,
+    "base_monster_id": 202,
+    "reward_table": 203,
+    "rare_item_chance": 15
+  },
+  {
+    "id": 303,
+    "name": "Prismatic Crystal Weaver",
+    "description": "A giant crystal spider whose body is composed of multicolored crystal segments. It can manipulate light and refract energy through its crystalline body.",
+    "hitpoints": 80,
+    "attack": 15,
+    "defense": 10,
+    "experience_reward": 85,
+    "gold_reward": 65,
+    "difficulty": 5,
+    "attack_type": "Magical",
+    "abilities": {
+      "prismatic_beam": {
+        "damage": 15,
+        "elemental": {
+          "type": "random",
+          "description": "Randomly uses fire, ice, or lightning damage"
+        },
+        "chance": 25,
+        "description": "Focuses light through its body to create a powerful elemental beam"
+      },
+      "crystal_prison": {
+        "immobilize": 2,
+        "chance": 20,
+        "description": "Encases victims in crystal, preventing movement for longer"
+      },
+      "refraction": {
+        "dodge_chance": 30,
+        "chance": 15,
+        "description": "Bends light around its body, becoming difficult to target"
+      }
+    },
+    "image_url": "crystal_weaver",
+    "is_elite": true,
+    "base_monster_id": 204,
+    "reward_table": 204,
+    "rare_item_chance": 20
+  },
+  {
+    "id": 304,
+    "name": "Kobold Geomancer",
+    "description": "A powerful kobold shaman who has learned to harness the magical energies of the crystals in the caverns. Wears elaborate crystal jewelry that amplifies its powers.",
+    "hitpoints": 70,
+    "attack": 14,
+    "defense": 8,
+    "experience_reward": 75,
+    "gold_reward": 60,
+    "difficulty": 4,
+    "attack_type": "Magical",
+    "abilities": {
+      "earth_spike": {
+        "damage": 12,
+        "chance": 25,
+        "description": "Causes sharp stone spikes to erupt from the ground"
+      },
+      "crystal_ward": {
+        "defense_boost": 4,
+        "chance": 20,
+        "description": "Creates a protective barrier of crystal shards"
+      },
+      "stone_skin": {
+        "defense_boost": 6,
+        "duration": 3,
+        "chance": 15,
+        "description": "Temporarily turns skin to stone, greatly increasing defense"
+      }
+    },
+    "image_url": "kobold_geomancer",
+    "is_elite": true,
+    "base_monster_id": 205,
+    "reward_table": 204,
+    "rare_item_chance": 18
+  },
+  {
+    "id": 305,
+    "name": "Ancient Rockjaw",
+    "description": "A colossal rock crawler that has lived for centuries in the deepest parts of the caverns. Its carapace has fused with various minerals, making it incredibly durable.",
+    "hitpoints": 100,
+    "attack": 16,
+    "defense": 14,
+    "experience_reward": 90,
+    "gold_reward": 70,
+    "difficulty": 5,
+    "attack_type": "Physical",
+    "abilities": {
+      "boulder_crush": {
+        "damage": 18,
+        "armor_penetration": 5,
+        "chance": 25,
+        "description": "A devastating attack that ignores a portion of armor"
+      },
+      "seismic_slam": {
+        "damage": 10,
+        "stun_chance": 30,
+        "chance": 20,
+        "description": "Slams into the ground, causing a small earthquake that can stun"
+      },
+      "diamond_shell": {
+        "damage_reduction": 50,
+        "duration": 2,
+        "chance": 15,
+        "description": "Hardens its shell to an incredible degree, reducing all incoming damage"
+      }
+    },
+    "image_url": "ancient_rockjaw",
+    "is_elite": true,
+    "base_monster_id": 207,
+    "reward_table": 204,
+    "rare_item_chance": 20
+  },
+  {
+    "id": 306,
+    "name": "The Mycelium Mind",
+    "description": "An enormous, sentient fungal colony that has developed a hive consciousness and absorbed the memories of its victims through spores that infect the brain.",
+    "hitpoints": 85,
+    "attack": 13,
+    "defense": 12,
+    "experience_reward": 85,
+    "gold_reward": 55,
+    "difficulty": 5,
+    "attack_type": "Magical",
+    "abilities": {
+      "memory_theft": {
+        "damage": 10,
+        "energy_drain": 15,
+        "chance": 25,
+        "description": "Absorbs memories, causing mental damage and draining energy"
+      },
+      "hallucinogenic_spores": {
+        "confusion": 2,
+        "chance": 20,
+        "description": "Releases spores that cause hallucinations and confusion"
+      },
+      "fungal_puppets": {
+        "summon": true,
+        "chance": 15,
+        "description": "Animates fungal growths in the shape of previous victims"
+      }
+    },
+    "image_url": "mycelium_mind",
+    "is_elite": true,
+    "base_monster_id": 206,
+    "reward_table": 204,
+    "rare_item_chance": 18
+  },
+  {
+    "id": 307,
+    "name": "Crystallos, The Living Geode",
+    "description": "A massive, sentient crystal formation that has absorbed magical energies over millennia. Its hollow center contains a swirling vortex of arcane energy that occasionally discharges with devastating effect.",
+    "hitpoints": 150,
+    "attack": 20,
+    "defense": 18,
+    "experience_reward": 120,
+    "gold_reward": 100,
+    "difficulty": 7,
+    "attack_type": "Magical",
+    "abilities": {
+      "crystal_nova": {
+        "damage": 25,
+        "chance": 25,
+        "description": "Releases a devastating burst of crystal shards in all directions"
+      },
+      "arcane_overload": {
+        "damage": 20,
+        "stun_chance": 40,
+        "chance": 15,
+        "description": "Channels excess magical energy into a concentrated beam"
+      },
+      "crystal_regeneration": {
+        "heal": 15,
+        "chance": 20,
+        "description": "Rapidly grows new crystal formations to repair damage"
+      },
+      "crystal_reflection": {
+        "reflect_damage": 30,
+        "chance": 15,
+        "description": "Creates a crystalline mirror that reflects a portion of damage back to attacker"
+      }
+    },
+    "image_url": "crystallos",
+    "is_elite": true,
+    "is_boss": true,
+    "reward_table": 205,
+    "rare_item_chance": 40
+  }
+]

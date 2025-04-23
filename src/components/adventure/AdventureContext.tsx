@@ -546,7 +546,8 @@ export function AdventureProvider({
           stat_requirements: null,
           reward_table_id: null,
           success_rate_formula: null,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          is_success: false
         }
       });
     } else if (result.isVictory) {
@@ -568,7 +569,8 @@ export function AdventureProvider({
           stat_requirements: null,
           reward_table_id: null,
           success_rate_formula: null,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          is_success: true
         }
       });
     }

@@ -111,6 +111,7 @@ export type AdventureDecision = Database['public']['Tables']['adventure_decision
 export type AdventureOutcome = Database['public']['Tables']['adventure_outcomes']['Row'] & {
   reward_table?: RewardTable | null;
   monsters?: Monster[] | null;
+  is_success?: boolean; // Whether this outcome is a success or failure
 };
 
 export type CharacterAdventure = Database['public']['Tables']['character_adventures']['Row'] & {

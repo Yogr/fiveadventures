@@ -637,5 +637,383 @@
         ]
       }
     ]
-  }
+  },
+  {
+    "title": "The Lost Trail",
+    "description": "You've wandered off the main path and find yourself on an overgrown trail that doesn't appear on any map. The forest seems different here - older and wilder.",
+    "min_experience": 25,
+    "min_gold": 15,
+    "is_violent": true,
+    "image_url": "forest_path",
+    "area_id": 1,
+    "decisions": [
+      {
+        "description": "Follow the trail deeper into the forest",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 85,
+        "outcomes": [
+          {
+            "description": "The winding trail leads you to an abandoned hunter's camp with supplies still intact. You gather useful items and make your way back to familiar territory.",
+            "experience_bonus": 25,
+            "gold_bonus": 20,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "energy_change": 5,
+            "is_success": true
+          },
+          {
+            "description": "The trail leads you into a goblin hunting party's territory. One of the scouts spots you!",
+            "experience_bonus": 15,
+            "gold_bonus": 10,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [2],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Climb a tall tree to get your bearings",
+        "type": "skill",
+        "requirements": null,
+        "icon": "agility",
+        "stat_check": "agility",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Your climbing skills serve you well. From the treetop, you spot a shortcut back to the main path and something glinting in a nearby thicket.",
+            "experience_bonus": 30,
+            "gold_bonus": 25,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "is_success": true
+          },
+          {
+            "description": "Halfway up, you slip and tumble down, scraping yourself on branches. As you collect yourself, a wolf emerges from the underbrush, drawn by the commotion.",
+            "experience_bonus": 10,
+            "gold_bonus": 0,
+            "hitpoints_change": -10,
+            "has_combat": true,
+            "monster_ids": [1],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Track wildlife to find a way back to the main forest paths",
+        "type": "premium",
+        "requirements": {
+          "wisdom": 12
+        },
+        "mastery": {
+          "stat": "wisdom",
+          "value": 20
+        },
+        "icon": "wisdom",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "Your keen observation of animal trails and forest signs leads you not only back to safety but also to a hidden cache of valuable herbs and forgotten treasures.",
+            "experience_bonus": 45,
+            "gold_bonus": 40,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "energy_change": 5,
+            "is_success": true
+          },
+          {
+            "description": "You follow what appears to be a deer trail, but it leads you straight to a territorial Woodland Guardian that sees you as a threat!",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [6],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Druid's Circle",
+    "description": "You discover an ancient circle of standing stones deep in the forest. Runes cover the stones, and the air hums with mystical energy.",
+    "min_experience": 30,
+    "min_gold": 10,
+    "is_violent": false,
+    "image_url": "healing_spring",
+    "area_id": 1,
+    "decisions": [
+      {
+        "description": "Respectfully observe the circle from a distance",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 95,
+        "outcomes": [
+          {
+            "description": "As you quietly observe, a serene feeling washes over you. The circle's energy seems to recognize your respect and grants you a blessing. You feel refreshed and rejuvenated.",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "hitpoints_change": 30,
+            "energy_change": 30,
+            "is_success": true
+          },
+          {
+            "description": "Your presence disturbs a forest sprite that was resting among the stones. It flits about angrily, casting minor irritating spells in your direction.",
+            "experience_bonus": 10,
+            "gold_bonus": 0,
+            "hitpoints_change": -10,
+            "energy_change": -5,
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Study the runes and symbols on the stones",
+        "type": "skill",
+        "requirements": null,
+        "icon": "intelligence",
+        "stat_check": "intelligence",
+        "base_success_rate": 65,
+        "outcomes": [
+          {
+            "description": "Your scholarly knowledge helps you decipher the ancient druidic symbols. You learn a simple ritual that, when performed, reveals a hidden compartment in one of the stones containing valuable artifacts.",
+            "experience_bonus": 35,
+            "gold_bonus": 30,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "energy_change": 10,
+            "is_success": true
+          },
+          {
+            "description": "You misinterpret one of the symbols and accidentally activate a defensive ward. A surge of wild magic temporarily drains your energy and attracts an irritated forest sprite.",
+            "experience_bonus": 15,
+            "gold_bonus": 0,
+            "hitpoints_change": 0,
+            "energy_change": -20,
+            "has_combat": true,
+            "monster_ids": [5],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Attempt to channel the circle's ancient power",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 13,
+          "wisdom": 11
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 21
+        },
+        "icon": "intelligence",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Your understanding of magical energies allows you to safely commune with the circle's power. Ancient knowledge flows into your mind, and the stones emit a soft glow that heals your wounds and infuses you with magical energy.",
+            "experience_bonus": 50,
+            "gold_bonus": 20,
+            "hitpoints_change": 50,
+            "energy_change": 50,
+            "is_success": true
+          },
+          {
+            "description": "The magical energies are too wild and unpredictable. As you attempt to channel them, they surge chaotically, causing a magical backlash that leaves you weakened.",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "hitpoints_change": -20,
+            "energy_change": -30,
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Ancient Tree",
+    "description": "Local villagers speak of an ancient tree at the heart of the forest that grants wishes to worthy supplicants. They also warn of its fierce guardian that tests all who approach.",
+    "min_experience": 50,
+    "min_gold": 30,
+    "is_violent": true,
+    "image_url": "enchanted_grove",
+    "area_id": 1,
+    "decisions": [
+      {
+        "description": "Approach the tree with a humble offering",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 80,
+        "outcomes": [
+          {
+            "description": "The guardian accepts your offering and allows you to approach the ancient tree. The tree's magic grants you strength and vitality, along with a mystical trinket that has fallen from its branches.",
+            "experience_bonus": 40,
+            "gold_bonus": 0,
+            "reward_table_id": 101,
+            "hitpoints_change": 25,
+            "energy_change": 25,
+            "is_success": true
+          },
+          {
+            "description": "Your offering is deemed insufficient. The Elderwood Guardian emerges from the foliage, its ancient bark creaking as it moves to defend the sacred tree!",
+            "experience_bonus": 30,
+            "gold_bonus": 0,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [105],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Challenge the guardian directly to reach the tree",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "You boldly challenge the guardian of the ancient tree! The massive Elderwood Guardian rises from the earth, its roots tearing free from the soil as it moves to confront you!",
+            "experience_bonus": 60,
+            "gold_bonus": 45,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [6, 105],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Commune with the forest to seek peaceful passage",
+        "type": "premium",
+        "requirements": {
+          "wisdom": 15
+        },
+        "mastery": {
+          "stat": "wisdom",
+          "value": 23
+        },
+        "icon": "wisdom",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Your deep connection with nature allows you to communicate your intentions to the forest itself. The trees part to reveal a hidden path, and the Elderwood Guardian bows in respect as you approach the ancient tree, which grants you both wisdom and a rare gift.",
+            "experience_bonus": 70,
+            "gold_bonus": 50,
+            "reward_table_id": 101,
+            "hitpoints_change": 20,
+            "energy_change": 30,
+            "is_success": true
+          },
+          {
+            "description": "The forest acknowledges your attempt but deems you not yet worthy. The Elderwood Guardian appears, its ancient eyes judging you. It challenges you to prove your worth in combat!",
+            "experience_bonus": 35,
+            "gold_bonus": 20,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [105],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Bandit Stronghold",
+    "description": "You've tracked a notorious band of forest bandits to their heavily fortified camp deep in the woods. They've been terrorizing travelers for months and have amassed significant wealth.",
+    "min_experience": 60,
+    "min_gold": 40,
+    "is_violent": true,
+    "image_url": "haunted_manor",
+    "area_id": 1,
+    "decisions": [
+      {
+        "description": "Scout the perimeter for weaknesses",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "Your careful scouting reveals a poorly guarded section of the camp. You manage to sneak in, steal some valuable loot, and escape without raising the alarm.",
+            "experience_bonus": 40,
+            "gold_bonus": 65,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "is_success": true
+          },
+          {
+            "description": "While scouting, you're spotted by a bandit patrol! They immediately attack, calling for reinforcements!",
+            "experience_bonus": 25,
+            "gold_bonus": 0,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [4, 4],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Launch a frontal assault on the bandit camp",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "You charge into the bandit camp, weapons ready! The notorious Bandit Warlord emerges from the main tent, flanked by his loyal followers. Prepare for a challenging battle!",
+            "experience_bonus": 70,
+            "gold_bonus": 80,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [4, 4, 104],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Disguise yourself as a bandit to infiltrate their ranks",
+        "type": "premium",
+        "requirements": {
+          "agility": 14,
+          "luck": 12
+        },
+        "mastery": {
+          "stat": "luck",
+          "value": 22
+        },
+        "icon": "luck",
+        "base_success_rate": 65,
+        "outcomes": [
+          {
+            "description": "Your disguise is flawless! You infiltrate the bandit camp, learn their secrets, and steal their treasure map. Under cover of night, you locate their hidden cache of wealth and make off with a fortune.",
+            "experience_bonus": 80,
+            "gold_bonus": 100,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "is_success": true
+          },
+          {
+            "description": "Your disguise initially works, but a suspicious bandit notices something off about you. Your cover is blown, and the Bandit Warlord himself comes to deal with the impostor!",
+            "experience_bonus": 30,
+            "gold_bonus": 20,
+            "reward_table_id": 101,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [104],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  }  
 ]

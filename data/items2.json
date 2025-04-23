@@ -1,0 +1,266 @@
+[
+  {
+    "id": 101,
+    "name": "Crystal Shard Dagger",
+    "type": "Weapon",
+    "rarity": "Uncommon",
+    "weapon_type": "Piercing",
+    "base_damage": 10,
+    "effects": {
+      "stat_boosts": {
+        "agility": 2,
+        "luck": 1
+      }
+    },
+    "value": 80,
+    "image_url": "crystal_dagger"
+  },
+  {
+    "id": 102,
+    "name": "Luminous Fungus Staff",
+    "type": "Weapon",
+    "rarity": "Uncommon",
+    "weapon_type": "Magic",
+    "base_damage": 9,
+    "effects": {
+      "stat_boosts": {
+        "intelligence": 3,
+        "wisdom": 1
+      },
+      "special": {
+        "type": "Illumination",
+        "description": "Emits light in dark places, revealing hidden enemies"
+      }
+    },
+    "value": 85,
+    "image_url": "fungus_staff"
+  },
+  {
+    "id": 103,
+    "name": "Stone Crusher",
+    "type": "Weapon",
+    "rarity": "Uncommon",
+    "weapon_type": "Blunt",
+    "base_damage": 12,
+    "effects": {
+      "stat_boosts": {
+        "strength": 3
+      },
+      "special": {
+        "type": "ArmorBreak",
+        "description": "Has a 15% chance to ignore enemy defense"
+      }
+    },
+    "value": 90,
+    "image_url": "stone_crusher"
+  },
+  {
+    "id": 104,
+    "name": "Geomancer's Wand",
+    "type": "Weapon",
+    "rarity": "Rare",
+    "weapon_type": "Magic",
+    "base_damage": 14,
+    "effects": {
+      "stat_boosts": {
+        "intelligence": 4,
+        "wisdom": 2
+      },
+      "elemental": {
+        "type": "Earth",
+        "damage": 6
+      }
+    },
+    "value": 150,
+    "image_url": "geomancer_wand"
+  },
+  {
+    "id": 105,
+    "name": "Crystalline Armor",
+    "type": "Armor",
+    "rarity": "Rare",
+    "base_defense": 12,
+    "effects": {
+      "stat_boosts": {
+        "defense": 3,
+        "intelligence": 2
+      },
+      "special": {
+        "type": "ElementalResistance",
+        "description": "Reduces elemental damage by 10%"
+      }
+    },
+    "value": 180,
+    "image_url": "crystal_armor"
+  },
+  {
+    "id": 106,
+    "name": "Kobold Mining Helmet",
+    "type": "Helmet",
+    "rarity": "Rare",
+    "base_defense": 10,
+    "effects": {
+      "stat_boosts": {
+        "strength": 2,
+        "wisdom": 3
+      },
+      "special": {
+        "type": "Illumination",
+        "description": "Emits light in dark places, revealing hidden treasures"
+      }
+    },
+    "value": 160,
+    "image_url": "mining_helmet"
+  },
+  {
+    "id": 107,
+    "name": "Gemstone Focus",
+    "type": "Trinket",
+    "rarity": "Rare",
+    "effects": {
+      "stat_boosts": {
+        "intelligence": 5,
+        "energy": 25
+      },
+      "special": {
+        "type": "ManaEfficiency",
+        "description": "Reduces energy cost of spells by 10%"
+      }
+    },
+    "value": 200,
+    "image_url": "gemstone_focus"
+  },
+  {
+    "id": 108,
+    "name": "Prismatic Crystal",
+    "type": "Trinket",
+    "rarity": "Epic",
+    "effects": {
+      "stat_boosts": {
+        "all": 2
+      },
+      "elemental": {
+        "type": "Random",
+        "damage": 8,
+        "description": "Randomly adds fire, ice, or lightning damage to attacks"
+      }
+    },
+    "value": 350,
+    "image_url": "prismatic_crystal"
+  },
+  {
+    "id": 109,
+    "name": "Heart of Crystallos",
+    "type": "Weapon",
+    "rarity": "Epic",
+    "weapon_type": "Magic",
+    "base_damage": 24,
+    "effects": {
+      "stat_boosts": {
+        "intelligence": 6,
+        "wisdom": 4,
+        "energy": 30
+      },
+      "elemental": {
+        "type": "Crystal",
+        "damage": 12
+      },
+      "special": {
+        "type": "CrystalReflection",
+        "description": "15% chance to reflect spells back at the caster"
+      }
+    },
+    "value": 450,
+    "image_url": "crystal_heart"
+  },
+  {
+    "id": 110,
+    "name": "Bat Wing Cloak",
+    "type": "Armor",
+    "rarity": "Uncommon",
+    "base_defense": 8,
+    "effects": {
+      "stat_boosts": {
+        "agility": 3,
+        "dodge_chance": 5
+      }
+    },
+    "value": 95,
+    "image_url": "bat_cloak"
+  },
+  {
+    "id": 111,
+    "name": "Cave Mushroom Potion",
+    "type": "Consumable",
+    "rarity": "Common",
+    "effects": {
+      "restore": {
+        "health": 40,
+        "energy": 40
+      }
+    },
+    "value": 40,
+    "image_url": "mushroom_potion"
+  },
+  {
+    "id": 112,
+    "name": "Mineral Water Vial",
+    "type": "Consumable",
+    "rarity": "Uncommon",
+    "effects": {
+      "stat_boost_temporary": {
+        "strength": 5,
+        "duration": "1 hour"
+      }
+    },
+    "value": 60,
+    "image_url": "mineral_water"
+  },
+  {
+    "id": 113,
+    "name": "Bioluminescent Extract",
+    "type": "Consumable",
+    "rarity": "Uncommon",
+    "effects": {
+      "stat_boost_temporary": {
+        "intelligence": 5,
+        "duration": "1 hour"
+      }
+    },
+    "value": 65,
+    "image_url": "glowing_extract"
+  },
+  {
+    "id": 114,
+    "name": "Rockjaw Gauntlets",
+    "type": "Armor",
+    "rarity": "Rare",
+    "base_defense": 6,
+    "effects": {
+      "stat_boosts": {
+        "strength": 4,
+        "attack": 3
+      }
+    },
+    "value": 140,
+    "image_url": "stone_gauntlets"
+  },
+  {
+    "id": 115,
+    "name": "Echo Charm",
+    "type": "Trinket",
+    "rarity": "Uncommon",
+    "effects": {
+      "stat_boosts": {
+        "dodge_chance": 8,
+        "agility": 2
+      },
+      "special": {
+        "type": "EchoLocation",
+        "description": "Warns of approaching enemies, reducing ambush chance"
+      }
+    },
+    "value": 110,
+    "image_url": "echo_charm"
+  }
+]

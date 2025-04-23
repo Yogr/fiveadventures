@@ -1,0 +1,569 @@
+[
+  {
+    "title": "Descent into Darkness",
+    "description": "The entrance to the vast cavern system looms before you, a gaping maw in the mountainside. Flickering torches mark the beginning of a well-worn path that winds downward into the unknown depths.",
+    "min_experience": 100,
+    "min_gold": 50,
+    "is_violent": true,
+    "image_url": "cavern_entrance",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Follow the main path downward",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 90,
+        "outcomes": [
+          {
+            "description": "The path descends gradually, with occasional wooden supports bracing the tunnel. You notice glittering minerals embedded in the walls and manage to extract a few valuable specimens before continuing.",
+            "experience_bonus": 35,
+            "gold_bonus": 40,
+            "reward_table_id": 201,
+            "hitpoints_change": 0,
+            "energy_change": -5,
+            "is_success": true
+          },
+          {
+            "description": "As you descend, you disturb a colony of cave bats that swarm around you in panic! One particularly large specimen attacks!",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [201],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Explore a narrow side passage",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "The side passage grows narrower as you squeeze through. Suddenly, the ground gives way beneath you, dropping you into a small chamber where giant rats have made their nest! They scatter at your intrusion, but the largest among them turns to attack!",
+            "experience_bonus": 50,
+            "gold_bonus": 30,
+            "reward_table_id": 201,
+            "hitpoints_change": -10,
+            "has_combat": true,
+            "monster_ids": [202, 202],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Search for hidden cave entrances",
+        "type": "premium",
+        "requirements": {
+          "wisdom": 15,
+          "intelligence": 12
+        },
+        "mastery": {
+          "stat": "wisdom",
+          "value": 25
+        },
+        "icon": "wisdom",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Your careful examination of the cavern walls reveals a hidden crevice. Squeezing through, you discover a small, untouched chamber filled with rare crystal formations and an abandoned explorer's pack containing valuable equipment.",
+            "experience_bonus": 70,
+            "gold_bonus": 60,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": -10,
+            "is_success": true
+          },
+          {
+            "description": "You find what appears to be a hidden entrance, but as you investigate closer, the ground collapses beneath you! You tumble into a slime pit where a Cave Slime lurks!",
+            "experience_bonus": 30,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -15,
+            "has_combat": true,
+            "monster_ids": [203],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Crystal Chamber",
+    "description": "Rumors speak of a magnificent chamber deep within the caverns where crystals of incredible size and beauty grow. The light of your torch reveals glimpses of sparkling surfaces ahead.",
+    "min_experience": 150,
+    "min_gold": 75,
+    "is_violent": true,
+    "image_url": "crystal_chamber",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Carefully harvest some smaller crystals",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 80,
+        "outcomes": [
+          {
+            "description": "With careful precision, you manage to extract several beautiful crystal specimens without damaging the larger formations. These will fetch a good price with collectors or alchemists.",
+            "experience_bonus": 45,
+            "gold_bonus": 65,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": -10,
+            "is_success": true
+          },
+          {
+            "description": "As you attempt to extract a particularly beautiful crystal, it shatters with a loud crack! The noise attracts a crystal spider that descends from the ceiling!",
+            "experience_bonus": 25,
+            "gold_bonus": 15,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [204],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Investigate the center of the chamber",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "As you approach the center of the chamber, where the largest crystal formations grow, you notice movement among the glittering spires. Suddenly, a massive crystal spider with a prismatic body descends, its crystalline fangs gleaming in the torchlight!",
+            "experience_bonus": 80,
+            "gold_bonus": 50,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [303],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Study the crystal resonance patterns",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 18
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 28
+        },
+        "icon": "intelligence",
+        "base_success_rate": 65,
+        "outcomes": [
+          {
+            "description": "Your scholarly knowledge allows you to identify patterns in how the crystals resonate with each other. By carefully tapping specific formations in sequence, you create a harmonious resonance that causes smaller crystal shards to detach painlessly from the larger structures. You gather these valuable specimens and gain insight into crystal magic.",
+            "experience_bonus": 90,
+            "gold_bonus": 70,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "energy_change": 15,
+            "is_success": true
+          },
+          {
+            "description": "Your attempt to create resonance produces a discordant vibration instead. The harsh sound agitates the chamber's guardian - a Prismatic Crystal Weaver emerges from hiding to defend its territory!",
+            "experience_bonus": 40,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -10,
+            "has_combat": true,
+            "monster_ids": [303],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Underground River",
+    "description": "You discover a swift-flowing river cutting through the cavern system. The black water rushes silently beneath low-hanging stalactites, disappearing into darkness.",
+    "min_experience": 125,
+    "min_gold": 60,
+    "is_violent": true,
+    "image_url": "underground_river",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Follow the riverbank",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 85,
+        "outcomes": [
+          {
+            "description": "The narrow path along the riverbank leads you to a small alcove where the water has deposited various debris. Among the rocks and driftwood, you find several valuable items washed down from deeper in the caverns.",
+            "experience_bonus": 40,
+            "gold_bonus": 50,
+            "reward_table_id": 201,
+            "hitpoints_change": 0,
+            "energy_change": -5,
+            "is_success": true
+          },
+          {
+            "description": "The path grows slippery as you progress. Suddenly, you lose your footing and splash into the shallows! A school of blind cave fish, disturbed by your intrusion, swarms around you aggressively!",
+            "experience_bonus": 25,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -5,
+            "has_combat": true,
+            "monster_ids": [208],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Wade into the shallows to search for treasures",
+        "type": "skill",
+        "requirements": null,
+        "icon": "strength",
+        "stat_check": "strength",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "The cold water numbs your legs as you carefully sift through the riverbed. Your persistence pays off when you uncover several gemstones and small artifacts that were trapped between rocks on the river bottom.",
+            "experience_bonus": 50,
+            "gold_bonus": 70,
+            "reward_table_id": 202,
+            "hitpoints_change": -5,
+            "energy_change": -10,
+            "is_success": true
+          },
+          {
+            "description": "The current is stronger than you anticipated. As you struggle to maintain your footing, something large and slimy brushes against your leg, then attacks!",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -10,
+            "has_combat": true,
+            "monster_ids": [203],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Create a small raft to explore downstream",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 14,
+          "agility": 12
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 24
+        },
+        "icon": "intelligence",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "Using driftwood and some rope from your pack, you construct a serviceable raft. Drifting downstream, you discover a hidden grotto accessible only by water. Inside, you find abandoned mining equipment and a cache of valuable ore and gemstones.",
+            "experience_bonus": 80,
+            "gold_bonus": 85,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "energy_change": -15,
+            "is_success": true
+          },
+          {
+            "description": "Your hastily constructed raft breaks apart in the current! As you struggle to swim to shore, you're pulled into a small whirlpool where a lurking cave slime attacks!",
+            "experience_bonus": 30,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -20,
+            "has_combat": true,
+            "monster_ids": [203],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Kobold Mining Operation",
+    "description": "The sound of pickaxes and guttural chatter echoes through the tunnels. You've stumbled upon a kobold mining operation where the small reptilian creatures are extracting gems and minerals from the cavern walls.",
+    "min_experience": 175,
+    "min_gold": 80,
+    "is_violent": true,
+    "image_url": "kobold_mine",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Observe from a hidden position",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 80,
+        "outcomes": [
+          {
+            "description": "From your concealed vantage point, you watch the kobolds' mining techniques. When they take a break to eat, you manage to slip into a recently excavated tunnel and claim some overlooked gemstones before retreating unseen.",
+            "experience_bonus": 45,
+            "gold_bonus": 60,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": -5,
+            "is_success": true
+          },
+          {
+            "description": "A loose stone dislodges under your foot with a loud clatter! A nearby kobold miner hears the noise and raises the alarm, then attacks!",
+            "experience_bonus": 25,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [205],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Raid the mining operation",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "With weapons drawn, you charge into the mining area! The kobold miners scatter in panic, but their overseer—a powerful kobold geomancer with crystal-adorned staff—steps forward to defend their claim. Prepare for battle!",
+            "experience_bonus": 80,
+            "gold_bonus": 100,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [205, 304],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Attempt to trade with the kobolds",
+        "type": "premium",
+        "requirements": {
+          "charisma": 16,
+          "wisdom": 12
+        },
+        "mastery": {
+          "stat": "charisma",
+          "value": 26
+        },
+        "icon": "charisma",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Using a combination of gestures and simple words, you manage to communicate peacefully with the kobolds. They're wary but curious about your surface goods. You trade some simple tools and trinkets for a collection of remarkable gems and a peculiar kobold mining artifact.",
+            "experience_bonus": 90,
+            "gold_bonus": 80,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "energy_change": 10,
+            "is_success": true
+          },
+          {
+            "description": "The kobolds seem interested in your trade goods until their geomancer leader arrives. He sees you as a threat and orders the others to attack! Several miners surround you with their picks raised!",
+            "experience_bonus": 35,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [205, 205],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Fungal Gardens",
+    "description": "You enter a vast cavern illuminated by the eerie blue-green glow of enormous bioluminescent mushrooms. The air is thick with spores that drift like glowing snowflakes in the still air.",
+    "min_experience": 200,
+    "min_gold": 70,
+    "is_violent": true,
+    "image_url": "fungal_garden",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Harvest some of the glowing fungi",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "With careful cuts, you gather several specimens of the luminous fungi. These rare mushrooms are valuable alchemical ingredients, and some even have medicinal properties.",
+            "experience_bonus": 50,
+            "gold_bonus": 60,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": -5,
+            "is_success": true
+          },
+          {
+            "description": "As you cut into one of the larger mushrooms, it releases a cloud of irritating spores! From within the fungal mass, a sentient luminous fungus creature emerges to defend its colony!",
+            "experience_bonus": 30,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -10,
+            "has_combat": true,
+            "monster_ids": [206],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Investigate the center of the fungal garden",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "As you approach the heart of the fungal garden, where the largest specimens grow, the ground beneath you shifts unnaturally. Suddenly, a massive colony of fungi rises up, forming a vaguely humanoid shape. The Mycelium Mind, a sentient fungal entity, has awakened to challenge your intrusion!",
+            "experience_bonus": 90,
+            "gold_bonus": 75,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [306],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Study the bioluminescent properties",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 16,
+          "wisdom": 14
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 26
+        },
+        "icon": "intelligence",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Your scholarly knowledge allows you to safely extract the bioluminescent compounds from the fungi. You create several vials of glowing extract that can be used as a light source or magical reagent. During your research, you also discover a rare species with powerful magical properties.",
+            "experience_bonus": 85,
+            "gold_bonus": 70,
+            "reward_table_id": 204,
+            "hitpoints_change": 0,
+            "energy_change": 20,
+            "is_success": true
+          },
+          {
+            "description": "In your enthusiasm for research, you disturb the delicate balance of the fungal ecosystem. Your intrusion awakens the garden's guardian - a powerful sentient fungal entity that rises from the ground to attack!",
+            "experience_bonus": 40,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -5,
+            "has_combat": true,
+            "monster_ids": [306],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Geode Sanctum",
+    "description": "Legends speak of an ancient chamber where a living crystal formation has grown sentient over millennia of exposure to magical energies. Few who seek this place ever return.",
+    "min_experience": 250,
+    "min_gold": 100,
+    "is_violent": true,
+    "image_url": "geode_sanctum",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Approach cautiously and observe",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 65,
+        "outcomes": [
+          {
+            "description": "From a safe distance, you study the incredible formation. The central crystal pulses with internal light, almost like a heartbeat. While observing, you notice smaller crystal fragments that have broken off. You carefully collect these powerful magical components without disturbing the main formation.",
+            "experience_bonus": 70,
+            "gold_bonus": 90,
+            "reward_table_id": 204,
+            "hitpoints_change": 0,
+            "energy_change": -10,
+            "is_success": true
+          },
+          {
+            "description": "The crystal entity seems dormant at first, but as you watch, the pulsing light within intensifies. Suddenly, a beam of energy lances out toward you! Crystallos, The Living Geode, has awakened and senses your presence!",
+            "experience_bonus": 50,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -20,
+            "has_combat": true,
+            "monster_ids": [307],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Attempt to commune with the crystal entity",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "As you approach and attempt to establish a psychic connection, the massive crystal formation flares with brilliant light! The chamber fills with arcane energy as Crystallos, The Living Geode, fully awakens. The ancient crystal entity rises to defend its sanctuary from what it perceives as a threat!",
+            "experience_bonus": 120,
+            "gold_bonus": 150,
+            "reward_table_id": 205,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [307],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Analyze the crystal resonance to establish peaceful contact",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 20,
+          "wisdom": 18
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 30
+        },
+        "icon": "intelligence",
+        "base_success_rate": 60,
+        "outcomes": [
+          {
+            "description": "Drawing on deep knowledge of crystal magic, you create a harmonic resonance that aligns with the entity's own frequency. The living crystal responds to your peaceful overture, its glow softening from threatening to curious. Through this connection, you gain profound insights into crystal magic, and the entity grants you a shard of its own form—an artifact of immense power.",
+            "experience_bonus": 150,
+            "gold_bonus": 120,
+            "reward_table_id": 205,
+            "hitpoints_change": 0,
+            "energy_change": 50,
+            "is_success": true
+          },
+          {
+            "description": "Your attempt at harmonic resonance creates a dissonant frequency instead! The crystal entity perceives this as an attack and retaliates with devastating force! Crystallos, The Living Geode, rises up in all its terrifying glory!",
+            "experience_bonus": 60,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -30,
+            "has_combat": true,
+            "monster_ids": [307],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  }
+]

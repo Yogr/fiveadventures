@@ -1,0 +1,227 @@
+[
+  {
+    "id": 201,
+    "name": "Cave Bat",
+    "description": "A large nocturnal bat with keen senses that thrives in the darkness of the caverns.",
+    "hitpoints": 30,
+    "attack": 7,
+    "defense": 3,
+    "experience_reward": 40,
+    "gold_reward": 25,
+    "difficulty": 2,
+    "attack_type": "Physical",
+    "abilities": {
+      "echolocation": {
+        "dodge_chance": 15,
+        "chance": 25,
+        "description": "Uses sound waves to detect movement, increasing dodge chance"
+      },
+      "sonic_screech": {
+        "damage": 5,
+        "stun_chance": 15,
+        "chance": 20,
+        "description": "Emits a disorienting screech that damages and can briefly stun"
+      }
+    },
+    "image_url": "cave_bat",
+    "reward_table": 201,
+    "rare_item_chance": 5
+  },
+  {
+    "id": 202,
+    "name": "Giant Rat",
+    "description": "A mutated rodent that has grown to an enormous size feeding on cave fungi.",
+    "hitpoints": 35,
+    "attack": 8,
+    "defense": 2,
+    "experience_reward": 35,
+    "gold_reward": 20,
+    "difficulty": 2,
+    "attack_type": "Physical",
+    "abilities": {
+      "disease_bite": {
+        "damage": 4,
+        "damage_over_time": 2,
+        "duration": 3,
+        "chance": 20,
+        "description": "A bite that causes ongoing damage from infection"
+      },
+      "scurry": {
+        "dodge_chance": 20,
+        "chance": 25,
+        "description": "Quick movement that makes it harder to hit"
+      }
+    },
+    "image_url": "giant_rat",
+    "reward_table": 201,
+    "rare_item_chance": 5
+  },
+  {
+    "id": 203,
+    "name": "Cave Slime",
+    "description": "A gelatinous, acidic creature that oozes through narrow crevices and dissolves organic matter.",
+    "hitpoints": 45,
+    "attack": 6,
+    "defense": 5,
+    "experience_reward": 45,
+    "gold_reward": 30,
+    "difficulty": 3,
+    "attack_type": "Physical",
+    "abilities": {
+      "acid_splash": {
+        "damage": 7,
+        "defense_reduction": 1,
+        "chance": 25,
+        "description": "Sprays acid that damages and temporarily reduces defense"
+      },
+      "split": {
+        "heal": 10,
+        "chance": 15,
+        "description": "Regenerates some health by dividing itself"
+      }
+    },
+    "image_url": "cave_slime",
+    "reward_table": 201,
+    "rare_item_chance": 5
+  },
+  {
+    "id": 204,
+    "name": "Crystal Spider",
+    "description": "A spider with a translucent body that has adapted to life in crystal-filled caves, its exoskeleton hardened by mineral deposits.",
+    "hitpoints": 40,
+    "attack": 9,
+    "defense": 6,
+    "experience_reward": 50,
+    "gold_reward": 35,
+    "difficulty": 3,
+    "attack_type": "Physical",
+    "abilities": {
+      "crystal_web": {
+        "immobilize": 1,
+        "chance": 25,
+        "description": "Traps you in a crystalline web, restricting movement"
+      },
+      "crystal_shard": {
+        "damage": 8,
+        "chance": 20,
+        "description": "Fires sharp crystal shards that cause significant damage"
+      }
+    },
+    "image_url": "crystal_spider",
+    "reward_table": 202,
+    "rare_item_chance": 8
+  },
+  {
+    "id": 205,
+    "name": "Kobold Miner",
+    "description": "A small reptilian humanoid skilled at tunneling and mining. Armed with crude picks and tools.",
+    "hitpoints": 38,
+    "attack": 8,
+    "defense": 4,
+    "experience_reward": 40,
+    "gold_reward": 40,
+    "difficulty": 2,
+    "attack_type": "Physical",
+    "abilities": {
+      "pickaxe_strike": {
+        "damage": 6,
+        "armor_penetration": 2,
+        "chance": 25,
+        "description": "A powerful swing that can penetrate armor"
+      },
+      "throw_dirt": {
+        "accuracy_reduction": 20,
+        "chance": 20,
+        "duration": 2,
+        "description": "Throws dirt in your eyes, reducing accuracy"
+      }
+    },
+    "image_url": "kobold_miner",
+    "reward_table": 202,
+    "rare_item_chance": 10
+  },
+  {
+    "id": 206,
+    "name": "Luminous Fungus",
+    "description": "A sentient mushroom-like creature that emits an eerie blue glow and releases toxic spores.",
+    "hitpoints": 50,
+    "attack": 5,
+    "defense": 7,
+    "experience_reward": 55,
+    "gold_reward": 25,
+    "difficulty": 3,
+    "attack_type": "Magical",
+    "abilities": {
+      "spore_cloud": {
+        "damage": 4,
+        "damage_over_time": 3,
+        "duration": 3,
+        "chance": 30,
+        "description": "Releases a cloud of toxic spores that cause ongoing damage"
+      },
+      "hypnotic_flash": {
+        "stun_chance": 20,
+        "chance": 15,
+        "description": "Emits a bright flash that can briefly stun"
+      }
+    },
+    "image_url": "luminous_fungus",
+    "reward_table": 202,
+    "rare_item_chance": 8
+  },
+  {
+    "id": 207,
+    "name": "Rock Crawler",
+    "description": "A large insectoid creature with a rock-like carapace and powerful pincers that can crush stone.",
+    "hitpoints": 55,
+    "attack": 10,
+    "defense": 8,
+    "experience_reward": 60,
+    "gold_reward": 35,
+    "difficulty": 4,
+    "attack_type": "Physical",
+    "abilities": {
+      "crushing_pincer": {
+        "damage": 12,
+        "chance": 20,
+        "description": "A devastating pincer attack that can crush armor"
+      },
+      "burrow": {
+        "dodge_chance": 25,
+        "chance": 15,
+        "description": "Quickly burrows into the ground, becoming temporarily harder to hit"
+      }
+    },
+    "image_url": "rock_crawler",
+    "reward_table": 203,
+    "rare_item_chance": 10
+  },
+  {
+    "id": 208,
+    "name": "Blind Cave Fish",
+    "description": "A school of eyeless fish that swim in underground pools and have developed heightened senses to hunt in darkness.",
+    "hitpoints": 25,
+    "attack": 6,
+    "defense": 2,
+    "experience_reward": 30,
+    "gold_reward": 15,
+    "difficulty": 1,
+    "attack_type": "Physical",
+    "abilities": {
+      "swarm": {
+        "damage": 8,
+        "chance": 25,
+        "description": "The school swarms around you, dealing damage from multiple angles"
+      },
+      "water_jet": {
+        "damage": 4,
+        "accuracy_reduction": 10,
+        "chance": 20,
+        "description": "Sprays water to disorient you"
+      }
+    },
+    "image_url": "blind_fish",
+    "reward_table": 201,
+    "rare_item_chance": 5
+  }
+]

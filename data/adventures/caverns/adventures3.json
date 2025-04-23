@@ -1,0 +1,579 @@
+[
+  {
+    "title": "The Narrow Passage",
+    "description": "A tight passageway winds between massive stone columns. The air is stale and the space is so confined that you must turn sideways to proceed in some sections.",
+    "min_experience": 130,
+    "min_gold": 50,
+    "is_violent": true,
+    "image_url": "narrow_passage",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Carefully squeeze through the narrowest sections",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 80,
+        "outcomes": [
+          {
+            "description": "With patience and careful maneuvering, you navigate the tight passage without incident. Along the way, you notice small crevices containing mineral deposits, which you manage to extract despite the confined space.",
+            "experience_bonus": 35,
+            "gold_bonus": 40,
+            "reward_table_id": 201,
+            "hitpoints_change": 0,
+            "energy_change": -10,
+            "is_success": true
+          },
+          {
+            "description": "While squeezing through a particularly tight section, you disturb a colony of cave bats nestled in a hidden crevice. They swarm out in panic, with several attacking you in the confined space!",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -5,
+            "has_combat": true,
+            "monster_ids": [201],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Use brute force to widen the passage",
+        "type": "skill",
+        "requirements": null,
+        "icon": "strength",
+        "stat_check": "strength",
+        "base_success_rate": 65,
+        "outcomes": [
+          {
+            "description": "Your powerful strikes break away sections of the narrowest parts, creating a more comfortable path. In the process, you expose a vein of valuable minerals that had been hidden within the stone walls.",
+            "experience_bonus": 45,
+            "gold_bonus": 55,
+            "reward_table_id": 202,
+            "hitpoints_change": -5,
+            "energy_change": -15,
+            "is_success": true
+          },
+          {
+            "description": "Your forceful attempts to widen the passage cause unexpected fractures in the surrounding rock. A section of the ceiling collapses, and from the newly created hole emerges an angry rock crawler!",
+            "experience_bonus": 25,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -15,
+            "has_combat": true,
+            "monster_ids": [207],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Search for a hidden alternate route",
+        "type": "premium",
+        "requirements": {
+          "wisdom": 15,
+          "agility": 13
+        },
+        "mastery": {
+          "stat": "wisdom",
+          "value": 25
+        },
+        "icon": "wisdom",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "Your careful examination of the walls reveals subtle air currents coming from behind a loose section of rock. Moving it aside, you discover a spacious hidden tunnel that not only bypasses the narrow passage but also leads to a small chamber containing abandoned mining equipment and valuable ore samples.",
+            "experience_bonus": 60,
+            "gold_bonus": 65,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "energy_change": 10,
+            "is_success": true
+          },
+          {
+            "description": "You find what appears to be an alternate route, but after crawling through a tight opening, you find yourself in a kobold mining tunnel! A surprised kobold miner raises the alarm!",
+            "experience_bonus": 30,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [205],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Glowing Mushroom Forest",
+    "description": "You enter a vast cavern filled with towering mushrooms that glow with an otherworldly blue-green light. The caps reach toward the ceiling, creating a forest-like environment deep underground.",
+    "min_experience": 170,
+    "min_gold": 65,
+    "is_violent": true,
+    "image_url": "mushroom_forest",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Harvest mushroom samples",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "You carefully collect specimens of various glowing fungi, taking care not to damage the delicate ecosystem. These rare mushroom varieties are sought after by alchemists and mages for their magical properties.",
+            "experience_bonus": 45,
+            "gold_bonus": 55,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": -5,
+            "is_success": true
+          },
+          {
+            "description": "As you cut into a particularly large mushroom, it releases a cloud of glowing spores that irritate your lungs. Worse, the disturbance attracts a luminous fungus creature that rises up to defend its territory!",
+            "experience_bonus": 25,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -10,
+            "has_combat": true,
+            "monster_ids": [206],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Navigate deeper into the mushroom forest",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "As you push through the densest part of the mushroom forest, you find yourself surrounded by luminous fungi that begin to move with unsettling intelligence. They release defensive spores as they close in around you!",
+            "experience_bonus": 60,
+            "gold_bonus": 40,
+            "reward_table_id": 202,
+            "hitpoints_change": -5,
+            "has_combat": true,
+            "monster_ids": [206, 206],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Study the symbiotic relationship between cave creatures and fungi",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 16,
+          "wisdom": 14
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 26
+        },
+        "icon": "intelligence",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Your scientific observation reveals fascinating insights about how the fungi and cave creatures benefit each other. You document your findings and collect unique specimens that exist in perfect balance with the cave insects. Your careful approach also allows you to extract the most potent parts of the mushrooms without triggering their defensive mechanisms.",
+            "experience_bonus": 75,
+            "gold_bonus": 60,
+            "reward_table_id": 203,
+            "hitpoints_change": 15,
+            "energy_change": 15,
+            "is_success": true
+          },
+          {
+            "description": "Your close observation brings you near a particularly sensitive fungal colony. It perceives your presence as a threat and releases a powerful hallucinogenic cloud. As you struggle with the effects, a luminous fungus entity materializes to attack!",
+            "experience_bonus": 35,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -15,
+            "has_combat": true,
+            "monster_ids": [206],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Crystal Maze",
+    "description": "You enter a bewildering network of narrow passages lined with reflective crystal surfaces. Light from your torch bounces in all directions, creating confusing reflections and illusions.",
+    "min_experience": 190,
+    "min_gold": 75,
+    "is_violent": true,
+    "image_url": "crystal_maze",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Navigate carefully through the maze",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "With patient observation and careful marking of your path, you successfully navigate the disorienting crystal passages. Along the way, you discover a small chamber where previous explorers left supplies and treasures before they managed to escape the maze.",
+            "experience_bonus": 50,
+            "gold_bonus": 60,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": -10,
+            "is_success": true
+          },
+          {
+            "description": "The confusing reflections disorient you, and you soon find yourself walking in circles. Worse, your movements have attracted the attention of a crystal spider that emerges from a hidden crevice!",
+            "experience_bonus": 25,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [204],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Harvest valuable crystal specimens",
+        "type": "skill",
+        "requirements": null,
+        "icon": "strength",
+        "stat_check": "strength",
+        "base_success_rate": 65,
+        "outcomes": [
+          {
+            "description": "Your careful extraction techniques allow you to collect several pristine crystal specimens without damaging the larger formations. These rare minerals will fetch a high price from collectors or mages who use them in arcane rituals.",
+            "experience_bonus": 55,
+            "gold_bonus": 70,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "energy_change": -15,
+            "is_success": true
+          },
+          {
+            "description": "As you chip away at a large crystal formation, a shower of fragments rains down with a loud tinkling sound. The noise echoes through the crystal maze, attracting a predator that hunts by sound - a massive crystal spider descends from above!",
+            "experience_bonus": 30,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -5,
+            "has_combat": true,
+            "monster_ids": [204],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Use crystal resonance to map the maze",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 18
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 28
+        },
+        "icon": "intelligence",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "Drawing on your knowledge of crystal properties, you carefully tap specific formations, creating resonant tones that help you map the maze's acoustic pathways. This technique not only guides you to the center of the maze where you find a cache of magical items, but also reveals hidden chambers containing valuable crystal formations.",
+            "experience_bonus": 80,
+            "gold_bonus": 85,
+            "reward_table_id": 204,
+            "hitpoints_change": 0,
+            "energy_change": 20,
+            "is_success": true
+          },
+          {
+            "description": "Your attempt at crystal resonance creates a dissonant frequency that agitates the crystal formations. The vibrations attract a powerful guardian of the crystal maze - a prismatic crystal weaver emerges, its body shimmering with dangerous energy!",
+            "experience_bonus": 40,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -10,
+            "has_combat": true,
+            "monster_ids": [303],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Abandoned Mining Tunnel",
+    "description": "You discover an old mining tunnel with rusted tools and abandoned carts scattered about. The support beams are rotting, and occasional creaks echo through the passage.",
+    "min_experience": 145,
+    "min_gold": 60,
+    "is_violent": true,
+    "image_url": "mining_tunnel",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Search for overlooked valuables",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 80,
+        "outcomes": [
+          {
+            "description": "Your thorough search of the abandoned mining operation pays off. You find several small veins of ore that the original miners missed, as well as tools and equipment that still have value.",
+            "experience_bonus": 40,
+            "gold_bonus": 50,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": -5,
+            "is_success": true
+          },
+          {
+            "description": "While searching through a pile of rubble, you inadvertently disturb a colony of giant rats that had made their nest in the abandoned mine. The largest one lunges at you!",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [202],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Venture deeper into unstable tunnels",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "As you brave the unstable deeper tunnels, the floor suddenly gives way beneath you! You tumble into a lower chamber that appears to be a kobold mining operation. The miners grab their tools and prepare to defend their territory!",
+            "experience_bonus": 55,
+            "gold_bonus": 45,
+            "reward_table_id": 202,
+            "hitpoints_change": -15,
+            "has_combat": true,
+            "monster_ids": [205, 205],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Attempt to reinforce the tunnel structures",
+        "type": "premium",
+        "requirements": {
+          "strength": 16,
+          "intelligence": 14
+        },
+        "mastery": {
+          "stat": "strength",
+          "value": 24
+        },
+        "icon": "strength",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Your engineering knowledge and physical strength allow you to properly brace the weakened supports. As you work, you discover a sealed-off tunnel that the original miners abandoned after hitting a pocket of precious gems, which you carefully extract.",
+            "experience_bonus": 65,
+            "gold_bonus": 75,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "energy_change": -20,
+            "is_success": true
+          },
+          {
+            "description": "Despite your best efforts, your attempts to reinforce a particularly unstable section trigger a small collapse! As you scramble away from the falling debris, you come face to face with a rock crawler that was disturbed by the commotion.",
+            "experience_bonus": 30,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -20,
+            "has_combat": true,
+            "monster_ids": [207],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Underground Waterfall",
+    "description": "A thunderous roar echoes through the caverns as a massive waterfall plummets from a high ceiling into a deep pool below. Mist fills the air, and rainbow-like patterns form in the light of your torch.",
+    "min_experience": 155,
+    "min_gold": 60,
+    "is_violent": true,
+    "image_url": "underground_waterfall",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Search behind the waterfall",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Braving the powerful spray, you edge along a narrow ledge and discover a hidden cave behind the waterfall. Inside, you find evidence of previous explorers who used this secluded spot as a temporary camp, along with supplies and valuables they left behind.",
+            "experience_bonus": 50,
+            "gold_bonus": 65,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": -10,
+            "is_success": true
+          },
+          {
+            "description": "The ledge behind the waterfall is slippery and treacherous. As you carefully make your way along it, you lose your footing and fall into the churning pool below! As you struggle to the surface, you disturb a cave slime lurking in the depths!",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -15,
+            "has_combat": true,
+            "monster_ids": [203],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Search the pool at the waterfall's base",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "You wade into the pool and begin searching the bottom for treasures. The constant pounding of the waterfall has driven many loose gemstones and minerals into the basin over centuries. Your search disturbs a school of blind cave fish that attack in a frenzied swarm!",
+            "experience_bonus": 55,
+            "gold_bonus": 70,
+            "reward_table_id": 202,
+            "hitpoints_change": -5,
+            "has_combat": true,
+            "monster_ids": [208, 208],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Study the geological formations around the waterfall",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 15,
+          "wisdom": 13
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 25
+        },
+        "icon": "intelligence",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "Your scientific examination of the rock formations reveals the geological history of this cavern. You identify where the constant water erosion has exposed veins of precious minerals and gemstones, allowing you to harvest them with precision. You also discover fossils of ancient cave creatures embedded in the rock walls.",
+            "experience_bonus": 65,
+            "gold_bonus": 80,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "energy_change": 5,
+            "is_success": true
+          },
+          {
+            "description": "While examining the rock formations, you inadvertently disturb a hidden nest of rock crawlers that had burrowed into the cavern walls near the waterfall. One of the larger specimens emerges to defend its territory!",
+            "experience_bonus": 30,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [207],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Kobold Trading Post",
+    "description": "You stumble upon a small outpost where kobold miners gather to trade minerals and tools. Crude stone huts surround a central area bustling with activity, illuminated by glowing crystal lanterns.",
+    "min_experience": 175,
+    "min_gold": 70,
+    "is_violent": true,
+    "image_url": "kobold_market",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Observe the trading activities from hiding",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 80,
+        "outcomes": [
+          {
+            "description": "From your concealed position, you watch the kobolds trade minerals, gems, and crafted items. When they retire to their huts for a communal meal, you manage to slip into the trading area and collect several valuable items they had set aside.",
+            "experience_bonus": 45,
+            "gold_bonus": 60,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": -5,
+            "is_success": true
+          },
+          {
+            "description": "A sharp-eyed kobold sentry spots your hiding place and raises the alarm! Several kobold miners grab their tools and rush toward you, led by a particularly large specimen!",
+            "experience_bonus": 25,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [205, 205],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Raid the outpost for valuables",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "You charge into the trading post, sending the smaller kobolds fleeing in panic. As you begin gathering their valuable mining finds, a kobold geomancer emerges from the largest hut, staff raised and glowing with arcane energy!",
+            "experience_bonus": 70,
+            "gold_bonus": 85,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [205, 304],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Attempt to trade peacefully with the kobolds",
+        "type": "premium",
+        "requirements": {
+          "charisma": 17,
+          "wisdom": 14
+        },
+        "mastery": {
+          "stat": "charisma",
+          "value": 27
+        },
+        "icon": "charisma",
+        "base_success_rate": 65,
+        "outcomes": [
+          {
+            "description": "Despite initial fear and suspicion, your friendly demeanor and offerings win over the kobold traders. They eagerly exchange their mining finds for trinkets and supplies from the surface world that they find fascinating. Your diplomatic approach yields rare cave minerals and crafted items that the kobolds are specialists in creating.",
+            "experience_bonus": 80,
+            "gold_bonus": 70,
+            "reward_table_id": 204,
+            "hitpoints_change": 0,
+            "energy_change": 10,
+            "is_success": true
+          },
+          {
+            "description": "Your attempt at peaceful trade initially seems successful, but a misunderstanding occurs when a kobold believes you're trying to cheat them. The situation quickly deteriorates as the kobolds grow hostile, grabbing their mining picks!",
+            "experience_bonus": 30,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [205, 205],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  }
+]

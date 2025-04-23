@@ -595,6 +595,11 @@ export interface Database {
           description: string
           requirements: Json | null
           created_at: string
+          type: string | null
+          icon: string | null
+          stat_check: string | null
+          base_success_rate: number | null
+          mastery: Json | null
         }
         Insert: {
           id?: number
@@ -602,6 +607,11 @@ export interface Database {
           description: string
           requirements?: Json | null
           created_at?: string
+          type?: string | null
+          icon?: string | null
+          stat_check?: string | null
+          base_success_rate?: number | null
+          mastery?: Json | null
         }
         Update: {
           id?: number
@@ -609,6 +619,11 @@ export interface Database {
           description?: string
           requirements?: Json | null
           created_at?: string
+          type?: string | null
+          icon?: string | null
+          stat_check?: string | null
+          base_success_rate?: number | null
+          mastery?: Json | null
         }
         Relationships: [
           {
@@ -634,6 +649,7 @@ export interface Database {
           has_combat: boolean
           monster_ids: number[] | null
           created_at: string
+          is_success: boolean
         }
         Insert: {
           id?: number
@@ -649,6 +665,7 @@ export interface Database {
           has_combat?: boolean
           monster_ids?: number[] | null
           created_at?: string
+          is_success?: boolean
         }
         Update: {
           id?: number
@@ -664,6 +681,7 @@ export interface Database {
           has_combat?: boolean
           monster_ids?: number[] | null
           created_at?: string
+          is_success?: boolean
         }
         Relationships: [
           {

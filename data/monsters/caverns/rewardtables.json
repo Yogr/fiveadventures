@@ -1,0 +1,177 @@
+[
+  {
+    "id": 201,
+    "name": "Caverns Common",
+    "description": "Common rewards found in the Caverns",
+    "items": [
+      {
+        "item_id": 4,
+        "chance": 25
+      },
+      {
+        "item_id": 5,
+        "chance": 20
+      },
+      {
+        "item_id": 6,
+        "chance": 20
+      },
+      {
+        "item_id": 8,
+        "chance": 15
+      },
+      {
+        "item_id": 11,
+        "chance": 12
+      },
+      {
+        "item_id": 101,
+        "chance": 8
+      }
+    ]
+  },
+  {
+    "id": 202,
+    "name": "Caverns Uncommon",
+    "description": "Less common rewards from more challenging cavern creatures",
+    "items": [
+      {
+        "item_id": 4,
+        "chance": 15
+      },
+      {
+        "item_id": 9,
+        "chance": 15
+      },
+      {
+        "item_id": 10,
+        "chance": 20
+      },
+      {
+        "item_id": 12,
+        "chance": 20
+      },
+      {
+        "item_id": 14,
+        "chance": 15
+      },
+      {
+        "item_id": 101,
+        "chance": 10
+      },
+      {
+        "item_id": 102,
+        "chance": 5
+      }
+    ]
+  },
+  {
+    "id": 203,
+    "name": "Caverns Elite",
+    "description": "Rare rewards from elite cavern monsters",
+    "items": [
+      {
+        "item_id": 12,
+        "chance": 20
+      },
+      {
+        "item_id": 16,
+        "chance": 20
+      },
+      {
+        "item_id": 17,
+        "chance": 15
+      },
+      {
+        "item_id": 20,
+        "chance": 15
+      },
+      {
+        "item_id": 102,
+        "chance": 15
+      },
+      {
+        "item_id": 103,
+        "chance": 10
+      },
+      {
+        "item_id": 105,
+        "chance": 5
+      }
+    ]
+  },
+  {
+    "id": 204,
+    "name": "Caverns Superior Elite",
+    "description": "Superior rewards from powerful elite monsters of the caverns",
+    "items": [
+      {
+        "item_id": 17,
+        "chance": 20
+      },
+      {
+        "item_id": 19,
+        "chance": 15
+      },
+      {
+        "item_id": 20,
+        "chance": 15
+      },
+      {
+        "item_id": 21,
+        "chance": 15
+      },
+      {
+        "item_id": 103,
+        "chance": 15
+      },
+      {
+        "item_id": 104,
+        "chance": 10
+      },
+      {
+        "item_id": 106,
+        "chance": 8
+      },
+      {
+        "item_id": 107,
+        "chance": 2
+      }
+    ]
+  },
+  {
+    "id": 205,
+    "name": "Crystallos Treasures",
+    "description": "Rare crystal artifacts from defeating Crystallos, The Living Geode",
+    "items": [
+      {
+        "item_id": 21,
+        "chance": 25
+      },
+      {
+        "item_id": 104,
+        "chance": 20
+      },
+      {
+        "item_id": 105,
+        "chance": 20
+      },
+      {
+        "item_id": 106,
+        "chance": 15
+      },
+      {
+        "item_id": 107,
+        "chance": 10
+      },
+      {
+        "item_id": 108,
+        "chance": 8
+      },
+      {
+        "item_id": 109,
+        "chance": 2
+      }
+    ]
+  }
+]

@@ -1,0 +1,401 @@
+[
+  {
+    "title": "The Bat Colony",
+    "description": "You enter a vast chamber where thousands of bats roost on the ceiling. The floor is covered in guano, and the air is filled with the sounds of squeaking and wing flutters.",
+    "min_experience": 110,
+    "min_gold": 45,
+    "is_violent": true,
+    "image_url": "bat_colony",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Traverse the chamber quietly",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 80,
+        "outcomes": [
+          {
+            "description": "You move with extreme caution, taking care not to disturb the sleeping bats. Your stealth pays off as you reach the other side of the chamber without incident, discovering a small cache left by a previous explorer.",
+            "experience_bonus": 30,
+            "gold_bonus": 35,
+            "reward_table_id": 201,
+            "hitpoints_change": 0,
+            "energy_change": -5,
+            "is_success": true
+          },
+          {
+            "description": "Despite your attempts at stealth, a loose stone tumbles beneath your foot, creating an echo that disturbs the colony. Hundreds of bats take flight in panic, and several cave bats swoop down to attack!",
+            "experience_bonus": 15,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [201, 201],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Harvest bat guano for alchemical ingredients",
+        "type": "skill",
+        "requirements": null,
+        "icon": "intelligence",
+        "stat_check": "intelligence",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "Your knowledge of alchemy allows you to identify and collect the highest quality guano samples, which are valuable components for various potions and magical compounds.",
+            "experience_bonus": 40,
+            "gold_bonus": 45,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": -10,
+            "is_success": true
+          },
+          {
+            "description": "As you attempt to gather samples, you accidentally disturb a large hunting bat that was roosting nearby. It attacks, screeching loudly!",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [201],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Study the bat colony's behavior",
+        "type": "premium",
+        "requirements": {
+          "wisdom": 16,
+          "intelligence": 12
+        },
+        "mastery": {
+          "stat": "wisdom",
+          "value": 26
+        },
+        "icon": "wisdom",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Your patient observation reveals fascinating patterns in the bats' behavior. You notice that they seem to be protecting something at the center of the colony. Carefully approaching, you discover a rare cave mineral that the bats are attracted to, which you collect without disturbing them.",
+            "experience_bonus": 60,
+            "gold_bonus": 50,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "energy_change": 10,
+            "is_success": true
+          },
+          {
+            "description": "Your presence too close to the colony triggers defensive behavior. The bats become agitated, and a large vampiric bat swoops down to drive you away!",
+            "experience_bonus": 25,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -5,
+            "has_combat": true,
+            "monster_ids": [301],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Mineral Hot Springs",
+    "description": "Steam rises from a series of bubbling pools in a grotto lined with colorful mineral deposits. The warm, mineral-rich water fills the air with a sulfurous scent.",
+    "min_experience": 140,
+    "min_gold": 55,
+    "is_violent": false,
+    "image_url": "hot_springs",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Bathe in the mineral waters",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 90,
+        "outcomes": [
+          {
+            "description": "The warm, mineral-rich water has rejuvenating properties. You feel your aches and pains melt away, and your energy is restored as you soak in the therapeutic springs.",
+            "experience_bonus": 30,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 40,
+            "energy_change": 40,
+            "is_success": true
+          },
+          {
+            "description": "As you enter the water, you realize too late that this particular pool is much hotter than it appeared. The scalding water burns your skin before you can scramble out.",
+            "experience_bonus": 15,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -20,
+            "energy_change": -10,
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Collect mineral deposits from around the springs",
+        "type": "skill",
+        "requirements": null,
+        "icon": "strength",
+        "stat_check": "strength",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "You carefully chip away at the colorful mineral formations, collecting several valuable specimens without disturbing the delicate ecosystem of the hot springs.",
+            "experience_bonus": 45,
+            "gold_bonus": 60,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": -15,
+            "is_success": true
+          },
+          {
+            "description": "While attempting to extract a particularly beautiful crystal formation, the rock face crumbles unexpectedly. You lose your balance and slip into a pool inhabited by a colony of aggressive blind cave fish!",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -10,
+            "has_combat": true,
+            "monster_ids": [208],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Analyze the spring's alchemical properties",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 17
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 25
+        },
+        "icon": "intelligence",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Your thorough analysis of the water's composition reveals unique mineral combinations with powerful alchemical applications. You collect samples and record your findings, gaining valuable insights that could be used to create potent potions.",
+            "experience_bonus": 65,
+            "gold_bonus": 50,
+            "reward_table_id": 203,
+            "hitpoints_change": 20,
+            "energy_change": 20,
+            "is_success": true
+          },
+          {
+            "description": "While taking samples, you inadvertently disturb the delicate chemical balance of one pool. The water bubbles violently, releasing toxic fumes that you inhale before you can retreat.",
+            "experience_bonus": 25,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -25,
+            "energy_change": -25,
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Subterranean Lake",
+    "description": "A vast underground lake stretches before you, its dark waters perfectly still. Glowing fungi along the shore provide minimal illumination, revealing strange formations reflected in the water's surface.",
+    "min_experience": 160,
+    "min_gold": 70,
+    "is_violent": true,
+    "image_url": "underground_lake",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Search along the shoreline",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 85,
+        "outcomes": [
+          {
+            "description": "The lake's edge holds many treasures - you find semi-precious stones, unusual cave plants, and even some abandoned equipment from previous explorers who ventured this deep.",
+            "experience_bonus": 40,
+            "gold_bonus": 45,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": -5,
+            "is_success": true
+          },
+          {
+            "description": "While searching the shoreline, you disturb a cave slime that was camouflaged among the wet rocks. It oozes toward you menacingly!",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [203],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Dive into the lake to search for treasures",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "You take a deep breath and dive into the dark waters. As you swim deeper, your presence disturbs a school of blind cave fish that swarm around you aggressively! You must fight your way back to the surface!",
+            "experience_bonus": 55,
+            "gold_bonus": 40,
+            "reward_table_id": 202,
+            "hitpoints_change": -10,
+            "has_combat": true,
+            "monster_ids": [208, 208],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Craft a small boat using cavern materials",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 15,
+          "strength": 13
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 25
+        },
+        "icon": "intelligence",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "Your ingenuity allows you to construct a sturdy raft from mushroom stalks and cave vines. Paddling to the center of the lake, you discover a small island with a hidden cache of treasures left by ancient explorers.",
+            "experience_bonus": 70,
+            "gold_bonus": 80,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "energy_change": -15,
+            "is_success": true
+          },
+          {
+            "description": "Your makeshift craft begins to disintegrate shortly after you push off from shore. As you desperately paddle back, something large and slimy rises from the depths to investigate!",
+            "experience_bonus": 30,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -15,
+            "has_combat": true,
+            "monster_ids": [203],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Echo Chamber",
+    "description": "You enter a vast cavern where even the slightest sound reflects off the walls, creating a symphony of echoes. Unusual rock formations create acoustic effects that distort and amplify noises in strange ways.",
+    "min_experience": 135,
+    "min_gold": 55,
+    "is_violent": true,
+    "image_url": "echo_chamber",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Move silently through the chamber",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "With careful, deliberate movements, you manage to cross the echo chamber without creating disruptive sounds. Your stealth allows you to spot a hidden cache of items left by a previous explorer who wasn't as fortunate.",
+            "experience_bonus": 35,
+            "gold_bonus": 45,
+            "reward_table_id": 201,
+            "hitpoints_change": 0,
+            "energy_change": -5,
+            "is_success": true
+          },
+          {
+            "description": "Despite your best efforts, your foot dislodges a small stone that creates a cascading series of echoes throughout the chamber. The noise attracts a colony of cave bats that swarm toward the sound!",
+            "experience_bonus": 20,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [201, 201],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Test the acoustic properties of the chamber",
+        "type": "skill",
+        "requirements": null,
+        "icon": "intelligence",
+        "stat_check": "intelligence",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Your experiments with the chamber's acoustics reveal fascinating properties. By creating specific tones at precise locations, you discover that certain rock formations resonate and reveal hidden mineral deposits and crystal formations that you can collect.",
+            "experience_bonus": 50,
+            "gold_bonus": 55,
+            "reward_table_id": 202,
+            "hitpoints_change": 0,
+            "energy_change": 10,
+            "is_success": true
+          },
+          {
+            "description": "Your acoustic experiments create an unexpected harmonic resonance that causes a small rock slide. From within the newly exposed crevice, a rock crawler emerges, aggravated by the vibrations!",
+            "experience_bonus": 25,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -10,
+            "has_combat": true,
+            "monster_ids": [207],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Create a map using sound reflections",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 16,
+          "wisdom": 14
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 26
+        },
+        "icon": "intelligence",
+        "base_success_rate": 75,
+        "outcomes": [
+          {
+            "description": "By producing carefully timed sounds and listening to their echoes, you create a detailed acoustic map of the chamber and surrounding tunnels. This reveals a hidden passage that leads to a small shrine where ancient cave dwellers left offerings and treasures.",
+            "experience_bonus": 70,
+            "gold_bonus": 65,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "energy_change": 5,
+            "is_success": true
+          },
+          {
+            "description": "Your sound mapping technique works too well, revealing a colony of cave creatures that had been hiding in the walls. A vampiric bat lord, disturbed by your acoustic probing, swoops down to attack!",
+            "experience_bonus": 35,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [301],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  }
+]

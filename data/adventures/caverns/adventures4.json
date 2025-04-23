@@ -1,0 +1,375 @@
+[
+  {
+    "title": "The Vampiric Bat Lord's Roost",
+    "description": "Deep within the cavern system, rumors speak of a massive chamber where an ancient, intelligent bat of enormous size has made its lair. From its perch, it commands lesser bats throughout the caves.",
+    "min_experience": 210,
+    "min_gold": 85,
+    "is_violent": true,
+    "image_url": "bat_lord_roost",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Approach stealthily to observe",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 65,
+        "outcomes": [
+          {
+            "description": "Your cautious approach pays off as you find a concealed vantage point near the ceiling of the vast chamber. From here, you observe the Vampiric Bat Lord's habits and territory without detection. When it leaves to hunt, you manage to collect several valuable items from its hoard.",
+            "experience_bonus": 60,
+            "gold_bonus": 70,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "energy_change": -15,
+            "is_success": true
+          },
+          {
+            "description": "Despite your care, your scent carries on the air currents within the chamber. The massive bat's keen senses detect you, and it descends from the ceiling with a terrifying screech, its massive wings creating gusts of wind as it attacks!",
+            "experience_bonus": 40,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [301],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Confront the Vampiric Bat Lord",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "You step boldly into the chamber, weapon ready. From the shadows above, countless pairs of gleaming eyes watch as their master - a bat of unnatural size with blood-red eyes and elongated fangs - descends to meet your challenge. The Vampiric Bat Lord screeches a battle cry that summons its minions!",
+            "experience_bonus": 90,
+            "gold_bonus": 80,
+            "reward_table_id": 204,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [201, 301],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Use sonic lures to distract the colony",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 18,
+          "wisdom": 16
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 28
+        },
+        "icon": "intelligence",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Using your knowledge of bat echolocation, you create a series of clever acoustic diversions that confuse the bat colony. This allows you to move through their territory while they investigate the false signals. You're able to reach the Bat Lord's personal treasure cache and extract several powerful items before making your escape.",
+            "experience_bonus": 95,
+            "gold_bonus": 90,
+            "reward_table_id": 204,
+            "hitpoints_change": 0,
+            "energy_change": 0,
+            "is_success": true
+          },
+          {
+            "description": "Your attempt to manipulate the bats' senses initially seems to work, but the Vampiric Bat Lord is too intelligent to be fooled for long. It quickly determines the source of the deception and swoops down upon you, its massive form blotting out the light from your torch!",
+            "experience_bonus": 50,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -10,
+            "has_combat": true,
+            "monster_ids": [301],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Prismatic Crystal Weaver's Den",
+    "description": "A maze of crystal formations leads to a central chamber where multiple passageways intersect. Reports speak of a gigantic crystal spider that has created an elaborate web of crystalline strands that shimmer with magical energy.",
+    "min_experience": 225,
+    "min_gold": 90,
+    "is_violent": true,
+    "image_url": "crystal_weaver_den",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Navigate the crystal web carefully",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 60,
+        "outcomes": [
+          {
+            "description": "With extraordinary care, you manage to slip between the crystalline strands without disturbing them. Each thread would alert the guardian if broken. Your patience allows you to reach the center of the web, where previous prey - and their valuable possessions - hang suspended in crystal cocoons.",
+            "experience_bonus": 70,
+            "gold_bonus": 85,
+            "reward_table_id": 204,
+            "hitpoints_change": 0,
+            "energy_change": -20,
+            "is_success": true
+          },
+          {
+            "description": "As you attempt to maneuver through the complex crystal web, your foot catches a nearly invisible strand. It vibrates with a musical tone that echoes through the chamber. Within moments, the Prismatic Crystal Weaver descends from above, its body glittering with supernatural light!",
+            "experience_bonus": 45,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [303],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Challenge the Crystal Weaver directly",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "You deliberately snap several crystal strands, sending reverberations throughout the web. In response, the massive Prismatic Crystal Weaver emerges from its central lair - a spider-like creature with a translucent body composed of living crystal that glows with internal magical energy. It shifts through prismatic colors as it prepares to defend its territory!",
+            "experience_bonus": 100,
+            "gold_bonus": 90,
+            "reward_table_id": 204,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [303],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Analyze the crystal resonance patterns",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 19,
+          "wisdom": 15
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 29
+        },
+        "icon": "intelligence",
+        "base_success_rate": 70,
+        "outcomes": [
+          {
+            "description": "Your thorough study of the crystal web reveals that each strand resonates at a specific frequency. By carefully producing counter-frequencies, you temporarily neutralize sections of the web, allowing you safe passage to the heart of the lair. There, you discover not only the Crystal Weaver's collection of valuable items but also gain insight into crystal magic from studying its unique creations.",
+            "experience_bonus": 110,
+            "gold_bonus": 100,
+            "reward_table_id": 204,
+            "hitpoints_change": 0,
+            "energy_change": 20,
+            "is_success": true
+          },
+          {
+            "description": "Your attempt to manipulate the crystal resonances produces unexpected harmonics that strengthen rather than neutralize the web. The entire structure begins to glow and pulse with energy, immediately alerting its creator. The Prismatic Crystal Weaver emerges, its body cycling through colors rapidly in agitation!",
+            "experience_bonus": 55,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -5,
+            "has_combat": true,
+            "monster_ids": [303],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Mycelium Mind's Dominion",
+    "description": "The largest fungal garden in the caverns houses a vast, intelligent fungal entity that has absorbed knowledge from countless victims. Its network of mycelium threads extends throughout several connected chambers, forming a collective consciousness.",
+    "min_experience": 220,
+    "min_gold": 85,
+    "is_violent": true,
+    "image_url": "mycelium_dominion",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Move carefully along the periphery",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 65,
+        "outcomes": [
+          {
+            "description": "You skirt the edges of the fungal colony, avoiding direct contact with the main mycelium network. Your careful path allows you to collect valuable specimens and artifacts from the Mycelium Mind's outer territory without alerting the central consciousness.",
+            "experience_bonus": 65,
+            "gold_bonus": 75,
+            "reward_table_id": 203,
+            "hitpoints_change": 0,
+            "energy_change": -15,
+            "is_success": true
+          },
+          {
+            "description": "Despite your caution, you accidentally step on a hidden sensor node of the fungal network. The entire garden seems to pulse with awareness, and suddenly the ground before you rises up as the Mycelium Mind forms a humanoid shape to confront the intruder!",
+            "experience_bonus": 45,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -5,
+            "has_combat": true,
+            "monster_ids": [306],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Confront the fungal entity",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "You march boldly into the heart of the fungal garden, challenging the ancient intelligence that dwells there. The air grows thick with spores as the ground trembles. Suddenly, the fungal mass coalesces into a towering humanoid form - the Mycelium Mind has awakened to defend its domain with terrible psychic powers!",
+            "experience_bonus": 95,
+            "gold_bonus": 85,
+            "reward_table_id": 204,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [306],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Attempt mental communion with the fungal network",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 19,
+          "wisdom": 18
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 29
+        },
+        "icon": "wisdom",
+        "base_success_rate": 65,
+        "outcomes": [
+          {
+            "description": "Using meditative techniques and your knowledge of psychic connections, you establish a tentative mental link with the Mycelium Mind. Though alien and vast, you manage to communicate peaceful intentions. The entity shares fragments of ancient knowledge and allows you to take several powerful artifacts from its collection, recognizing a kindred intellect rather than a threat.",
+            "experience_bonus": 115,
+            "gold_bonus": 90,
+            "reward_table_id": 204,
+            "hitpoints_change": 10,
+            "energy_change": 35,
+            "is_success": true
+          },
+          {
+            "description": "Your attempt to establish mental contact with the fungal entity opens your mind too completely. The Mycelium Mind's consciousness is overwhelming - ancient, alien, and hungry for more knowledge. It attempts to absorb your memories and experiences! The psychic assault manifests physically as the fungal mass rises up to engulf you!",
+            "experience_bonus": 55,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -15,
+            "energy_change": -25,
+            "has_combat": true,
+            "monster_ids": [306],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Crystallos: The Heart of the Geode",
+    "description": "At the deepest point of the caverns lies a massive geode chamber, its walls lined with colossal crystal formations. At its center floats the legendary Crystallos - a sentient crystal entity of immense power that has absorbed magical energies for millennia.",
+    "min_experience": 250,
+    "min_gold": 100,
+    "is_violent": true,
+    "image_url": "crystallos_chamber",
+    "area_id": 2,
+    "decisions": [
+      {
+        "description": "Approach with reverence and caution",
+        "type": "safe",
+        "requirements": null,
+        "icon": null,
+        "base_success_rate": 50,
+        "outcomes": [
+          {
+            "description": "Your respectful approach seems to resonate with the ancient entity. Crystallos observes you with detached curiosity rather than hostility. While maintaining a safe distance, you're able to gather several crystal fragments that have broken off from the main formation - each containing immense magical potential.",
+            "experience_bonus": 85,
+            "gold_bonus": 95,
+            "reward_table_id": 204,
+            "hitpoints_change": 0,
+            "energy_change": 25,
+            "is_success": true
+          },
+          {
+            "description": "Though you approach with care, Crystallos perceives your presence as a threat. The massive crystal entity pulses with brilliant light, and suddenly a beam of concentrated energy lances out toward you! The ancient guardian of the geode has awakened to defend its sanctuary!",
+            "experience_bonus": 60,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -20,
+            "has_combat": true,
+            "monster_ids": [307],
+            "is_success": false
+          }
+        ]
+      },
+      {
+        "description": "Challenge Crystallos for its power",
+        "type": "combat",
+        "requirements": null,
+        "icon": "attack",
+        "base_success_rate": 100,
+        "outcomes": [
+          {
+            "description": "You boldly stride into the heart of the geode chamber and declare your challenge to Crystallos. The massive crystal entity responds by pulsing with blinding light as it rises from its resting place. The air crackles with magical energy as the most powerful guardian of the caverns prepares to test your worth!",
+            "experience_bonus": 120,
+            "gold_bonus": 120,
+            "reward_table_id": 205,
+            "hitpoints_change": 0,
+            "has_combat": true,
+            "monster_ids": [307],
+            "is_success": true
+          }
+        ]
+      },
+      {
+        "description": "Conduct a crystal harmonic ritual",
+        "type": "premium",
+        "requirements": {
+          "intelligence": 20,
+          "wisdom": 18
+        },
+        "mastery": {
+          "stat": "intelligence",
+          "value": 30
+        },
+        "icon": "intelligence",
+        "base_success_rate": 65,
+        "outcomes": [
+          {
+            "description": "Drawing on extensive knowledge of crystal magic, you perform an elaborate ritual that creates harmonic resonances with Crystallos. The sentient crystal entity responds to your magical overture, its internal light shifting to match your ritual's patterns. A form of communication is established, and Crystallos grants you not only access to its accumulated treasures but also imparts ancient magical knowledge that enhances your understanding of arcane forces.",
+            "experience_bonus": 150,
+            "gold_bonus": 140,
+            "reward_table_id": 205,
+            "hitpoints_change": 30,
+            "energy_change": 50,
+            "is_success": true
+          },
+          {
+            "description": "Your ritual begins well, but a mistake in the harmonic sequence creates a dissonant frequency that agitates rather than harmonizes with Crystallos. The massive crystal entity's inner light turns from blue to angry red, and it rises from its resting place, vibrating with power. Energy beams begin to focus toward you as Crystallos prepares to eliminate the threat!",
+            "experience_bonus": 70,
+            "gold_bonus": 0,
+            "reward_table_id": null,
+            "hitpoints_change": -25,
+            "has_combat": true,
+            "monster_ids": [307],
+            "is_success": false
+          }
+        ]
+      }
+    ]
+  }
+]
