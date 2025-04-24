@@ -41,33 +41,32 @@ export default function AreaInfoPopup({
   
   // Calculate position for popup
   const getPopupStyle = () => {
-    // Get window dimensions
-    const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 900;
+    // Position the popup based on clicked position, but ensure it's visible
+    // We use position.y from the click but adjust it to be above the clicked area
     
-    // Calculate the horizontal center position
-    const left = `${windowWidth / 2}px`;
-    
-    // Position the popup above the click point
-    const top = `${position.y}px`;
+    // Make sure popup doesn't go too high (at least 60px from top)
+    // and position it above the clicked area by 120px
+    const minTop = 60; 
+    const topPos = Math.max(minTop, position.y - 120);
     
     return {
       position: 'fixed' as const,
-      top,
-      left,
-      transform: 'translate(-50%, -100%)', // Center horizontally and position above
+      top: `${topPos}px`,
+      left: '50%', // Still centered horizontally
+      transform: 'translateX(-50%)', // Center horizontally
       zIndex: 100,
     };
   };
   
   return (
     <div 
-      className="fixed inset-0 z-50"
-      onClick={handleBackdropClick}
+      className="fixed inset-0 z-50 pointer-events-none"
     >
       <div 
         ref={popupRef}
         style={getPopupStyle()}
-        className="relative bg-gray-900 border-2 border-amber-600 rounded-md shadow-lg w-72 animate-fadeIn"
+        className="relative bg-gray-900 border-2 border-amber-600 rounded-md shadow-lg w-72 animate-fadeIn pointer-events-auto"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Area Name Header */}
         <div className="px-4 py-2 border-b border-amber-700 text-amber-300 font-semibold pr-8">

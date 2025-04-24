@@ -80,14 +80,14 @@ export async function completeCombat(
     
     const newExperience = character.experience + experienceReward;
     const newGold = character.gold + goldReward;
-    const newAdventureCount = character.daily_adventure_count + 1;
+    // Don't increment adventure count here - it will be incremented when transitioning to the next adventure
     
     console.log('completeCombat: Calculated rewards:', {
       experienceReward,
       goldReward,
       newExperience,
       newGold,
-      newAdventureCount
+      currentAdventureCount: character.daily_adventure_count
     });
     
     // Step 3: Update the combat record
@@ -108,13 +108,13 @@ export async function completeCombat(
       };
     }
     
-    // Step 4: Update the character with rewards
+    // Step 4: Update the character with rewards - but don't increment adventure count
     const { error: updateCharacterError } = await supabase
       .from('characters')
       .update({
         experience: newExperience,
         gold: newGold,
-        daily_adventure_count: newAdventureCount,
+        // No daily_adventure_count increment here
         updated_at: new Date().toISOString()
       })
       .eq('id', characterId);
@@ -127,7 +127,7 @@ export async function completeCombat(
       };
     }
     
-    // Step 5: Update the adventure state to outcome
+    // Step 5: Update the adventure state to outcome - using current adventure count, not incrementing
     const { error: updateAdventureStateError } = await supabase
       .from('character_adventures')
       .upsert(
@@ -136,7 +136,7 @@ export async function completeCombat(
           current_state: 'outcome',
           combat_id: null,
           day: character.last_played_day,
-          adventure_number: newAdventureCount,
+          adventure_number: character.daily_adventure_count, // Use current count, don't increment
           updated_at: new Date().toISOString()
         },
         { onConflict: 'character_id' }
@@ -184,8 +184,7 @@ export async function completeCombat(
       expectedGold: newGold,
       actualGold: updatedCharacter.gold,
       goldDiff: updatedCharacter.gold - character.gold,
-      expectedAdventureCount: newAdventureCount,
-      actualAdventureCount: updatedCharacter.daily_adventure_count
+      adventureCount: updatedCharacter.daily_adventure_count
     });
     
     // Return the updated data

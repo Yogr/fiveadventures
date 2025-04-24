@@ -5,16 +5,23 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Bugs
 ----------
-
-- Death blows should not allow monsters to return attack
-
 - Buffs need to time out
+
+- Shop loads fake items? Item not found? Awards random items?
 
 - Flip the queen spider image
 
 
 Todo
 -------------
+- Improve world boss
+
+- Add menu nav
+  - User Profile
+  - Advanced stats
+  - About
+  - Help
+
 - Alert non-member users in several places about their character not saving. (Show create account suggestion)
 
 - Leaderboards

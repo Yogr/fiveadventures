@@ -330,19 +330,20 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   };
 
   // Handle skill action
-  const handleUseSkill = async () => {
-    if (!combat || !selectedSkill || actionInProgress) return;
+  const handleUseSkill = async (skill: Skill) => {
+    if (!combat || actionInProgress) return;
     
     setActionInProgress(true);
+    setSelectedSkill(skill);
     
     try {
       // Animate character using skill
       animateElement('.character-avatar', 'attacking');
       
       // Show skill name as effect
-      createFloatingNumber('character', 0, 'effect', selectedSkill.name);
+      createFloatingNumber('character', 0, 'effect', skill.name);
       
-      const result = await startCombatTurn(combatId, 'skill', selectedSkill);
+      const result = await startCombatTurn(combatId, 'skill', skill);
       
       if (!result.success || !result.data) {
         setError(result.error || 'Failed to use skill');
@@ -351,7 +352,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       }
       
       setCombat(result.data);
-      addToCombatLog(`You used ${selectedSkill.name}!`);
+      addToCombatLog(`You used ${skill.name}!`);
       
       // If skill dealt damage
       if (result.data.character_damage_dealt > combat.character_damage_dealt) {
@@ -538,9 +539,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
                       label={skill.name}
                       onClick={() => {
                         if (character.current_energy >= skill.energy_cost && !actionInProgress) {
-                          setSelectedSkill(skill);
-                          // Immediately use the skill after setting it
-                          setTimeout(() => handleUseSkill(), 0);
+                          handleUseSkill(skill);
                         }
                       }}
                       disabled={character.current_energy < skill.energy_cost || actionInProgress}
