@@ -5,14 +5,12 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Bugs
 ----------
-Stone Golem no rewards
-Bandit Leader no rewards
-Death blows should not allow monsters to return attack
-Buffs need to time out
-If we detect a character in cookies, At the top of the home page, above the character creator dialog, show a 'Continue Playing' button with the name and level of the character found in cookies.
-Flip the queen spider image
 
-Lets create new adventures, decisions, outcomes, monsters, reward tables, items, etc for the next area: Caverns. This area is level 5-10 and should feature things related to 'Caverns'. I'm thinking crystals, ores, rocks, spiders, cave goblins, mud golems, rock golems, ogres, etc.
+- Death blows should not allow monsters to return attack
+
+- Buffs need to time out
+
+- Flip the queen spider image
 
 
 Todo

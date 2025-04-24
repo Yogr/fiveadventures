@@ -33,11 +33,22 @@ export async function getAdventure(
   character: Character,
   area: Area,
 ): Promise<ApiResponse<Adventure>> {
+  const startTime = new Date().getTime();
+  console.log(`[${new Date().toISOString()}] getAdventure: Starting adventure selection process`);
+  console.log('getAdventure: Character info:', {
+    id: character.id,
+    name: character.name,
+    level: getLevelFromExperience(character.experience),
+    adventureCount: character.daily_adventure_count,
+    hp: `${character.current_hitpoints}/${character.max_hitpoints}`
+  });
+  
   try {
     const supabase = await createClient();
     
     // Check if character has completed all adventures for the day
     if (character.daily_adventure_count >= MAX_ADVENTURES_PER_DAY) {
+      console.log('getAdventure: All adventures completed for today');
       return {
         success: false,
         error: 'All adventures completed for today'
@@ -46,6 +57,7 @@ export async function getAdventure(
     
     // Determine if we need a non-violent adventure (if character has 0 HP)
     const needsNonViolent = character.current_hitpoints <= 0;
+    console.log('getAdventure: Needs non-violent adventure:', needsNonViolent);
     
     // Determine if this should be an elite encounter (5th adventure or greater)
     // Since daily_adventure_count is 0-indexed, the 5th adventure is when count >= 4
@@ -53,15 +65,21 @@ export async function getAdventure(
     console.log(`getAdventure: Character adventure count: ${character.daily_adventure_count}, isEliteEncounter: ${isEliteEncounter}`);
 
     const currentDay = await getCurrentGameDay();
+    console.log('getAdventure: Current game day:', currentDay);
     
-    // Generate a seed based on character ID, current day, and adventure number
+    // Generate a seed based on character ID, current day, and adventure count
+    const adventureNumber = character.daily_adventure_count;
     const seed = generateAdventureSeed(
       character.id, 
       currentDay, 
-      character.daily_adventure_count + 1
+      adventureNumber
     );
+    console.log(`getAdventure: Adventure seed generation params - characterId: ${character.id.substring(0, 8)}..., day: ${currentDay}, adventure number: ${adventureNumber}`);
+    console.log(`getAdventure: Generated seed: ${seed}`);
     
+    console.log('getAdventure: Fetching available adventures');
     // Get valid adventures
+    const fetchStartTime = new Date().getTime();
     const { data: adventures, error } = await supabase
     .from('adventures')
     .select(`
@@ -75,17 +93,40 @@ export async function getAdventure(
     .eq('is_violent', !needsNonViolent)
     
     if (error || !adventures || adventures.length === 0) {
-      console.error('Error getting adventures:', error);
+      console.error('getAdventure: Error getting adventures:', error);
       return {
         success: false,
         error: 'Failed to get adventures'
       };
     }
     
+    console.log(`getAdventure: Fetched ${adventures.length} available adventures in ${new Date().getTime() - fetchStartTime}ms`);
+    
+    // Log the available adventures for debugging
+    if (adventures.length <= 10) {
+      console.log('getAdventure: Available adventures:', adventures.map(a => ({
+        id: a.id,
+        title: a.title,
+        isViolent: a.is_violent
+      })));
+    } else {
+      console.log(`getAdventure: Available adventures count: ${adventures.length} (too many to log all)`);
+    }
+    
     // Use the seed to select a random adventure
     // For simplicity, we'll use the seed to generate an index
     const adventureIndex = Math.abs(seed) % adventures.length;
     const selectedAdventure = adventures[adventureIndex];
+    
+    console.log(`getAdventure: Selected adventure index ${adventureIndex} out of ${adventures.length} adventures`);
+    console.log('getAdventure: Selected adventure:', {
+      id: selectedAdventure.id,
+      title: selectedAdventure.title,
+      isViolent: selectedAdventure.is_violent,
+      decisionCount: selectedAdventure.decisions?.length || 0
+    });
+    
+    console.log(`[${new Date().toISOString()}] getAdventure: Adventure selection completed in ${new Date().getTime() - startTime}ms`);
     
     return {
       success: true,
