@@ -8,7 +8,7 @@ import { getCharacterSkills } from '@/app/actions/combat';
 import { getCharacterById } from '@/app/actions/character';
 import { useAdventureState } from '@/components/adventure/AdventureStateContext';
 import LoadingSpinner from '@/components/ui/loading-spinner';
-import { Dialog, Transition } from '@headlessui/react';
+import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
 import Image from 'next/image';
 import ActionButton from './action-button';
 import CombatScene from './CombatScene';
@@ -127,17 +127,9 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       turns: Array.isArray(combat.turns) ? combat.turns.length : 0
     });
     
-    // Check if monster is defeated (HP <= 0)
-    const monsterCurrentHP = combat.monster.hitpoints - combat.character_damage_dealt;
-    const monsterDefeated = monsterCurrentHP <= 0;
-    
-    // End combat if server says it's completed or if monster HP is 0 or less
-    if ((combat.is_completed && combat.is_victory !== null) || monsterDefeated) {
-      console.log('CombatInterface: Combat is completed or monster is defeated');
-      
-      // If monster is defeated but combat not marked as completed, force victory
-      // Ensure isVictory is always a boolean, not null
-      const isVictory = monsterDefeated ? true : (combat.is_victory === true);
+    // End combat if server says it's completed
+    if (combat.is_completed && combat.is_victory !== null) {
+      console.log('CombatInterface: Combat is completed according to server');
       
       // Check if this was a "run away" scenario
       const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) => {
@@ -145,9 +137,9 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         return turn.actor === 'character' && turn.action === 'run' && turn.effects?.success === true;
       });
       
-      // If player ran away, make sure isVictory is false
+      // Create final result
       const finalResult = {
-        isVictory: ranAway ? false : isVictory,
+        isVictory: ranAway ? false : (combat.is_victory === true),
         ranAway: !!ranAway,
         monsterName: combat.monster?.name || 'monster'
       };
@@ -155,24 +147,20 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       // Set combat ending flag to prevent multiple calls
       combatEndingRef.current = true;
       
-      // Import the completeCombat function
-      import('@/app/actions/combat-end').then(({ completeCombat }) => {
-        // Use the completeCombat function to handle the entire combat end process
-        completeCombat(combatId, finalResult.isVictory, finalResult.ranAway).then(result => {
-          if (result.success && result.data) {
-            // Update local character state with the updated data
-            setCharacter(result.data.character);
-          }
-          
-          // Call onCombatEnd to update the UI
-          onCombatEnd(finalResult);
-        }).catch(() => {
-          // Call onCombatEnd even if completeCombat fails
-          onCombatEnd(finalResult);
-        });
+      // Refresh character information first
+      getCharacterById(character.id).then(response => {
+        if (response.success && response.data) {
+          setCharacter(response.data);
+        }
+        
+        // Call onCombatEnd to update the UI with the result
+        onCombatEnd(finalResult);
+      }).catch(() => {
+        // Call onCombatEnd even if getCharacterById fails
+        onCombatEnd(finalResult);
       });
     }
-  }, [combat, character.id, combatId, onCombatEnd, refreshAdventureState]);
+  }, [combat, character.id, combatId, onCombatEnd]);
 
   // Create a floating damage number
   const createFloatingNumber = (target: 'character' | 'monster', value: number, type: 'damage' | 'heal' | 'effect' = 'damage', text?: string) => {
@@ -491,28 +479,24 @@ export default function CombatInterface({ combatId, character: initialCharacter,
                   if (combatEndingRef.current) return;
                   combatEndingRef.current = true;
 
-                  // Create the final result
+                  // Create the final result - this action only updates the UI, doesn't trigger server calls
                   const finalResult = {
                     isVictory: combat.is_victory === true,
                     ranAway: !!ranAway,
                     monsterName: combat.monster?.name || 'monster'
                   };
 
-                  // Import the completeCombat function
-                  import('@/app/actions/combat-end').then(({ completeCombat }) => {
-                    // Use the completeCombat function to handle the entire combat end process
-                    completeCombat(combatId, finalResult.isVictory, finalResult.ranAway).then(result => {
-                      if (result.success && result.data) {
-                        // Update local character state with the updated data
-                        setCharacter(result.data.character);
-                      }
-
-                      // Call onCombatEnd to update the UI
-                      onCombatEnd(finalResult);
-                    }).catch(() => {
-                      // Call onCombatEnd even if completeCombat fails
-                      onCombatEnd(finalResult);
-                    });
+                  // Get updated character data
+                  getCharacterById(character.id).then(response => {
+                    if (response.success && response.data) {
+                      setCharacter(response.data);
+                    }
+                    
+                    // Call onCombatEnd to update the UI
+                    onCombatEnd(finalResult);
+                  }).catch(() => {
+                    // Call onCombatEnd even if getCharacterById fails
+                    onCombatEnd(finalResult);
                   });
                 }}
                 className="pixel-button text-base md:text-xl"
@@ -584,7 +568,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       {combat && (
         <Transition appear show={showMonsterInfo} as={Fragment}>
           <Dialog as="div" className="relative z-50" onClose={() => setShowMonsterInfo(false)}>
-            <Transition.Child
+            <TransitionChild
               as={Fragment}
               enter="ease-out duration-300"
               enterFrom="opacity-0"
@@ -594,11 +578,11 @@ export default function CombatInterface({ combatId, character: initialCharacter,
               leaveTo="opacity-0"
             >
               <div className="fixed inset-0 bg-black bg-opacity-75" />
-            </Transition.Child>
+            </TransitionChild>
 
             <div className="fixed inset-0 overflow-y-auto">
               <div className="flex min-h-full items-center justify-center p-4 text-center">
-                <Transition.Child
+                <TransitionChild
                   as={Fragment}
                   enter="ease-out duration-300"
                   enterFrom="opacity-0 scale-95"
@@ -607,15 +591,15 @@ export default function CombatInterface({ combatId, character: initialCharacter,
                   leaveFrom="opacity-100 scale-100"
                   leaveTo="opacity-0 scale-95"
                 >
-                  <Dialog.Panel className="w-11/12 max-w-sm md:max-w-md transform overflow-hidden rounded-2xl bg-gray-900 border-2 border-gray-700 p-4 md:p-6 text-left align-middle shadow-xl transition-all">
-                    <Dialog.Title as="h3" className="text-lg md:text-xl font-bold text-center text-red-400 mb-3 md:mb-4 border-b border-gray-700 pb-2">
+                  <DialogPanel className="w-11/12 max-w-sm md:max-w-md transform overflow-hidden rounded-2xl bg-gray-900 border-2 border-gray-700 p-4 md:p-6 text-left align-middle shadow-xl transition-all">
+                    <DialogTitle as="h3" className="text-lg md:text-xl font-bold text-center text-red-400 mb-3 md:mb-4 border-b border-gray-700 pb-2">
                       {combat.monster.name}
                       {combat.monster.is_elite && (
                         <span className="ml-2 text-xs text-yellow-400 font-bold border border-yellow-400 rounded-md px-1 py-0.5">
                           ELITE
                         </span>
                       )}
-                    </Dialog.Title>
+                    </DialogTitle>
                     
                     <div className="flex mb-4">
                       <div className="mr-4">
@@ -660,8 +644,8 @@ export default function CombatInterface({ combatId, character: initialCharacter,
                         Close
                       </button>
                     </div>
-                  </Dialog.Panel>
-                </Transition.Child>
+                  </DialogPanel>
+                </TransitionChild>
               </div>
             </div>
           </Dialog>

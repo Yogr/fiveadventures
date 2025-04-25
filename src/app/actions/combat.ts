@@ -336,7 +336,12 @@ export async function startCombatTurn(
     
     // Check if monster is defeated
     if (monsterRemainingHp === 0) {
-      // Monster defeated - end combat
+      // Monster defeated - This section handles the COMPLETE combat ending process including:
+      // 1. Marking combat as completed
+      // 2. Awarding experience and gold
+      // 3. Incrementing adventure count
+      // 4. Updating all necessary database records
+      console.log('Combat: Monster defeated - processing complete victory flow');
       await supabase
         .from('combat')
         .update({
@@ -348,18 +353,7 @@ export async function startCombatTurn(
         })
         .eq('id', combatId);
       
-      // Award experience and gold - CRITICAL FIX
-      console.log('CRITICAL: About to update character with rewards:', {
-        characterId: character.id,
-        oldExperience: character.experience,
-        experienceReward: monster.experience_reward,
-        newExperience: character.experience + monster.experience_reward,
-        oldGold: character.gold,
-        goldReward: monster.gold_reward,
-        newGold: character.gold + monster.gold_reward
-      });
-      
-      // EMERGENCY FIX: Force direct update with updated_at timestamp to ensure change is detected
+      // Add rewards to character in a single transaction
       const { error: updateExpGoldError } = await supabase
         .from('characters')
         .update({
@@ -370,22 +364,21 @@ export async function startCombatTurn(
         .eq('id', character.id);
         
       if (updateExpGoldError) {
-        console.error('EMERGENCY ERROR: Failed to update character experience and gold:', updateExpGoldError);
+        console.error('Combat: Failed to update character experience and gold:', updateExpGoldError);
         return {
           success: false,
           error: 'Failed to update character with rewards'
         };
       }
       
-      // Log the update
-      console.log('EMERGENCY: Character rewards update sent to database:', {
-        characterId: character.id,
+      console.log('Combat: Added rewards to character:', {
+        experienceAdded: monster.experience_reward,
+        goldAdded: monster.gold_reward,
         newExperience: character.experience + monster.experience_reward,
-        newGold: character.gold + monster.gold_reward,
-        timestamp: new Date().toISOString()
+        newGold: character.gold + monster.gold_reward
       });
       
-      // Increment adventure count separately with updated_at timestamp
+      // Increment adventure count in a separate transaction to ensure it's updated correctly
       const { error: updateAdventureCountError } = await supabase
         .from('characters')
         .update({
@@ -393,13 +386,35 @@ export async function startCombatTurn(
           updated_at: new Date().toISOString() // Force update timestamp
         })
         .eq('id', character.id);
+
+      console.log('Combat: Adventure count updated to:', character.daily_adventure_count + 1);
         
       if (updateAdventureCountError) {
-        console.error('Error updating adventure count:', updateAdventureCountError);
+        console.error('Combat: Error updating adventure count:', updateAdventureCountError);
         // Continue anyway, this isn't as critical as the rewards
       }
       
-      // Verify the update by fetching the character data
+      // Update the adventure state to outcome to properly transition to the outcome screen
+      const { error: updateAdventureStateError } = await supabase
+        .from('character_adventures')
+        .upsert(
+          {
+            character_id: character.id,
+            current_state: 'outcome',
+            combat_id: null,
+            day: character.last_played_day,
+            adventure_number: character.daily_adventure_count,
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: 'character_id' }
+        );
+      
+      if (updateAdventureStateError) {
+        console.error('Combat: Error updating adventure state:', updateAdventureStateError);
+        // Continue anyway, this isn't critical
+      }
+      
+      // Verify all updates by fetching the character data
       const { data: verifiedCharacter, error: verifyError } = await supabase
         .from('characters')
         .select('*')
@@ -470,94 +485,96 @@ export async function startCombatTurn(
       };
     }
     
-    // Monster's turn
-    // Base damage with randomness (±20%)
-    const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
-    let monsterDamageDealt = Math.floor(monster.attack * randomFactor);
-    let monsterEffects = null;
-    
-    // Calculate total defense using the same function as in the character display
-    const totalDefense = calculateTotalDefense(character);
-    
-    // Reduced impact of defense
-    monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(totalDefense / 3));
-    
-    console.log(`Combat: Monster attack - Damage: ${monsterDamageDealt}, Character defense: ${totalDefense}`);
-    
-    // Check for monster abilities
-    if (monster.abilities) {
-      const abilities = monster.abilities as Record<string, any>;
+    if (monsterRemainingHp > 0) {
+      // Monster's turn
+      // Base damage with randomness (±20%)
+      const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
+      let monsterDamageDealt = Math.floor(monster.attack * randomFactor);
+      let monsterEffects = null;
       
-      // Roll for each ability
-      for (const [abilityName, ability] of Object.entries(abilities)) {
-        const roll = Math.floor(Math.random() * 100) + 1;
-        const typedAbility = ability as Record<string, any>;
+      // Calculate total defense using the same function as in the character display
+      const totalDefense = calculateTotalDefense(character);
+      
+      // Reduced impact of defense
+      monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(totalDefense / 3));
+      
+      console.log(`Combat: Monster attack - Damage: ${monsterDamageDealt}, Character defense: ${totalDefense}`);
+      
+      // Check for monster abilities
+      if (monster.abilities) {
+        const abilities = monster.abilities as Record<string, any>;
         
-        if (roll <= typedAbility.chance) {
-          // Ability triggers
-          if (typedAbility.damage) {
-            // Damage ability
-            monsterDamageDealt += typedAbility.damage;
-          }
+        // Roll for each ability
+        for (const [abilityName, ability] of Object.entries(abilities)) {
+          const roll = Math.floor(Math.random() * 100) + 1;
+          const typedAbility = ability as Record<string, any>;
           
-          if (typedAbility.defense_boost || typedAbility.immobilize || typedAbility.damage_over_time) {
-            // Status effect ability
-            monsterEffects = {
-              ability: abilityName,
-              ...typedAbility
-            };
+          if (roll <= typedAbility.chance) {
+            // Ability triggers
+            if (typedAbility.damage) {
+              // Damage ability
+              monsterDamageDealt += typedAbility.damage;
+            }
+            
+            if (typedAbility.defense_boost || typedAbility.immobilize || typedAbility.damage_over_time) {
+              // Status effect ability
+              monsterEffects = {
+                ability: abilityName,
+                ...typedAbility
+              };
+            }
           }
         }
       }
-    }
-    
-    // Record monster turn
-    await supabase
-      .from('combat_turns')
-      .insert({
-        id: generateId(), // Generate UUID for the record
-        combat_id: combatId,
-        turn_number: turnNumber,
-        actor: 'monster',
-        action: 'attack',
-        damage_dealt: monsterDamageDealt,
-        effects: monsterEffects
-      });
-    
-    // Update character HP
-    const characterRemainingHp = Math.max(0, character.current_hitpoints - monsterDamageDealt);
-    
-    await supabase
-      .from('characters')
-      .update({
-        current_hitpoints: characterRemainingHp
-      })
-      .eq('id', character.id);
-    
-    // Check if character is defeated
-    if (characterRemainingHp === 0) {
-      // Character defeated - end combat
+      
+      // Record monster turn
       await supabase
-        .from('combat')
-        .update({
-          is_completed: true,
-          is_victory: false,
-          turns: turnNumber,
-          character_damage_dealt: combat.character_damage_dealt + characterDamageDealt,
-          monster_damage_dealt: combat.monster_damage_dealt + monsterDamageDealt,
-          completed_at: new Date().toISOString()
-        })
-        .eq('id', combatId);
-    } else {
-      // Combat continues
+        .from('combat_turns')
+        .insert({
+          id: generateId(), // Generate UUID for the record
+          combat_id: combatId,
+          turn_number: turnNumber,
+          actor: 'monster',
+          action: 'attack',
+          damage_dealt: monsterDamageDealt,
+          effects: monsterEffects
+        });
+      
+      // Update character HP
+      character.current_hitpoints = Math.max(0, character.current_hitpoints - monsterDamageDealt);
+      
       await supabase
-        .from('combat')
+        .from('characters')
         .update({
-          turns: turnNumber,
-          character_damage_dealt: combat.character_damage_dealt + characterDamageDealt,
-          monster_damage_dealt: combat.monster_damage_dealt + monsterDamageDealt
+          current_hitpoints: character.current_hitpoints
         })
-        .eq('id', combatId);
+        .eq('id', character.id);
+    
+      // Check if character is defeated
+      if (character.current_hitpoints === 0) {
+        // Character defeated - end combat
+        await supabase
+          .from('combat')
+          .update({
+            is_completed: true,
+            is_victory: false,
+            turns: turnNumber,
+            character_damage_dealt: combat.character_damage_dealt + characterDamageDealt,
+            monster_damage_dealt: combat.monster_damage_dealt + monsterDamageDealt,
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', combatId);
+      } else {
+        // Combat continues
+        await supabase
+          .from('combat')
+          .update({
+            turns: turnNumber,
+            character_damage_dealt: combat.character_damage_dealt + characterDamageDealt,
+            monster_damage_dealt: combat.monster_damage_dealt + monsterDamageDealt
+          })
+          .eq('id', combatId);
+      }
     }
     
     // Get updated combat
