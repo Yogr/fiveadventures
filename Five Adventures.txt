@@ -5,6 +5,8 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Bugs
 ----------
+- Sometimes, encounter victories do not record the adventure
+
 - Buffs need to time out
 
 - Shop loads fake items? Item not found? Awards random items?

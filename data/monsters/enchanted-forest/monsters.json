@@ -120,6 +120,7 @@
     "experience_reward": 45,
     "gold_reward": 20,
     "difficulty": 3,
+    "scale": 3,
     "attack_type": "Physical",
     "abilities": {
       "root_grab": {

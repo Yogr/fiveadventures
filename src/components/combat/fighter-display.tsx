@@ -11,6 +11,7 @@ interface FighterDisplayProps {
   imageAlt: string;
   currentHp: number;
   maxHp: number;
+  scale?: number;
   isEnemy?: boolean;
   isElite?: boolean;
   effects?: Record<string, any>[];
@@ -27,6 +28,7 @@ export default function FighterDisplay({
   imageAlt,
   currentHp,
   maxHp,
+  scale = 1.0,
   isEnemy = false,
   isElite = false,
   effects = [],
@@ -91,8 +93,8 @@ export default function FighterDisplay({
           <Image
             src={image}
             alt={imageAlt}
-            width={width}
-            height={height}
+            width={width * scale}
+            height={height * scale}
             className={isEnemy ? "-scale-x-100" : ""}
           />
         </div>

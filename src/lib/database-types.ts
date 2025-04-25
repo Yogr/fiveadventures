@@ -384,6 +384,7 @@ export interface Database {
           attack_type: string
           abilities: Json | null
           image_url: string | null
+          scale?: number | null
           is_elite?: boolean
           base_monster_id?: number | null
           reward_table?: number

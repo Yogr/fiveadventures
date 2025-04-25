@@ -70,6 +70,7 @@ export default function CombatScene({
             imageAlt={combat.monster.name}
             currentHp={monsterCurrentHp}
             maxHp={combat.monster.hitpoints}
+            scale={combat.monster.scale ? combat.monster.scale : 1.0}
             isEnemy={true}
             isElite={combat.monster.is_elite}
             effects={monsterEffects}
