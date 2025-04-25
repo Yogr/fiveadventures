@@ -1,20 +1,20 @@
 import { 
-  GiBiceps, // Strength
-  GiMagicSwirl, // Intelligence 
-  GiRunningNinja, // Agility
-  GiClover, // Luck
-  GiBrain, // Wisdom
-  GiSwordsPower, // Combat
-  GiShield // Safe
+  GiBiceps,
+  GiRunningNinja,
+  GiClover,
+  GiBrain,
+  GiShield,
+  GiBookCover,
+  GiSwordsEmblem
 } from 'react-icons/gi';
 
 export const STAT_ICONS = {
   strength: GiBiceps, 
-  intelligence: GiMagicSwirl,
+  intelligence: GiBrain,
   agility: GiRunningNinja,
   luck: GiClover,
-  wisdom: GiBrain,
-  combat: GiSwordsPower,
+  wisdom: GiBookCover,
+  combat: GiSwordsEmblem,
   safe: GiShield
 };
 

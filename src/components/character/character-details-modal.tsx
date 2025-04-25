@@ -65,11 +65,11 @@ export default function CharacterDetailsModal({
   };
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 m-0">
       <div className="bg-amber-950 rounded-lg max-w-lg w-full animate-fadeIn border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
         {/* Header with close button */}
         <div className="flex justify-between items-center p-3 border-b border-amber-800">
-          <h3 className="text-lg font-bold text-amber-200">{character.name}</h3>
+          <h3 className="text-lg text-amber-200">{character.name}</h3>
           <button 
             onClick={onClose}
             className="text-amber-400 hover:text-amber-200"
@@ -97,27 +97,27 @@ export default function CharacterDetailsModal({
                 </div>
                 
                 <div className="space-y-1 text-center mt-1">
-                  <p className="text-amber-300 text-xs">
-                    <span className="text-purple-300">Level {level}</span><span className="text-amber-300 text-xs"> {character.class}</span>
+                  <p className="text-amber-300">
+                    <span className="text-purple-300">Level {level}</span><span className="text-amber-300"> {character.class}</span>
                   </p>
                   
                   {/* XP Bar */}
                   <div className="w-full h-1.5 bg-amber-900 rounded-full overflow-hidden mx-auto mt-1">
                     <div 
-                      className="h-full bg-green-600 text-xs" 
+                      className="h-full bg-green-600" 
                       style={{ width: `${Math.max(0, Math.min(100, expProgress))}%` }}
                     ></div>
                   </div>
                   
-                  <p className="text-amber-200 text-xs">
+                  <p className="text-amber-200">
                     HP: {character.current_hitpoints}/{getTotalMaxHitpoints(character)}
                     {getTotalMaxHitpoints(character) > character.max_hitpoints && (
-                      <span className="text-green-400 text-xs ml-1">
+                      <span className="text-green-400 ml-1">
                         (+{getTotalMaxHitpoints(character) - character.max_hitpoints})
                       </span>
                     )}
                   </p>
-                  <p className="text-amber-200 text-xs">
+                  <p className="text-amber-200">
                     MP: {character.current_energy}/{getTotalMaxEnergy(character)}
                     {getTotalMaxEnergy(character) > character.max_energy && (
                       <span className="text-green-400 text-xs ml-1">
@@ -125,7 +125,7 @@ export default function CharacterDetailsModal({
                       </span>
                     )}
                   </p>
-                  <p className="text-yellow-400 text-xs">
+                  <p className="text-yellow-400">
                     Gold: {character.gold}
                   </p>
                 </div>
@@ -133,17 +133,17 @@ export default function CharacterDetailsModal({
               
               {/* Right side - attributes only */}
               <div className="w-1/2 pl-2 flex flex-col justify-center">
-                <div className="space-y-1 text-xs">
+                <div className="space-y-1 text-sm">
                   <div className="bg-amber-900 p-1.5 rounded-md">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center text-red-400">
-                        <STAT_ICONS.strength className="mr-1 text-sm" />
+                        <STAT_ICONS.strength className="mr-1" />
                         <span className="text-amber-200">STR</span>
                       </div>
                       <span className="text-red-400">
                         {getTotalStrength(character)}
                         {getTotalStrength(character) > character.strength && (
-                          <span className="text-green-400 text-xs ml-1">
+                          <span className="text-green-400ml-1">
                             (+{getTotalStrength(character) - character.strength})
                           </span>
                         )}
@@ -171,13 +171,13 @@ export default function CharacterDetailsModal({
                   <div className="bg-amber-900 p-1.5 rounded-md">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center text-purple-400">
-                        <STAT_ICONS.wisdom className="mr-1 text-sm" />
+                        <STAT_ICONS.wisdom className="mr-1" />
                         <span className="text-amber-200">WIS</span>
                       </div>
                       <span className="text-purple-400">
                         {getTotalWisdom(character)}
                         {getTotalWisdom(character) > character.wisdom && (
-                          <span className="text-green-400 text-xs ml-1">
+                          <span className="text-green-400 ml-1">
                             (+{getTotalWisdom(character) - character.wisdom})
                           </span>
                         )}
@@ -188,13 +188,13 @@ export default function CharacterDetailsModal({
                   <div className="bg-amber-900 p-1.5 rounded-md">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center text-yellow-400">
-                        <STAT_ICONS.agility className="mr-1 text-sm" />
+                        <STAT_ICONS.agility className="mr-1" />
                         <span className="text-amber-200">AGI</span>
                       </div>
                       <span className="text-yellow-400">
                         {getTotalAgility(character)}
                         {getTotalAgility(character) > character.agility && (
-                          <span className="text-green-400 text-xs ml-1">
+                          <span className="text-green-400 ml-1">
                             (+{getTotalAgility(character) - character.agility})
                           </span>
                         )}

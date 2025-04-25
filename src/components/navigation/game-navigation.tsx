@@ -126,7 +126,7 @@ export default function GameNavigation({
       {/* Top navigation bar */}
       <div className="w-full bg-yellow-950 border-b border-amber-900 flex items-center justify-between px-4 py-1">
         {/* Day counter - left section */}
-        <div className="text-xs text-amber-300 flex-1">
+        <div className="text-sm text-amber-300 flex-1">
           <span>Day: {currentDay}</span>
         </div>
         
@@ -134,7 +134,7 @@ export default function GameNavigation({
         <div className="flex items-center justify-center gap-2 flex-1">
           <Link 
             href={ROUTES.ADVENTURE}
-            className={`rounded px-2 py-0.5 text-xs text-center text-white font-medium ${
+            className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium ${
               activeTab === 'adventure' ? 'bg-red-700' : 'bg-red-600 hover:bg-red-500'
             }`}
           >
@@ -143,7 +143,7 @@ export default function GameNavigation({
           
           <Link 
             href={ROUTES.SHOP}
-            className={`rounded px-2 py-0.5 text-xs text-center text-white font-medium ${
+            className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium ${
               activeTab === 'shop' ? 'bg-yellow-700' : 'bg-yellow-600 hover:bg-yellow-500'
             }`}
           >
@@ -153,7 +153,7 @@ export default function GameNavigation({
           <div className="relative flex items-center">
             <Link 
               href={ROUTES.WORLD_BOSS}
-              className={`rounded px-2 py-0.5 text-xs text-center text-white font-medium whitespace-nowrap ${
+              className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium whitespace-nowrap ${
                 activeTab === 'worldboss' ? 'bg-purple-700' : 'bg-purple-600 hover:bg-purple-500'
               }`}
             >
@@ -176,14 +176,14 @@ export default function GameNavigation({
                 await signOut();
                 window.location.href = '/';
               }} 
-              className="rounded px-2 py-0.5 text-xs text-center text-white font-medium bg-blue-600 hover:bg-blue-500"
+              className="rounded px-2 py-0.5 text-sm text-center text-white font-medium bg-blue-600 hover:bg-blue-500"
             >
               Logout
             </button>
           ) : (
             <Link 
               href="/login"
-              className="rounded px-2 py-0.5 text-xs text-center text-white font-medium bg-blue-600 hover:bg-blue-500"
+              className="rounded px-2 py-0.5 text-sm text-center text-white font-medium bg-blue-600 hover:bg-blue-500"
             >
               Login
             </Link>

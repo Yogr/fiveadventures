@@ -68,7 +68,7 @@ export default function FighterDisplay({
       </div>
       
       {/* Status Bar */}
-      <div className="mb-2 w-32 md:w-40">
+      <div className="mb-8 w-32 md:w-40">
         <StatusBar 
           current={currentHp} 
           max={maxHp}
@@ -87,7 +87,7 @@ export default function FighterDisplay({
         <div className="absolute bottom-0 left-1/2 w-20 h-6 bg-black bg-opacity-30 rounded-full -z-10 transform -translate-x-1/2 translate-y-1"></div>
         
         {/* Fighter image */}
-        <div className={`w-16 h-16 md:w-20 md:h-20 flex items-center justify-center ${avatarClass} ${isElite ? 'filter-brightness-110' : ''}`}>
+        <div className={`w-16 h-16 md:w-20 md:h-20 flex align-bottom pb-2 items-end ${avatarClass} ${isElite ? 'filter-brightness-110' : ''}`}>
           <Image
             src={image}
             alt={imageAlt}

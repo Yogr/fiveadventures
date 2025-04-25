@@ -134,7 +134,7 @@ const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: 
                   <button 
                     onClick={() => !loading && handleConfirmSelection(area)}
                     disabled={loading}
-                    className="pixel-button text-xs py-1 w-full bg-amber-700 hover:bg-amber-600 active:bg-amber-800 transition-all duration-200"
+                    className="pixel-button py-1 w-full bg-amber-700 hover:bg-amber-600 active:bg-amber-800 transition-all duration-200"
                   >
                     {loading ? 'Processing...' : 'Begin Adventures'}
                   </button>

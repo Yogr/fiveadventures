@@ -56,14 +56,7 @@ const DecisionCard: React.FC<DecisionCardProps> = ({
           : 'border-amber-800 bg-amber-900 bg-opacity-30 hover:border-amber-600'
       } ${statRequirement ? 'border-l-4 ' + statColor : ''}`}
       onClick={() => onSelect(decision)}
-    >
-      {/* Combat Icon */}
-      {CombatIcon && (
-        <div className="absolute top-3 right-3 text-red-600">
-          <CombatIcon className="text-xl" />
-        </div>
-      )}
-      
+    >      
       <p className="text-base text-amber-200 pr-8">{decision.description}</p>
       
       {/* Stat requirement indicator */}

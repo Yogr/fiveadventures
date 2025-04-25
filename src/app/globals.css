@@ -62,7 +62,7 @@ body {
 .pixel-button {
   position: relative;
   padding: 0.5rem 1rem;
-  font-weight: bold;
+  font-weight: lighter;
   text-transform: uppercase;
   border: 2px solid #92400e;
   border-radius: 4px;

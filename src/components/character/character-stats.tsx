@@ -41,31 +41,38 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
           {/* Character name */}
           <h3 className="text-base md:text-lg font-medium text-amber-200 mb-1 self-start">{character.name}</h3>
           
-          {/* Character avatar */}
-          <div className="w-12 h-12 md:w-14 md:h-14 rounded-full flex-shrink-0 border border-amber-700 bg-stone-800 overflow-hidden relative">
-            <Image
-              src={`/image/characters/${character.class.toLowerCase()}.png`}
-              alt={`${character.class} character portrait`}
-              fill
-              sizes="(max-width: 768px) 48px, 56px"
-              className="object-cover"
-              priority
-            />
-          </div>
+
+          <button 
+            onClick={() => { playInventoryOpenSound(); setShowDetailsModal(true) }}
+            className="h-12  w-12 flex items-center justify-center self-center"
+            aria-label="Character"
+          >
+            {/* Character avatar */}
+            <div className="w-12 h-12 md:w-14 md:h-14 rounded-full flex-shrink-0 border border-amber-700 bg-stone-800 overflow-hidden relative">
+              <Image
+                src={`/image/characters/${character.class.toLowerCase()}.png`}
+                alt={`${character.class} character portrait`}
+                fill
+                sizes="(max-width: 768px) 48px, 56px"
+                className="object-cover"
+                priority
+              />
+            </div>
+          </button>
         </div>
         
         {/* Middle section with bars */}
         <div className="flex-grow flex flex-col justify-center max-w-[65%]">
           {/* Level and class info above bars */}
-          <div className="text-sm mb-0.5">
+          <div className="mb-0.5">
             <span className="text-purple-300">Lv. {level}</span> <span className="text-amber-300">{character.class}</span>
           </div>
           
           {/* HP Bar - combined label and bar */}
           <div className="mb-1">
             <div className="flex items-center h-3.5 md:h-4 relative">
-              <span className="absolute left-1 text-sm z-10 text-white font-medium">HP</span>
-              <span className="absolute right-1 text-sm z-10 text-white font-medium">
+              <span className="absolute left-1 z-10 text-white font-medium">HP</span>
+              <span className="absolute right-1 z-10 text-white font-medium">
                 {formatNumber(character.current_hitpoints)}/{formatNumber(totalMaxHitpoints)}
               </span>
               <div className="w-full h-full bg-amber-900 rounded-md overflow-hidden">
@@ -80,8 +87,8 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
           {/* Energy Bar - combined label and bar */}
           <div className="mb-1">
             <div className="flex items-center h-3.5 md:h-4 relative">
-              <span className="absolute left-1 text-sm z-10 text-white font-medium">MP</span>
-              <span className="absolute right-1 text-sm z-10 text-white font-medium">
+              <span className="absolute left-1 z-10 text-white font-medium">MP</span>
+              <span className="absolute right-1 z-10 text-white font-medium">
                 {formatNumber(character.current_energy)}/{formatNumber(totalMaxEnergy)}
               </span>
               <div className="w-full h-full bg-amber-900 rounded-md overflow-hidden">
@@ -96,8 +103,8 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
           {/* XP Bar - combined label and bar */}
           <div>
             <div className="flex items-center h-3.5 md:h-4 relative">
-              <span className="absolute left-1 text-sm z-10 text-white font-medium">XP</span>
-              <span className="absolute right-1 text-sm z-10 text-white font-medium">
+              <span className="absolute left-1 z-10 text-white font-medium">XP</span>
+              <span className="absolute right-1 z-10 text-white font-medium">
                 {Math.floor(expProgress)}%
               </span>
               <div className="w-full h-full bg-amber-900 rounded-md overflow-hidden">
@@ -114,7 +121,7 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
         <div className="flex flex-col justify-center ml-1">
           <div className="bg-amber-900 px-1.5 py-1 rounded-md flex items-center mb-1">
             {/* Gold coin placeholder - will be replaced with actual image */}
-            <div className="w-4 h-4 mr-1 flex items-center justify-center text-xs">
+            <div className="w-4 h-4 mr-1 flex items-center justify-center">
               <Image
                 src="/image/ui/coin.png"
                 alt="Gold"
@@ -123,7 +130,7 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
                 className="object-contain"
               />
             </div>
-            <span className="text-yellow-400 text-sm">{formatNumber(character.gold)}</span>
+            <span className="text-yellow-400 font-light">{formatNumber(character.gold)}</span>
           </div>
           
           {/* Inventory button */}
