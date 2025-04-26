@@ -180,7 +180,7 @@
         "description": "Summons a swarm of tiny faeries that harass and damage over time"
       }
     },
-    "image_url": "forest_sprite",
+    "image_url": "whisperwind",
     "is_elite": true,
     "is_boss": true,
     "base_monster_id": 5,

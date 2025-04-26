@@ -331,8 +331,13 @@ export async function startCombatTurn(
         .eq('id', character.id);
     }
     
-    // Update monster HP
-    const monsterRemainingHp = Math.max(0, monster.hitpoints - characterDamageDealt);
+    // Calculate total damage dealt to monster (accumulate previous + current turn damage)
+    const totalDamageDealt = combat.character_damage_dealt + characterDamageDealt;
+    
+    // Update monster HP based on total accumulated damage
+    const monsterRemainingHp = Math.max(0, monster.hitpoints - totalDamageDealt);
+    
+    console.log(`Combat: Monster HP calculation - Initial HP: ${monster.hitpoints}, Previous Damage: ${combat.character_damage_dealt}, New Damage: ${characterDamageDealt}, Total Damage: ${totalDamageDealt}, Remaining HP: ${monsterRemainingHp}`);
     
     // Check if monster is defeated
     if (monsterRemainingHp === 0) {
