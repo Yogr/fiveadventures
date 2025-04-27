@@ -188,9 +188,23 @@ body {
   100% { transform: translateX(0); }
 }
 
+@keyframes attack-enemy {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-20px); }
+  50% { transform: translateX(0); }
+  100% { transform: translateX(0); }
+}
+
 @keyframes hit {
   0% { transform: translateX(0); filter: brightness(1); }
   25% { transform: translateX(-10px); filter: brightness(2); }
+  50% { transform: translateX(0); filter: brightness(1); }
+  100% { transform: translateX(0); filter: brightness(1); }
+}
+
+@keyframes hit-enemy {
+  0% { transform: translateX(0); filter: brightness(1); }
+  25% { transform: translateX(10px); filter: brightness(2); }
   50% { transform: translateX(0); filter: brightness(1); }
   100% { transform: translateX(0); filter: brightness(1); }
 }
@@ -205,7 +219,7 @@ body {
 }
 
 .monster-avatar.attacking {
-  animation: attack 0.5s ease-in-out;
+  animation: attack-enemy 0.5s ease-in-out;
 }
 
 .character-avatar.hit {
@@ -213,7 +227,7 @@ body {
 }
 
 .monster-avatar.hit {
-  animation: hit 0.5s ease-in-out;
+  animation: hit-enemy 0.5s ease-in-out;
 }
 
 .damage-number {

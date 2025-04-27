@@ -6,7 +6,7 @@ import type { Skill } from '@/lib/types';
  * Manually determine if an effect is a buff or debuff based on its properties
  * This avoids TypeScript issues with importing from character-utils
  */
-function determineEffectType(effect: Record<string, any>): 'buff' | 'debuff' | undefined {
+export function determineEffectType(effect: Record<string, any>): 'buff' | 'debuff' | undefined {
   // Define which properties indicate buffs
   const buffProperties = [
     'strength_boost',
@@ -147,8 +147,16 @@ export function getEffectsWithRemainingDuration(
   return effectsArray.map(effect => {
     if (!effect.duration) return effect;
     
+    // When an effect is applied on Turn X with duration Y:
+    // - On Turn X, it should show Y remaining (not Y-1)
+    // - On Turn X+1, it should show Y-1 remaining
+    // - On Turn X+Y, it should show 1 remaining (last turn)
+    // - On Turn X+Y+1, it should be gone
     const turnsPassed = currentTurn - effect.turn_applied;
-    const remaining = Math.max(0, effect.duration - turnsPassed);
+    
+    // If turnsPassed is 0 (same turn), show full duration
+    // Otherwise, subtract turnsPassed from duration
+    const remaining = Math.max(0, effect.duration + 1 - turnsPassed);
     
     return {
       ...effect,
@@ -173,17 +181,24 @@ export function createEffectFromSkill(
     id: `${skill.id}_${Date.now()}`,
     name: skill.name,
     source: skill.name,
-    turn_applied: currentTurn,
-    image_url: skill.image_url
+    turn_applied: currentTurn
   };
+  
+  // Handle image_url separately to convert null to undefined
+  if (skill.image_url !== null) {
+    effectObj.image_url = skill.image_url;
+  }
   
   // Copy all properties from skill effects
   Object.entries(skillEffects).forEach(([key, value]) => {
     (effectObj as any)[key] = value;
   });
   
-  // Determine effect type
-  effectObj.type = determineEffectType(skillEffects);
+  // Determine effect type (handle null/undefined properly)
+  const effectType = determineEffectType(skillEffects);
+  if (effectType) {
+    effectObj.type = effectType;
+  }
   
   return effectObj;
 }
@@ -209,8 +224,11 @@ export function createEffectFromMonsterAbility(
     (effectObj as any)[key] = value;
   });
   
-  // Determine effect type
-  effectObj.type = determineEffectType(ability);
+  // Determine effect type (handle null/undefined properly)
+  const effectType = determineEffectType(ability);
+  if (effectType) {
+    effectObj.type = effectType;
+  }
   
   return effectObj;
 }

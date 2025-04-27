@@ -20,7 +20,7 @@ export default function CombatMessagePanel({ messages }: CombatMessagePanelProps
   const displayMessages = messages.length > 3 ? messages.slice(-3) : messages;
   
   return (
-    <div className="absolute top-2 left-0 right-0 z-50 flex flex-col items-center">
+    <div className="absolute top-2 left-0 right-0 z-10 flex flex-col items-center">
       <div 
         ref={messagesContainerRef}
         className="bg-black bg-opacity-50 p-2 rounded-md max-w-xl max-h-[10vh] overflow-hidden"

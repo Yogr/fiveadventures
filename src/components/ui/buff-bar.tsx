@@ -2,33 +2,17 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { categorizeEffect } from '@/lib/character-utils';
-
-interface BuffEffect {
-  name?: string;
-  type?: string;
-  image_url?: string;
-  duration?: number;
-  turn_applied?: number;
-  strength_boost?: number;
-  intelligence_boost?: number;
-  agility_boost?: number;
-  luck_boost?: number;
-  defense_boost?: number;
-  slow?: number;
-  damage_over_time?: number;
-  stun?: boolean;
-  ability?: string;
-  [key: string]: any;
-}
+import { determineEffectType } from '@/lib/effect-utils';
+import type { CombatEffect } from '@/lib/effect-utils';
 
 interface BuffBarProps {
-  effects: BuffEffect[];
+  effects: CombatEffect[];
   size?: 'sm' | 'md' | 'lg';
   maxBuffs?: number;
 }
 
 export default function BuffBar({ effects, size = 'md', maxBuffs = 4 }: BuffBarProps) {
+  console.log('BuffBar', effects, size, maxBuffs);
   if (!effects || effects.length === 0) {
     return null;
   }
@@ -49,7 +33,7 @@ export default function BuffBar({ effects, size = 'md', maxBuffs = 4 }: BuffBarP
     <div className="flex items-center gap-1 my-1">
       {visibleEffects.map((effect, index) => {
         // Determine if effect is a buff or debuff
-        const effectType = categorizeEffect(effect);
+        const effectType = effect.type || determineEffectType(effect);
         
         // Set border color based on effect type
         const borderColor = 
@@ -63,7 +47,7 @@ export default function BuffBar({ effects, size = 'md', maxBuffs = 4 }: BuffBarP
         // Try to infer the image URL from the effect properties
         if (effect.image_url) {
           imageUrl = `/image/skill/${effect.image_url}.png`;
-        } else if (effect.ability) {
+        } else if (effect.source === 'monster_ability') {
           // For monster abilities, use a generic icon
           imageUrl = '/image/ui/attack.png';
         } else if (effect.strength_boost) {
@@ -96,13 +80,13 @@ export default function BuffBar({ effects, size = 'md', maxBuffs = 4 }: BuffBarP
               />
             </div>
             
-            {/* Show duration if available */}
-            {effect.duration && (
+            {/* Show remaining duration if available */}
+            {effect.remaining_duration !== undefined && (
               <span 
                 className="absolute bottom-0 right-0 bg-black bg-opacity-70 text-white text-xs rounded-sm px-0.5"
                 style={{ fontSize: size === 'sm' ? '8px' : '10px' }}
               >
-                {effect.duration}
+                {effect.remaining_duration}
               </span>
             )}
           </div>

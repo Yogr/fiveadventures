@@ -80,6 +80,26 @@ export type CombatTurn = Database['public']['Tables']['combat_turns']['Row'] & {
 
 export type CombatAction = 'Attack' | 'Skill' | 'Run';
 
+// Fighter interface - common interface for both Character and Monster
+export interface Fighter {
+  id: string;
+  name: string;
+  hitpoints: number;
+  current_hitpoints?: number;
+  attack: number;
+  defense: number;
+  
+  // Stats that might be used for skill calculations
+  strength?: number;
+  intelligence?: number;
+  agility?: number;
+  luck?: number;
+  wisdom?: number;
+  
+  // Extra properties to allow for Character and Monster
+  [key: string]: any;
+}
+
 // Reward Types
 export type RewardTable = Database['public']['Tables']['reward_tables']['Row'] & {
   items: RewardItem[];

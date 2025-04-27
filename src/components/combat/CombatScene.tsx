@@ -6,12 +6,13 @@ import CombatMessagePanel from './CombatMessagePanel';
 import Image from 'next/image';
 import type { Character, Combat } from '@/lib/types';
 import { getTotalMaxHitpoints } from '@/lib/character-utils';
+import type { CombatEffect } from '@/lib/effect-utils';
 
 interface CombatSceneProps {
   character: Character;
   combat: Combat;
-  characterEffects: Record<string, any>[];
-  monsterEffects: Record<string, any>[];
+  characterEffects: CombatEffect[];
+  monsterEffects: CombatEffect[];
   combatLog: string[];
   areaImage: string;
   onMonsterInfoClick: () => void;

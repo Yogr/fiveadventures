@@ -34,8 +34,8 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   const [error, setError] = useState<string | null>(null);
   const [combatLog, setCombatLog] = useState<string[]>([]);
   const [showMonsterInfo, setShowMonsterInfo] = useState(false);
-  const [characterEffects, setCharacterEffects] = useState<Record<string, any>[]>([]);
-  const [monsterEffects, setMonsterEffects] = useState<Record<string, any>[]>([]);
+  const [characterEffects, setCharacterEffects] = useState<CombatEffect[]>([]);
+  const [monsterEffects, setMonsterEffects] = useState<CombatEffect[]>([]);
   const combatEndingRef = useRef(false);
 
   // Load combat data
@@ -55,7 +55,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
           return;
         }
         
-        console.log('CombatInterface: Combat data loaded successfully');
+        console.log('CombatInterface: Combat data loaded successfully, combat: ', combatResponse.data);
         setCombat(combatResponse.data);
         
         // Get character skills
@@ -89,72 +89,13 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   useEffect(() => {
     if (!combat) return;
     
-    console.log('CombatInterface: Updating active effects from combat data');
-    
+    console.log('CombatInterface: Updating active effects from combat data, combat.player_effects:', combat.player_effects, 'combat.enemy_effects:', combat.enemy_effects);    
     // Get effects from the combat object
     const playerEffects = Array.isArray(combat.player_effects) ? combat.player_effects : [];
     const enemyEffects = Array.isArray(combat.enemy_effects) ? combat.enemy_effects : [];
-    
-    // Add remaining duration to effects for UI display
-    const currentTurn = combat.current_turn || 1;
-    
-    // Process player effects
-    const processedPlayerEffects: Record<string, any>[] = [];
-    playerEffects.forEach((effectData) => {
-      if (effectData && typeof effectData === 'object') {
-        const effect = effectData as Record<string, any>;
-        
-        // Calculate remaining duration
-        if (!effect.duration) {
-          // Permanent effect
-          processedPlayerEffects.push(effect);
-        } else {
-          const turnsPassed = currentTurn - (effect.turn_applied || 0);
-          const remaining = Math.max(0, effect.duration - turnsPassed);
-          
-          if (remaining > 0) {
-            // Effect is still active
-            processedPlayerEffects.push({
-              ...effect,
-              remaining_duration: remaining
-            });
-          }
-        }
-      }
-    });
-    
-    // Process enemy effects
-    const processedEnemyEffects: Record<string, any>[] = [];
-    enemyEffects.forEach((effectData) => {
-      if (effectData && typeof effectData === 'object') {
-        const effect = effectData as Record<string, any>;
-        
-        // Calculate remaining duration
-        if (!effect.duration) {
-          // Permanent effect
-          processedEnemyEffects.push(effect);
-        } else {
-          const turnsPassed = currentTurn - (effect.turn_applied || 0);
-          const remaining = Math.max(0, effect.duration - turnsPassed);
-          
-          if (remaining > 0) {
-            // Effect is still active
-            processedEnemyEffects.push({
-              ...effect,
-              remaining_duration: remaining
-            });
-          }
-        }
-      }
-    });
-    
-    console.log('CombatInterface: Processed effects:', {
-      playerEffects: processedPlayerEffects.length,
-      enemyEffects: processedEnemyEffects.length
-    });
-    
-    setCharacterEffects(processedPlayerEffects);
-    setMonsterEffects(processedEnemyEffects);
+
+    setCharacterEffects(playerEffects as CombatEffect[]);
+    setMonsterEffects(enemyEffects as CombatEffect[]);
   }, [combat]);
 
   // Check if combat is completed

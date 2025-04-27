@@ -6,12 +6,14 @@ import type {
   Character,
   Monster,
   Item,
-  Skill
+  Skill,
+  Fighter
 } from '@/lib/types';
 import { getCharacterById } from './character';
 import { getPrimaryStat, generateId } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/server';
 import { updateCombatEffects, incrementCombatTurn, applySkillEffect, applyMonsterAbilityEffect } from './effect-helpers';
+import { executeSkill, processActiveEffects } from './skill-utils';
 import {
   getTotalStrength,
   getTotalIntelligence,
@@ -113,8 +115,58 @@ export async function startCombatTurn(
     const character = combat.character as Character;
     const monster = combat.monster as Monster;
     
-    // Filter active effects before the turn starts
+    // Filter active effects before the turn starts and process any DoT/HoT effects
     await updateCombatEffects(combatId);
+    
+    // Process any active effects (applying DoT, HoT, etc.)
+    const effectResults = await processActiveEffects(combat, currentTurn);
+    
+    // Apply any damage or healing from effects
+    if (effectResults.playerDamageFromEffects > 0) {
+      // Character takes damage from effects
+      const newHP = Math.max(0, character.current_hitpoints - effectResults.playerDamageFromEffects);
+      await supabase
+        .from('characters')
+        .update({
+          current_hitpoints: newHP
+        })
+        .eq('id', character.id);
+        
+      // Add to combat log
+      combatLog.push(...effectResults.messages.filter(msg => msg.includes('player')));
+    }
+    
+    if (effectResults.playerHealingFromEffects > 0) {
+      // Character heals from effects
+      const newHP = Math.min(
+        getTotalMaxHitpoints(character), 
+        character.current_hitpoints + effectResults.playerHealingFromEffects
+      );
+      
+      await supabase
+        .from('characters')
+        .update({
+          current_hitpoints: newHP
+        })
+        .eq('id', character.id);
+    }
+    
+    // Apply monster effects (damage and healing)
+    // This is tracked in memory since monster HP isn't in the database
+    const monsterCurrentHP = Math.max(0, monster.hitpoints - combat.character_damage_dealt);
+    let monsterUpdatedHP = monsterCurrentHP;
+    
+    if (effectResults.monsterDamageFromEffects > 0) {
+      monsterUpdatedHP = Math.max(0, monsterUpdatedHP - effectResults.monsterDamageFromEffects);
+      combatLog.push(...effectResults.messages.filter(msg => msg.includes('monster')));
+    }
+    
+    if (effectResults.monsterHealingFromEffects > 0) {
+      monsterUpdatedHP = Math.min(monster.hitpoints, monsterUpdatedHP + effectResults.monsterHealingFromEffects);
+    }
+    
+    // Update the character damage dealt to include effect damage
+    characterDamageDealt += (monsterCurrentHP - monsterUpdatedHP);
     
     // Calculate character damage based on action
     if (action === 'attack') {
@@ -149,79 +201,52 @@ export async function startCombatTurn(
           error: 'Not enough energy'
         };
       }
+
+      // Cast Character and Monster directly as Fighter with TypeScript's interface
+      const characterAsFighter = character as unknown as Fighter;
       
-      // Process skill effects
-      if (skill.effects) {
-        const effects = skill.effects as Record<string, any>;
-        
-        // Get the skill's attribute if specified, or use the character's primary attribute
-        let attributeValue = 0;
-        let attributeName = skill.attribute || '';
-        
-        if (!attributeName) {
-          // If no attribute specified, use primary stat based on class
-          switch(character.class) {
-            case 'Warrior': attributeName = 'strength'; break;
-            case 'Wizard': attributeName = 'intelligence'; break;
-            case 'Thief': attributeName = 'luck'; break;
-            case 'Ranger': attributeName = 'agility'; break;
-            case 'Cleric': attributeName = 'intelligence'; break;
-            default: attributeName = 'strength';
-          }
-        }
-        
-        // Get the total attribute value including equipment bonuses
-        switch(attributeName) {
-          case 'strength': attributeValue = getTotalStrength(character); break;
-          case 'intelligence': attributeValue = getTotalIntelligence(character); break;
-          case 'agility': attributeValue = getTotalAgility(character); break;
-          case 'luck': attributeValue = getTotalLuck(character); break;
-          default: attributeValue = getPrimaryStat(character);
-        }
-        
-        if (effects.damage_multiplier) {
-          // Damage skill
-          // Use weapon damage if available, otherwise use base damage of 5
-          let baseDamage = 5;
-          if (character.equipment?.weapon) {
-            baseDamage = character.equipment.weapon.base_damage || 5;
-          }
-          
-          // Add skill power if available
-          const skillPower = skill.power || 0;
-          
-          // Calculate damage with exponential multiplier based on attribute
-          // Formula: (baseDamage + skillPower) * damageMultiplier * (1 + (attributeValue / 50))
-          const attributeMultiplier = 1 + (attributeValue / 50);
-          characterDamageDealt = Math.floor((baseDamage + skillPower) * effects.damage_multiplier * attributeMultiplier);
-          
-          // Apply monster defense
-          characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 3));
-          
-          console.log(`Combat: Skill attack - Base damage: ${baseDamage}, Skill power: ${skillPower}, Attribute: ${attributeName}(${attributeValue}), Multiplier: ${effects.damage_multiplier}, Final damage: ${characterDamageDealt}`);
-          
-          // Add to combat log
-          combatLog.push(`${character.name} uses ${skill.name} for ${characterDamageDealt} damage.`);
-        }
-        
-        if (effects.healing) {
-          // Healing skill
-          characterHealingDone = effects.healing;
-          
-          // Add to combat log
-          combatLog.push(`${character.name} uses ${skill.name} to heal for ${characterHealingDone} HP.`);
-        }
-        
-        // Apply skill effects to combat record if it has a duration
-        if (effects.duration) {
-          console.log('Combat: Applying skill effect to combat record');
-          // For character skills, effects are applied to the monster (enemy_effects)
-          await applySkillEffect(combatId, skill, 'character');
-          
-          // Add to combat log
-          combatLog.push(`${skill.name} effect applied to ${monster.name}.`);
-        }
+      // For monsters, we need to calculate current HP based on damage dealt
+      const monsterCurrentHP = Math.max(0, monster.hitpoints - combat.character_damage_dealt);
+      const monsterAsFighter = {
+        // Start with a fresh object to avoid type errors
+        id: monster.id.toString(), // Convert to string as Fighter requires string id
+        name: monster.name,
+        hitpoints: monster.hitpoints,
+        current_hitpoints: monsterCurrentHP,
+        attack: monster.attack,
+        defense: monster.defense,
+        // Default values for missing stats
+        strength: monster.attack, // Use attack as strength
+        intelligence: 0,
+        agility: 0,
+        luck: 0,
+        wisdom: 0,
+        // Add abilities and any other Monster properties we might need
+        abilities: monster.abilities
+      } as Fighter;
+      
+      // Execute the skill directly with casted objects
+      const skillResult = await executeSkill(skill, characterAsFighter, monsterAsFighter, combat);
+      
+      // Apply the results
+      characterDamageDealt += skillResult.damageDealt;
+      characterHealingDone += skillResult.healingDone;
+      
+      // Add messages to combat log
+      combatLog.push(...skillResult.messages);
+      
+      // Apply any effects if the skill created them
+      if (skillResult.effectApplied) {
+        await applySkillEffect(combatId, skill, 'character');
       }
+      
+      // Log debug information
+      console.log(`Combat: Skill ${skill.name} executed with result:`, {
+        damageDealt: characterDamageDealt,
+        healingDone: characterHealingDone,
+        effectApplied: skillResult.effectApplied,
+        messages: skillResult.messages.length
+      });
       
       // Update character energy
       await supabase
@@ -566,7 +591,7 @@ export async function startCombatTurn(
       }
     }
     
-    // Update combat effects - filter out expired effects
+    // Update combat effects - filter out expired effects and update remaining durations
     await updateCombatEffects(combatId);
     
     // Get updated combat

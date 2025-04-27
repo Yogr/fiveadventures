@@ -1,8 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { createEffectFromSkill, createEffectFromMonsterAbility, filterActiveEffects } from '@/lib/effect-utils';
-import type { CombatEffect } from '@/lib/effect-utils';
+import { createEffectFromSkill, createEffectFromMonsterAbility, filterActiveEffects, type CombatEffect } from './server-effect-utils';
 import type { Skill } from '@/lib/types';
 
 /**
@@ -13,6 +12,9 @@ export async function applySkillEffect(
   skill: Skill,
   actor: 'character' | 'monster'
 ): Promise<boolean> {
+  // Import directly here to avoid circular dependencies
+  const { applyEffectToCombat } = await import('./skill-utils');
+  
   try {
     const supabase = await createClient();
     
@@ -28,33 +30,35 @@ export async function applySkillEffect(
       return false;
     }
     
-    // Determine which effects array to update
-    const effectField = actor === 'character' ? 'enemy_effects' : 'player_effects';
-    const currentEffects = combat[effectField] || [];
     const currentTurn = combat.current_turn || 1;
     
-    // Create effect object from skill
-    const effect = createEffectFromSkill(skill, currentTurn);
+    // Create effect from skill
+    const effect = await createEffectFromSkill(skill, currentTurn);
     if (!effect) return false;
     
-    // Create an array if it doesn't exist
-    const updatedEffects = Array.isArray(currentEffects) ? [...currentEffects] : [];
+    // Determine which effects array to update
+    // Character buffs go to player_effects, debuffs go to enemy_effects
+    const effectType = effect.type;
+    let targetField: 'player_effects' | 'enemy_effects';
     
-    // Add the new effect
-    updatedEffects.push(effect);
-    
-    // Update combat record
-    const { error: updateError } = await supabase
-      .from('combat')
-      .update({ [effectField]: updatedEffects })
-      .eq('id', combatId);
-    
-    if (updateError) {
-      console.error('Error updating combat effects:', updateError);
-      return false;
+    if (actor === 'character') {
+      // For character skills
+      if (effectType === 'buff') {
+        targetField = 'player_effects'; // Buffs on self
+      } else {
+        targetField = 'enemy_effects';  // Debuffs on enemy
+      }
+    } else {
+      // For monster skills
+      if (effectType === 'buff') {
+        targetField = 'enemy_effects';  // Buffs on self (monster)
+      } else {
+        targetField = 'player_effects'; // Debuffs on enemy (player)
+      }
     }
     
-    return true;
+    // Apply the effect to the combat using our utility function
+    return await applyEffectToCombat(combatId, effect, actor, targetField);
   } catch (err) {
     console.error('Error applying skill effect:', err);
     return false;
@@ -90,14 +94,31 @@ export async function applyMonsterAbilityEffect(
     const currentTurn = combat.current_turn || 1;
     
     // Create effect object from monster ability
-    const effect = createEffectFromMonsterAbility(abilityName, ability, currentTurn);
+    const effect = await createEffectFromMonsterAbility(abilityName, ability, currentTurn);
     if (!effect) return false;
     
     // Create an array if it doesn't exist
     const updatedEffects = Array.isArray(currentEffects) ? [...currentEffects] : [];
     
-    // Add the new effect
-    updatedEffects.push(effect);
+    // Check if this effect already exists (by name)
+    const existingEffectIndex = updatedEffects.findIndex(e => 
+      e.name === effect.name && e.source === effect.source
+    );
+    
+    if (existingEffectIndex >= 0) {
+      // Update existing effect's duration by resetting its turn_applied
+      updatedEffects[existingEffectIndex] = {
+        ...updatedEffects[existingEffectIndex],
+        turn_applied: effect.turn_applied,
+        // Preserve the original effect ID
+        id: updatedEffects[existingEffectIndex].id
+      };
+      console.log(`Updated existing monster effect: ${effect.name}`);
+    } else {
+      // Add as a new effect
+      updatedEffects.push(effect);
+      console.log(`Added new monster effect: ${effect.name}`);
+    }
     
     // Update combat record
     const { error: updateError } = await supabase
@@ -118,7 +139,9 @@ export async function applyMonsterAbilityEffect(
 }
 
 /**
- * Filter out expired effects from combat
+ * Filter out expired effects from combat and update remaining durations
+ * @param combatId The combat ID
+ * @param nextTurn The next turn number to calculate remaining durations (optional)
  */
 export async function updateCombatEffects(combatId: string): Promise<boolean> {
   try {
@@ -138,16 +161,46 @@ export async function updateCombatEffects(combatId: string): Promise<boolean> {
     
     const currentTurn = combat.current_turn || 1;
     
-    // Filter out expired effects
-    const playerEffects = filterActiveEffects(
+    // Filter out expired effects and update remaining durations
+    let playerEffects = await filterActiveEffects(
       Array.isArray(combat.player_effects) ? combat.player_effects : [], 
       currentTurn
     );
     
-    const enemyEffects = filterActiveEffects(
+    let enemyEffects = await filterActiveEffects(
       Array.isArray(combat.enemy_effects) ? combat.enemy_effects : [], 
       currentTurn
     );
+    
+    
+    playerEffects = playerEffects.map(effect => {
+      if (!effect.duration) return effect;
+      
+      // Calculate remaining duration using formula:
+      // effectRemainingDuration = effect.duration - (present_turn - (turn_applied+1))
+      
+      const remainingDuration = effect.duration - (currentTurn - (effect.turn_applied + 1));
+      console.log('Remaining duration:', effect.duration, currentTurn, effect.turn_applied + 1);
+      console.log('Remaining duration result is:', remainingDuration);
+      
+      return {
+        ...effect,
+        remaining_duration: Math.max(0, remainingDuration)
+      };
+    });
+    
+    enemyEffects = enemyEffects.map(effect => {
+      if (!effect.duration) return effect;
+      
+      // Calculate remaining duration using formula:
+      // effectRemainingDuration = effect.duration - (present_turn - (turn_applied+1))
+      const remainingDuration = effect.duration - (currentTurn - (effect.turn_applied + 1));
+      
+      return {
+        ...effect,
+        remaining_duration: Math.max(0, remainingDuration)
+      };
+    });
     
     // Update combat record
     const { error: updateError } = await supabase

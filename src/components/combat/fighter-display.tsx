@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import StatusBar from './status-bar';
 import BuffBar from '@/components/ui/buff-bar';
+import type { CombatEffect } from '@/lib/effect-utils';
 
 interface FighterDisplayProps {
   name: string;
@@ -14,7 +15,7 @@ interface FighterDisplayProps {
   scale?: number;
   isEnemy?: boolean;
   isElite?: boolean;
-  effects?: Record<string, any>[];
+  effects?: CombatEffect[];
   width?: number;
   height?: number;
   className?: string;
@@ -41,8 +42,10 @@ export default function FighterDisplay({
   // Determine avatar CSS class for animations
   const avatarClass = isEnemy ? 'monster-avatar' : 'character-avatar';
 
+  console.log('FighterDisplayy, effects:', effects, 'isEnemy:', isEnemy, 'isElite:', isElite, 'className:', className);
+
   return (
-    <div className={`flex flex-col items-center ${className}`}>
+    <div className={`flex flex-col items-center ${className} relative`}>
       {/* Name and info header */}
       <div className="mb-2 px-3 py-1 bg-gray-900 bg-opacity-70 rounded-md">
         <div className="flex items-center">
@@ -79,7 +82,7 @@ export default function FighterDisplay({
       
       {/* Effects display */}
       {effects.length > 0 && (
-        <div className="absolute top-0 left-0">
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2">
           <BuffBar effects={effects} size="md" />
         </div>
       )}
