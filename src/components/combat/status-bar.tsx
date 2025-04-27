@@ -33,7 +33,7 @@ export default function StatusBar({
         ></div>
         
         {/* Status text inside the bar */}
-        <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-shadow">
+        <div className="absolute inset-0 flex items-center justify-center text-white text-sm text-shadow">
           {label}: {current}/{max}
         </div>
       </div>

@@ -11,6 +11,7 @@ import type {
 import { getCharacterById } from './character';
 import { getPrimaryStat, generateId } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/server';
+import { updateCombatEffects, incrementCombatTurn, applySkillEffect, applyMonsterAbilityEffect } from './effect-helpers';
 import {
   getTotalStrength,
   getTotalIntelligence,
@@ -34,7 +35,8 @@ export async function getCombat(
       .select(`
         *,
         monster:monster_id(*),
-        turns:combat_turns(*)
+        player_effects,
+        enemy_effects
       `)
       .eq('id', combatId)
       .single();
@@ -51,8 +53,7 @@ export async function getCombat(
       id: data.id,
       is_completed: data.is_completed,
       is_victory: data.is_victory,
-      turns: data.turns ? data.turns.length : 0,
-      turn_details: data.turns
+      current_turn: data.current_turn || 1
     });
     
     return {
@@ -80,7 +81,7 @@ export async function startCombatTurn(
     // Get the combat data
     const { data: combat, error: combatError } = await supabase
       .from('combat')
-      .select('*, monster:monster_id(*), character:character_id(*)')
+      .select('*, monster:monster_id(*), character:character_id(*), player_effects, enemy_effects')
       .eq('id', combatId)
       .single();
     
@@ -100,15 +101,20 @@ export async function startCombatTurn(
     }
     
     // Get the current turn number
-    const turnNumber = combat.turns + 1;
+    const currentTurn = combat.current_turn || 1;
+    
+    // Initialize combat log for this turn
+    let combatLog = combat.combat_log || [];
     
     // Process character action
     let characterDamageDealt = 0;
     let characterHealingDone = 0;
-    let characterEffects = null;
     
     const character = combat.character as Character;
     const monster = combat.monster as Monster;
+    
+    // Filter active effects before the turn starts
+    await updateCombatEffects(combatId);
     
     // Calculate character damage based on action
     if (action === 'attack') {
@@ -131,6 +137,9 @@ export async function startCombatTurn(
       characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 3));
       
       console.log(`Combat: Character basic attack - Base damage: ${baseDamage}, Final damage: ${characterDamageDealt}`);
+      
+      // Add to combat log
+      combatLog.push(`${character.name} attacks for ${characterDamageDealt} damage.`);
     } else if (action === 'skill' && skill) {
       
       // Check if character has enough energy
@@ -190,16 +199,27 @@ export async function startCombatTurn(
           characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 3));
           
           console.log(`Combat: Skill attack - Base damage: ${baseDamage}, Skill power: ${skillPower}, Attribute: ${attributeName}(${attributeValue}), Multiplier: ${effects.damage_multiplier}, Final damage: ${characterDamageDealt}`);
+          
+          // Add to combat log
+          combatLog.push(`${character.name} uses ${skill.name} for ${characterDamageDealt} damage.`);
         }
         
         if (effects.healing) {
           // Healing skill
           characterHealingDone = effects.healing;
+          
+          // Add to combat log
+          combatLog.push(`${character.name} uses ${skill.name} to heal for ${characterHealingDone} HP.`);
         }
         
-        if (effects.strength_boost || effects.slow || effects.gold_chance) {
-          // Status effect skill
-          characterEffects = effects;
+        // Apply skill effects to combat record if it has a duration
+        if (effects.duration) {
+          console.log('Combat: Applying skill effect to combat record');
+          // For character skills, effects are applied to the monster (enemy_effects)
+          await applySkillEffect(combatId, skill, 'character');
+          
+          // Add to combat log
+          combatLog.push(`${skill.name} effect applied to ${monster.name}.`);
         }
       }
       
@@ -218,13 +238,20 @@ export async function startCombatTurn(
       
       console.log(`Combat: Run attempt - Roll: ${roll}, Chance: ${runChance}, Success: ${roll <= runChance}`);
       
+      // Add to combat log
+      combatLog.push(`${character.name} attempts to run away.`);
+      
       if (roll <= runChance) {
         // Success - end combat immediately
+        // Add to combat log
+        combatLog.push(`${character.name} successfully escaped!`);
+        
         await supabase
           .from('combat')
           .update({
             is_completed: true,
             is_victory: false,
+            combat_log: combatLog,
             completed_at: new Date().toISOString()
           })
           .eq('id', combatId);
@@ -248,77 +275,25 @@ export async function startCombatTurn(
           console.log('Character successfully updated after running away');
         }
         
-        // Record the turn
-        console.log('Combat: Recording successful run turn');
-        const { data: turnData, error: turnError } = await supabase
-          .from('combat_turns')
-          .insert({
-            id: generateId(),
-            combat_id: combatId,
-            turn_number: turnNumber,
-            actor: 'character',
-            action: 'run',
-            effects: { success: true }
-          })
-          .select();
-          
-        if (turnError) {
-          console.error('Error recording run turn:', turnError);
-        }
-        
-        // Get the updated turns
-        const { data: updatedTurns, error: turnsError } = await supabase
-          .from('combat_turns')
-          .select('*')
-          .eq('combat_id', combatId)
-          .order('turn_number', { ascending: true });
+        // Get updated combat
+        const { data: updatedCombat } = await supabase
+          .from('combat')
+          .select('*, monster:monster_id(*), player_effects, enemy_effects')
+          .eq('id', combatId)
+          .single();
         
         // CRITICAL FIX: Return immediately after successful run, monster doesn't get a turn
         return {
           success: true,
-          data: {
-            ...combat,
-            is_completed: true,
-            is_victory: false,
-            turns: updatedTurns || []
-          } as Combat
+          data: updatedCombat as Combat
         };
       } else {
         // Failed to run
         console.log('Combat: Run attempt failed, monster gets to attack');
         
-        // Record the turn
-        await supabase
-          .from('combat_turns')
-          .insert({
-            id: generateId(),
-            combat_id: combatId,
-            turn_number: turnNumber,
-            actor: 'character',
-            action: 'run',
-            effects: { success: false }
-          });
-        
-        // Monster still gets to attack
-        characterEffects = { run_failed: true };
+        // Add to combat log
+        combatLog.push(`${character.name} failed to escape!`);
       }
-    }
-    
-    // Record character turn (skip if action is 'run' since we already recorded it)
-    if (action !== 'run') {
-      await supabase
-        .from('combat_turns')
-        .insert({
-          id: generateId(), // Generate UUID for the record
-          combat_id: combatId,
-          turn_number: turnNumber,
-          actor: 'character',
-          action,
-          skill_id: skill?.id,
-          damage_dealt: characterDamageDealt > 0 ? characterDamageDealt : null,
-          healing_done: characterHealingDone > 0 ? characterHealingDone : null,
-          effects: characterEffects
-        });
     }
     
     // Apply healing if any
@@ -346,14 +321,19 @@ export async function startCombatTurn(
       // 2. Awarding experience and gold
       // 3. Incrementing adventure count
       // 4. Updating all necessary database records
+      
+      // Add to combat log
+      combatLog.push(`${monster.name} was defeated!`);
+      
       console.log('Combat: Monster defeated - processing complete victory flow');
       await supabase
         .from('combat')
         .update({
           is_completed: true,
           is_victory: true,
-          turns: turnNumber,
-          character_damage_dealt: combat.character_damage_dealt + characterDamageDealt,
+          current_turn: currentTurn + 1,
+          character_damage_dealt: totalDamageDealt,
+          combat_log: combatLog,
           completed_at: new Date().toISOString()
         })
         .eq('id', combatId);
@@ -469,10 +449,10 @@ export async function startCombatTurn(
         }
       }
       
-      // Get updated combat
+      // Get updated combat with effects
       const { data: updatedCombat, error: updateError } = await supabase
         .from('combat')
-        .select('*, monster:monster_id(*), turns:combat_turns(*)')
+        .select('*, monster:monster_id(*), player_effects, enemy_effects')
         .eq('id', combatId)
         .single();
       
@@ -495,7 +475,6 @@ export async function startCombatTurn(
       // Base damage with randomness (±20%)
       const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
       let monsterDamageDealt = Math.floor(monster.attack * randomFactor);
-      let monsterEffects = null;
       
       // Calculate total defense using the same function as in the character display
       const totalDefense = calculateTotalDefense(character);
@@ -504,6 +483,9 @@ export async function startCombatTurn(
       monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(totalDefense / 3));
       
       console.log(`Combat: Monster attack - Damage: ${monsterDamageDealt}, Character defense: ${totalDefense}`);
+      
+      // Add to combat log
+      combatLog.push(`${monster.name} attacks for ${monsterDamageDealt} damage.`);
       
       // Check for monster abilities
       if (monster.abilities) {
@@ -519,31 +501,28 @@ export async function startCombatTurn(
             if (typedAbility.damage) {
               // Damage ability
               monsterDamageDealt += typedAbility.damage;
+              
+              // Add to combat log
+              combatLog.push(`${monster.name} uses ${abilityName} for ${typedAbility.damage} additional damage.`);
             }
             
             if (typedAbility.defense_boost || typedAbility.immobilize || typedAbility.damage_over_time) {
               // Status effect ability
-              monsterEffects = {
-                ability: abilityName,
-                ...typedAbility
-              };
+              // Add to combat log
+              combatLog.push(`${monster.name} uses ${abilityName} ability.`);
+              
+              // Apply monster ability effect to combat record if it has a duration
+              if (typedAbility.duration) {
+                console.log('Combat: Applying monster ability effect to combat record');
+                await applyMonsterAbilityEffect(combatId, abilityName, typedAbility);
+                
+                // Add to combat log
+                combatLog.push(`${abilityName} effect applied to ${character.name}.`);
+              }
             }
           }
         }
       }
-      
-      // Record monster turn
-      await supabase
-        .from('combat_turns')
-        .insert({
-          id: generateId(), // Generate UUID for the record
-          combat_id: combatId,
-          turn_number: turnNumber,
-          actor: 'monster',
-          action: 'attack',
-          damage_dealt: monsterDamageDealt,
-          effects: monsterEffects
-        });
       
       // Update character HP
       character.current_hitpoints = Math.max(0, character.current_hitpoints - monsterDamageDealt);
@@ -558,14 +537,18 @@ export async function startCombatTurn(
       // Check if character is defeated
       if (character.current_hitpoints === 0) {
         // Character defeated - end combat
+        // Add to combat log
+        combatLog.push(`${character.name} was defeated!`);
+        
         await supabase
           .from('combat')
           .update({
             is_completed: true,
             is_victory: false,
-            turns: turnNumber,
-            character_damage_dealt: combat.character_damage_dealt + characterDamageDealt,
+            current_turn: currentTurn + 1,
+            character_damage_dealt: totalDamageDealt,
             monster_damage_dealt: combat.monster_damage_dealt + monsterDamageDealt,
+            combat_log: combatLog,
             completed_at: new Date().toISOString()
           })
           .eq('id', combatId);
@@ -574,18 +557,22 @@ export async function startCombatTurn(
         await supabase
           .from('combat')
           .update({
-            turns: turnNumber,
-            character_damage_dealt: combat.character_damage_dealt + characterDamageDealt,
-            monster_damage_dealt: combat.monster_damage_dealt + monsterDamageDealt
+            current_turn: currentTurn + 1,
+            character_damage_dealt: totalDamageDealt,
+            monster_damage_dealt: combat.monster_damage_dealt + monsterDamageDealt,
+            combat_log: combatLog
           })
           .eq('id', combatId);
       }
     }
     
+    // Update combat effects - filter out expired effects
+    await updateCombatEffects(combatId);
+    
     // Get updated combat
     const { data: updatedCombat, error: updateError } = await supabase
       .from('combat')
-      .select('*, monster:monster_id(*), turns:combat_turns(*)')
+      .select('*, monster:monster_id(*), player_effects, enemy_effects')
       .eq('id', combatId)
       .single();
     
@@ -622,7 +609,9 @@ export async function getActiveCharacterCombat(
       .from('combat')
       .select(`
         *,
-        monster:monster_id(*)
+        monster:monster_id(*),
+        player_effects,
+        enemy_effects
       `)
       .eq('character_id', characterId)
       .eq('is_completed', false)

@@ -784,6 +784,10 @@ export interface Database {
           turns: number
           character_damage_dealt: number
           monster_damage_dealt: number
+          player_effects: Json | null
+          enemy_effects: Json | null
+          current_turn: number
+          combat_log: Json | null
           created_at: string
           completed_at: string | null
         }
@@ -798,6 +802,10 @@ export interface Database {
           turns?: number
           character_damage_dealt?: number
           monster_damage_dealt?: number
+          player_effects?: Json | null
+          enemy_effects?: Json | null
+          current_turn?: number
+          combat_log?: Json | null
           created_at?: string
           completed_at?: string | null
         }
@@ -812,6 +820,9 @@ export interface Database {
           turns?: number
           character_damage_dealt?: number
           monster_damage_dealt?: number
+          player_effects?: Json | null
+          enemy_effects?: Json | null
+          current_turn?: number
           created_at?: string
           completed_at?: string | null
         }

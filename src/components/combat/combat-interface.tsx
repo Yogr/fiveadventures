@@ -6,6 +6,7 @@ import type { Combat, Character, Skill } from '@/lib/types';
 import { getCombat, startCombatTurn } from '@/app/actions/combat';
 import { getCharacterSkills } from '@/app/actions/combat';
 import { getCharacterById } from '@/app/actions/character';
+import type { CombatEffect } from '@/lib/effect-utils';
 import { useAdventureState } from '@/components/adventure/AdventureStateContext';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
@@ -84,37 +85,77 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     loadCombatData();
   }, [combatId, character.id]);
 
-  // Update active effects whenever combat turns change
+  // Update active effects whenever combat data changes
   useEffect(() => {
-    if (!combat || !combat.turns || !Array.isArray(combat.turns)) return;
+    if (!combat) return;
     
-    console.log('CombatInterface: Updating active effects from combat turns');
+    console.log('CombatInterface: Updating active effects from combat data');
     
-    // Extract character and monster effects from combat turns
-    const charEffects: Record<string, any>[] = [];
-    const monsterEffs: Record<string, any>[] = [];
+    // Get effects from the combat object
+    const playerEffects = Array.isArray(combat.player_effects) ? combat.player_effects : [];
+    const enemyEffects = Array.isArray(combat.enemy_effects) ? combat.enemy_effects : [];
     
-    // Separate effects by actor
-    combat.turns.forEach(turn => {
-      if (turn.effects) {
-        // Make sure effects is an object before adding to array
-        const effectObj = typeof turn.effects === 'object' ? turn.effects : {};
-        if (turn.actor === 'character') {
-          charEffects.push(effectObj as Record<string, any>);
-        } else if (turn.actor === 'monster') {
-          monsterEffs.push(effectObj as Record<string, any>);
+    // Add remaining duration to effects for UI display
+    const currentTurn = combat.current_turn || 1;
+    
+    // Process player effects
+    const processedPlayerEffects: Record<string, any>[] = [];
+    playerEffects.forEach((effectData) => {
+      if (effectData && typeof effectData === 'object') {
+        const effect = effectData as Record<string, any>;
+        
+        // Calculate remaining duration
+        if (!effect.duration) {
+          // Permanent effect
+          processedPlayerEffects.push(effect);
+        } else {
+          const turnsPassed = currentTurn - (effect.turn_applied || 0);
+          const remaining = Math.max(0, effect.duration - turnsPassed);
+          
+          if (remaining > 0) {
+            // Effect is still active
+            processedPlayerEffects.push({
+              ...effect,
+              remaining_duration: remaining
+            });
+          }
         }
       }
     });
     
-    console.log('CombatInterface: Extracted effects:', {
-      characterEffects: charEffects.length,
-      monsterEffects: monsterEffs.length
+    // Process enemy effects
+    const processedEnemyEffects: Record<string, any>[] = [];
+    enemyEffects.forEach((effectData) => {
+      if (effectData && typeof effectData === 'object') {
+        const effect = effectData as Record<string, any>;
+        
+        // Calculate remaining duration
+        if (!effect.duration) {
+          // Permanent effect
+          processedEnemyEffects.push(effect);
+        } else {
+          const turnsPassed = currentTurn - (effect.turn_applied || 0);
+          const remaining = Math.max(0, effect.duration - turnsPassed);
+          
+          if (remaining > 0) {
+            // Effect is still active
+            processedEnemyEffects.push({
+              ...effect,
+              remaining_duration: remaining
+            });
+          }
+        }
+      }
     });
     
-    setCharacterEffects(charEffects);
-    setMonsterEffects(monsterEffs);
-  }, [combat?.turns]);
+    console.log('CombatInterface: Processed effects:', {
+      playerEffects: processedPlayerEffects.length,
+      enemyEffects: processedEnemyEffects.length
+    });
+    
+    setCharacterEffects(processedPlayerEffects);
+    setMonsterEffects(processedEnemyEffects);
+  }, [combat]);
 
   // Check if combat is completed
   useEffect(() => {

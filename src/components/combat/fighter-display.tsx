@@ -46,10 +46,10 @@ export default function FighterDisplay({
       {/* Name and info header */}
       <div className="mb-2 px-3 py-1 bg-gray-900 bg-opacity-70 rounded-md">
         <div className="flex items-center">
-          <h3 className="text-base md:text-lg font-bold">
+          <h3 className="text-base md:text-lg">
             {name}
             {isElite && (
-              <span className="ml-2 text-xs text-yellow-400 font-bold border border-yellow-400 rounded-md px-1 py-0.5">
+              <span className="ml-2 text-xs text-yellow-400 border border-yellow-400 rounded-md px-1 py-0.5">
                 ELITE
               </span>
             )}
