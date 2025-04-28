@@ -139,7 +139,7 @@ export default function CharacterCreationForm() {
       )}
 
       {/* Submit Button */}
-      <div className="flex flex-col items-center mt-4 gap-4">
+      <div className="flex flex-col items-center mt-4">
         <button
           type="submit"
           disabled={isCreating}
@@ -151,11 +151,6 @@ export default function CharacterCreationForm() {
         >
           {isCreating ? 'Creating...' : 'Begin Adventure'}
         </button>
-        
-        {/* Sign in link */}
-        <div className="text-center text-sm text-amber-200">
-          Already have a character? <a href="/login" className="text-blue-400 hover:text-blue-300 underline">Click here to sign in</a>
-        </div>
       </div>
     </form>
   );
