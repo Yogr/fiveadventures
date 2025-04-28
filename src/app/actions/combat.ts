@@ -19,9 +19,11 @@ import {
   getTotalIntelligence,
   getTotalAgility,
   getTotalLuck,
+  getTotalWisdom,
   calculateTotalDamage,
   calculateTotalDefense,
-  getTotalMaxHitpoints
+  getTotalMaxHitpoints,
+  calculateCriticalHit
 } from '@/lib/character-utils';
 
 // Get combat data
@@ -69,6 +71,112 @@ export async function getCombat(
       error: 'An unexpected error occurred'
     };
   }
+}
+
+/**
+ * Process effects from equipped items for a character
+ * @param character The character with equipment
+ * @param monster The monster being fought
+ * @param isBoss Whether the monster is a boss
+ * @returns Object containing various effect modifiers
+ */
+export async function processItemEffects(
+  character: Character,
+  monster: Monster,
+  isBoss: boolean = false
+): Promise<{
+  damageMultiplier: number;
+  ignoreDefense: boolean;
+  additionalDamage: number;
+  doubleCastChance: number;
+  freeCastChance: number;
+  reflectSpellChance: number;
+  elementalDamage: number;
+  elementalType: string | null;
+  tripleStrikeChance: number;
+}> {
+  // Initialize result with default values
+  const result = {
+    damageMultiplier: 1.0,
+    ignoreDefense: false,
+    additionalDamage: 0,
+    doubleCastChance: 0,
+    freeCastChance: 0,
+    reflectSpellChance: 0,
+    elementalDamage: 0,
+    elementalType: null as string | null,
+    tripleStrikeChance: 0
+  };
+  
+  // Check if character has equipment
+  if (!character.equipment) {
+    return result;
+  }
+  
+  // Get all equipped items
+  const equippedItems = [
+    character.equipment.weapon,
+    character.equipment.helmet,
+    character.equipment.armor,
+    character.equipment.trinket
+  ].filter(item => item !== null && item !== undefined) as Item[];
+  
+  // Process each equipped item
+  for (const item of equippedItems) {
+    if (!item.effects) continue;
+    
+    const effects = item.effects as Record<string, any>;
+    
+    // Process elemental damage
+    if (effects.elemental) {
+      result.elementalDamage += effects.elemental.damage || 0;
+      result.elementalType = effects.elemental.type || null;
+    }
+    
+    // Process critical hit modifiers (handled separately in combat function)
+    
+    // Process boss damage multiplier
+    if (effects.boss_damage_multiplier && isBoss) {
+      result.damageMultiplier *= effects.boss_damage_multiplier;
+    }
+    
+    // Process special effects
+    if (effects.special) {
+      const special = effects.special;
+      
+      // Check for ArmorBreak effect
+      if (special.type === 'ArmorBreak') {
+        // Roll for chance to ignore defense
+        const roll = Math.random() * 100;
+        if (roll <= 15) { // 15% chance hardcoded in the item
+          result.ignoreDefense = true;
+        }
+      }
+      
+      // Check for ManaEfficiency effect - reduces energy cost
+      if (special.type === 'ManaEfficiency') {
+        // This is handled separately in the skill usage section
+      }
+      
+      // Check for HeroicStrike effect - chance to triple damage
+      if (special.type === 'HeroicStrike') {
+        result.tripleStrikeChance = special.description?.includes('10%') ? 10 : 0;
+      }
+      
+      // Check for SpellMastery effect - chance to cast twice or cost no energy
+      if (special.type === 'SpellMastery') {
+        result.doubleCastChance = 8; // 8% from description
+        result.freeCastChance = 15; // 15% from description
+      }
+      
+      // Check for CrystalReflection effect - chance to reflect spells
+      if (special.type === 'CrystalReflection') {
+        result.reflectSpellChance = special.description?.includes('15%') ? 15 : 0;
+      }
+    }
+  }
+  
+  return result;
 }
 
 // Start a combat turn
@@ -178,6 +286,12 @@ export async function startCombatTurn(
         .eq('character_id', character.id)
         .single();
       
+      // Check if monster is a boss
+      const isBoss = monster.is_elite === true || monster.is_boss === true;
+      
+      // Process item effects
+      const itemEffects = await processItemEffects(character, monster, isBoss);
+      
       // Calculate total damage using the same function as in the character display
       let baseDamage = calculateTotalDamage(character);
       
@@ -185,17 +299,92 @@ export async function startCombatTurn(
       const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
       characterDamageDealt = Math.floor(baseDamage * randomFactor);
       
-      // Apply monster defense (reduced impact)
-      characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 3));
+      // Apply monster defense (reduced impact) unless we have ignore defense effect
+      if (!itemEffects.ignoreDefense) {
+        characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 3));
+      } else {
+        combatLog.push(`${character.name}'s attack ignores armor!`);
+      }
+      
+      // Check for critical hit using character's weapon
+      const criticalHit = calculateCriticalHit(
+        character, 
+        weaponEquipment?.weapon || null
+      );
+      
+      // Apply critical hit if it occurs
+      if (criticalHit.isCritical) {
+        characterDamageDealt = Math.floor(characterDamageDealt * criticalHit.multiplier);
+        combatLog.push(`Critical hit! Damage increased to ${characterDamageDealt}.`);
+      }
+      
+      // Check for triple strike from HeroicStrike effect
+      if (itemEffects.tripleStrikeChance > 0) {
+        const tripleStrikeRoll = Math.random() * 100;
+        if (tripleStrikeRoll <= itemEffects.tripleStrikeChance) {
+          characterDamageDealt = Math.floor(characterDamageDealt * 3);
+          combatLog.push(`Heroic Strike activated! Triple damage: ${characterDamageDealt}.`);
+        }
+      }
+      
+      // Apply boss damage multiplier if applicable
+      if (isBoss && itemEffects.damageMultiplier > 1.0) {
+        const oldDamage = characterDamageDealt;
+        characterDamageDealt = Math.floor(characterDamageDealt * itemEffects.damageMultiplier);
+        combatLog.push(`Boss damage bonus applied! Damage increased from ${oldDamage} to ${characterDamageDealt}.`);
+      }
+      
+      // Add elemental damage if applicable
+      if (itemEffects.elementalDamage > 0) {
+        const elementalDamage = itemEffects.elementalDamage;
+        characterDamageDealt += elementalDamage;
+        combatLog.push(`${itemEffects.elementalType || 'Elemental'} damage adds ${elementalDamage} additional damage.`);
+      }
       
       console.log(`Combat: Character basic attack - Base damage: ${baseDamage}, Final damage: ${characterDamageDealt}`);
       
       // Add to combat log
-      combatLog.push(`${character.name} attacks for ${characterDamageDealt} damage.`);
+      combatLog.push(`${character.name} attacks for ${characterDamageDealt} damage total.`);
     } else if (action === 'skill' && skill) {
       
-      // Check if character has enough energy
-      if (character.current_energy < skill.energy_cost) {
+      // Process item effects to check for ManaEfficiency
+      const isBoss = monster.is_elite === true || monster.is_boss === true;
+      const itemEffects = await processItemEffects(character, monster, isBoss);
+      
+      // Calculate energy cost with potential reduction from ManaEfficiency
+      let energyCost = skill.energy_cost;
+      let freeSpellCast = false;
+      
+      // Check for chance of free cast (SpellMastery effect)
+      if (itemEffects.freeCastChance > 0) {
+        const freeCastRoll = Math.random() * 100;
+        if (freeCastRoll <= itemEffects.freeCastChance) {
+          freeSpellCast = true;
+          combatLog.push(`Spell Mastery activates! ${skill.name} costs no energy.`);
+        }
+      }
+      
+      // Apply ManaEfficiency if present
+      const weaponEffects = character.equipment?.weapon?.effects as any;
+      const trinketEffects = character.equipment?.trinket?.effects as any;
+      
+      const hasEquipmentWithManaEfficiency = 
+        (weaponEffects?.special?.type === 'ManaEfficiency') ||
+        (trinketEffects?.special?.type === 'ManaEfficiency');
+      
+      if (hasEquipmentWithManaEfficiency && !freeSpellCast) {
+        // Apply mana efficiency reduction (15% from item descriptions)
+        const reduction = 0.15;
+        const oldCost = energyCost;
+        energyCost = Math.floor(energyCost * (1 - reduction));
+        
+        if (oldCost !== energyCost) {
+          combatLog.push(`Mana Efficiency reduces ${skill.name} energy cost from ${oldCost} to ${energyCost}.`);
+        }
+      }
+      
+      // Skip energy check if free cast
+      if (!freeSpellCast && character.current_energy < energyCost) {
         return {
           success: false,
           error: 'Not enough energy'
@@ -248,13 +437,15 @@ export async function startCombatTurn(
         messages: skillResult.messages.length
       });
       
-      // Update character energy
-      await supabase
-        .from('characters')
-        .update({
-          current_energy: Math.max(0, character.current_energy - skill.energy_cost)
-        })
-        .eq('id', character.id);
+      // Update character energy (only if not a free cast)
+      if (!freeSpellCast) {
+        await supabase
+          .from('characters')
+          .update({
+            current_energy: Math.max(0, character.current_energy - energyCost)
+          })
+          .eq('id', character.id);
+      }
     } else if (action === 'run') {
       // Run away
       // 50% chance of success, modified by agility

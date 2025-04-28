@@ -44,6 +44,8 @@ export async function getAttributeValue(fighter: Fighter, attributeName: string)
  * @param combat Current combat state for context
  * @returns Damage dealt, healing done, applied effects, and messages
  */
+import { processItemEffects } from './combat';
+
 export async function executeSkill(
   skill: Skill,
   caster: Fighter,
@@ -62,6 +64,35 @@ export async function executeSkill(
   
   // Current turn from combat
   const currentTurn = combat.current_turn || 1;
+  
+  // Check if target is a boss (for boss damage multipliers)
+  const targetIsBoss = ('is_elite' in target && target.is_elite === true) || 
+                       ('is_boss' in target && target.is_boss === true);
+  
+  // Process item effects if caster is a character (has equipment)
+  let itemEffects = {
+    damageMultiplier: 1.0,
+    ignoreDefense: false,
+    additionalDamage: 0,
+    doubleCastChance: 0,
+    freeCastChance: 0,
+    reflectSpellChance: 0,
+    elementalDamage: 0,
+    elementalType: null as string | null,
+    tripleStrikeChance: 0
+  };
+  
+  // If caster is a character (has equipment), process item effects
+  if ('equipment' in caster) {
+    const monster = 'abilities' in target ? target as unknown as any : null;
+    if (monster) {
+      itemEffects = await processItemEffects(
+        caster as unknown as any, 
+        monster, 
+        targetIsBoss
+      );
+    }
+  }
   
   // Process skill effects
   if (skill.effects) {
@@ -109,11 +140,44 @@ export async function executeSkill(
       const attributeMultiplier = 1 + (attributeValue / 50);
       damageDealt = Math.floor((baseDamage + skillPower) * effects.damage_multiplier * attributeMultiplier);
       
-      // Apply target defense
-      damageDealt = Math.max(1, damageDealt - Math.floor(target.defense / 3));
+      // Apply boss damage multiplier if applicable
+      if (targetIsBoss && itemEffects.damageMultiplier > 1.0) {
+        damageDealt = Math.floor(damageDealt * itemEffects.damageMultiplier);
+        messages.push(`Boss damage bonus applied to ${skill.name}!`);
+      }
       
-      // Add to messages
-      messages.push(`${caster.name} uses ${skill.name} for ${damageDealt} damage.`);
+      // Apply target defense unless ignore defense effect is active
+      if (!itemEffects.ignoreDefense) {
+        damageDealt = Math.max(1, damageDealt - Math.floor(target.defense / 3));
+      } else {
+        messages.push(`${skill.name} ignores armor!`);
+      }
+      
+      // Add elemental damage if applicable
+      if (itemEffects.elementalDamage > 0) {
+        const elementalDamage = Math.floor(itemEffects.elementalDamage);
+        damageDealt += elementalDamage;
+        messages.push(`${itemEffects.elementalType || 'Elemental'} damage adds ${elementalDamage} additional damage.`);
+      }
+      
+      // Apply bonuses for specific enemy types if applicable
+      if (effects.bonus_vs_undead && 'type' in target && target.type === 'Undead') {
+        const bonusDamage = effects.bonus_vs_undead;
+        damageDealt += bonusDamage;
+        messages.push(`${skill.name} deals ${bonusDamage} extra damage against undead!`);
+      }
+      
+      // Check for double cast from SpellMastery
+      if (itemEffects.doubleCastChance > 0) {
+        const doubleCastRoll = Math.random() * 100;
+        if (doubleCastRoll <= itemEffects.doubleCastChance) {
+          damageDealt *= 2;
+          messages.push(`Spell Mastery triggers! ${skill.name} casts twice for double damage!`);
+        }
+      }
+      
+      // Add to messages with final damage
+      messages.push(`${caster.name} uses ${skill.name} for ${damageDealt} total damage.`);
     }
     
     // Process healing effects
