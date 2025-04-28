@@ -49,7 +49,6 @@ export default function WorldBossScene({
           src={`/image/area/${backgroundImage}.png`}
           alt="Combat background"
           className="w-full h-full object-cover object-top"
-          style={{ filter: 'blur(1px)' }}
         />
         
         {/* Semi-transparent overlay for better readability */}
@@ -64,7 +63,7 @@ export default function WorldBossScene({
       {/* World Boss HP Bar - positioned at the top center */}
       <div className="absolute top-3 left-1/2 transform -translate-x-1/2 z-20 w-3/4 max-w-md">
         <div className="flex justify-between text-sm mb-1 text-amber-200">
-          <span className="font-bold">{boss.name}</span>
+          <span>{boss.name}</span>
           <span>{boss.current_hitpoints.toLocaleString()} / {boss.total_hitpoints.toLocaleString()}</span>
         </div>
         <div className="h-4 bg-amber-900 rounded-md overflow-hidden border border-amber-700">
@@ -76,7 +75,7 @@ export default function WorldBossScene({
       </div>
       
       {/* Fighters positioned directly on top of the background */}
-      <div className="absolute bottom-2 inset-x-0 z-20 flex justify-between items-end px-3 md:px-6">
+      <div className="absolute bottom-2 inset-x-0 z-20 flex justify-around items-end px-3 md:px-6">
         {/* Character - Left Side (no HP bar displayed) */}
         <div className="self-end">
           <FighterDisplay 
