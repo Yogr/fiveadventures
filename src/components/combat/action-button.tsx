@@ -78,14 +78,20 @@ export default function ActionButton({
         {/* Overlay with gradient for better text visibility */}
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/50 to-transparent"></div>
         
+        {/* Cost indicator in top-right corner */}
+        {cost !== undefined && (
+          <div className="absolute top-0 right-0 px-1 py-0 z-10">
+            <span className={`${textSize} text-blue-400 font-bold bg-black bg-opacity-50 rounded-bl px-1`}>
+              {cost}
+            </span>
+          </div>
+        )}
+        
         {/* Text at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pb-1">
+        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center pb-1">
           <span className={`${textSize} text-center text-white text-shadow whitespace-nowrap overflow-hidden text-ellipsis w-full px-1`}>
             {label}
           </span>
-          {cost !== undefined && (
-            <span className={`${textSize} text-blue-400 font-bold`}>{cost}</span>
-          )}
         </div>
       </button>
     </div>

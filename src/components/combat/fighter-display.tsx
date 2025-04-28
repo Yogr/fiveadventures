@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Image from 'next/image';
 import StatusBar from './status-bar';
 import BuffBar from '@/components/ui/buff-bar';
@@ -52,55 +52,76 @@ export default function FighterDisplay({
 
   // Use fixed container size for consistent layout
   const containerSize = 80; // Fixed container size
+  
+  // Calculate additional spacing needed for larger scale fighters
+  const statusMargin = useMemo(() => {
+    if (scale <= 1.0) return 0;
+    // Increase margin as scale increases
+    return Math.round((scale - 1.0) * 40);
+  }, [scale]);
 
   return (
     <div className={`flex flex-col items-center ${className} relative`}>
-      {/* Name and info header */}
-      <div className="mb-2 px-3 py-1 bg-gray-900 bg-opacity-70 rounded-md">
-        <div className="flex items-center">
-          <h3 className="text-base md:text-lg">
-            {name}
-            {isElite && (
-              <span className="ml-2 text-xs text-yellow-400 border border-yellow-400 rounded-md px-1 py-0.5">
-                ELITE
-              </span>
+      <div className="flex flex-col items-center relative">
+        {/* Name and info header - higher z-index */}
+        <div 
+          className="mb-2 px-3 py-1 bg-gray-900 bg-opacity-70 rounded-md text-center w-full"
+          style={{ zIndex: 20 }}
+        >
+          <div className="flex items-center justify-center">
+            <h3 className="text-base md:text-lg whitespace-nowrap">
+              {name}
+              {isElite && (
+                <span className="ml-2 text-xs text-yellow-400 border border-yellow-400 rounded-md px-1 py-0.5">
+                  ELITE
+                </span>
+              )}
+            </h3>
+            
+            {onInfoClick && (
+              <button 
+                onClick={onInfoClick}
+                className="ml-2 bg-blue-700 hover:bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                title="View details"
+              >
+                i
+              </button>
             )}
-          </h3>
-          
-          {onInfoClick && (
-            <button 
-              onClick={onInfoClick}
-              className="ml-2 bg-blue-700 hover:bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-              title="View details"
-            >
-              i
-            </button>
-          )}
-          
-          {additionalHeader}
+            
+            {additionalHeader}
+          </div>
         </div>
+        
+        {/* Status Bar - higher z-index */}
+        <div 
+          className="w-32 md:w-40" 
+          style={{ 
+            zIndex: 20,
+            marginBottom: `${statusMargin + 8}px` // Base 8px plus scale-based margin
+          }}
+        >
+          <StatusBar 
+            current={currentHp} 
+            max={maxHp}
+          />
+        </div>
+        
+        {/* Effects display - highest z-index */}
+        {effects.length > 0 && (
+          <div 
+            className="absolute top-0 left-1/2 transform -translate-x-1/2" 
+            style={{ zIndex: 30 }}
+          >
+            <BuffBar effects={effects} size="md" />
+          </div>
+        )}
       </div>
       
-      {/* Status Bar */}
-      <div className="mb-8 w-32 md:w-40">
-        <StatusBar 
-          current={currentHp} 
-          max={maxHp}
-        />
-      </div>
-      
-      {/* Effects display */}
-      {effects.length > 0 && (
-        <div className="absolute top-0 left-1/2 transform -translate-x-1/2">
-          <BuffBar effects={effects} size="md" />
-        </div>
-      )}
-      
-      {/* Fighter container with shadow */}
-      <div className="relative">
+      {/* Fighter container with shadow - lower z-index */}
+      <div className="relative mt-1" style={{ zIndex: 10 }}>
         {/* Semi-transparent oval beneath the fighter */}
         <div 
-          className="absolute bottom-0 left-1/2 bg-black bg-opacity-30 rounded-full -z-10 transform -translate-x-1/2 translate-y-1"
+          className="absolute bottom-0 left-1/2 bg-black bg-opacity-30 rounded-full transform -translate-x-1/2 translate-y-1"
           style={{ 
             width: `${shadowWidth}px`, 
             height: `${shadowHeight}px` 
