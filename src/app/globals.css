@@ -64,21 +64,56 @@ body {
   padding: 0.5rem 1rem;
   font-weight: lighter;
   text-transform: uppercase;
-  border: 2px solid #92400e;
-  border-radius: 4px;
-  background-color: #78350f;
+  background-image: linear-gradient(to bottom, #92400e, #78350f);
   color: white;
   cursor: pointer;
-  transition: all 0.2s;
+  border: 2px solid #92400e;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.pixel-button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: all 0.6s ease;
 }
 
 .pixel-button:hover {
-  background-color: #92400e;
+  background-image: linear-gradient(to bottom, #b45309, #92400e);
   transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+.pixel-button:hover:before {
+  left: 100%;
 }
 
 .pixel-button:active {
+  background-image: linear-gradient(to bottom, #78350f, #451a03);
   transform: translateY(0);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1), inset 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+}
+
+.pixel-button:disabled {
+  background-image: linear-gradient(to bottom, #6b7280, #4b5563);
+  border-color: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 /* Adventure Tracker */
