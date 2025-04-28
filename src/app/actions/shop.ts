@@ -4,10 +4,10 @@ import { MAX_SHOP_ITEMS } from '@/lib/constants';
 import type { Item, ItemRarity, ApiResponse } from '@/lib/types';
 import { getCharacterForUser } from './character';
 import { revalidatePath } from 'next/cache';
-import { getCurrentGameDay, generateShopSeed, getRandomShopItems, generateId } from '@/lib/utils';
-import itemsData from '../../../data/items.json';
+import { getCurrentGameDay, generateShopSeed } from '@/lib/utils';
 import { unstable_cache } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server-admin';
 
 // Define a custom shop item type that doesn't rely on the database schema
 export type ShopItemSimple = {
@@ -16,60 +16,197 @@ export type ShopItemSimple = {
   price: number;
 };
 
+// Get shop items from the database based on shop_id
+// This function uses an admin client without cookies, so it can be cached
+const fetchShopItemsFromDB = async (shopId: number) => {
+  console.log(`[SHOP DEBUG] fetchShopItemsFromDB - Starting for shop_id: ${shopId}`);
+  
+  // Use the admin client that doesn't rely on cookies
+  const supabase = createAdminClient();
+  console.log(`[SHOP DEBUG] fetchShopItemsFromDB - Created admin client`);
+  
+  try {
+    // Get all items for this shop from the shop_items table
+    console.log(`[SHOP DEBUG] Querying shop_items table: shop_id=${shopId}`);
+    const { data: shopItems, error } = await supabase
+      .from('shop_items')
+      .select('*, item:item_id(*)')
+      .eq('shop_id', shopId);
+    
+    if (error) {
+      console.error('[SHOP DEBUG] Error fetching shop items:', error);
+      return [];
+    }
+    
+    console.log(`[SHOP DEBUG] fetchShopItemsFromDB - Found ${shopItems?.length || 0} items for shop_id ${shopId}`);
+    
+    // Log the first few items for debugging
+    if (shopItems && shopItems.length > 0) {
+      console.log(`[SHOP DEBUG] Sample items:`, 
+        shopItems.slice(0, 2).map(item => ({
+          id: item.id,
+          shop_id: item.shop_id,
+          item_id: item.item_id,
+          item_name: item.item?.name || 'NULL',
+          chance: item.chance
+        }))
+      );
+    } else {
+      console.log('[SHOP DEBUG] No items found - the shop_items table may be empty');
+      
+      // Let's do a raw count to confirm
+      const { count, error: countError } = await supabase
+        .from('shop_items')
+        .select('*', { count: 'exact', head: true });
+        
+      console.log(`[SHOP DEBUG] Total shop_items count: ${count}, Error: ${countError ? countError.message : 'None'}`);
+    }
+    
+    return shopItems || [];
+  } catch (err) {
+    console.error('[SHOP DEBUG] Exception in fetchShopItemsFromDB:', err);
+    return [];
+  }
+};
+
+// Select random items based on chance values
+const selectRandomItems = (shopItems: any[], count: number, seed: number): any[] => {
+  if (!shopItems || shopItems.length === 0) return [];
+  
+  // Create a seeded random number generator
+  const seededRandom = () => {
+    // Simple LCG (Linear Congruential Generator)
+    seed = (seed * 1664525 + 1013904223) % 2147483648;
+    return seed / 2147483648; // Normalize to [0, 1)
+  };
+  
+  // Calculate total chance sum
+  const totalChance = shopItems.reduce((sum, item) => sum + (item.chance || 1), 0);
+  
+  // Create chance windows (cumulative)
+  let cumulativeChance = 0;
+  const itemWindows = shopItems.map(item => {
+    const itemChance = item.chance || 1;
+    const start = cumulativeChance;
+    cumulativeChance += itemChance;
+    return {
+      item,
+      start,
+      end: cumulativeChance
+    };
+  });
+  
+  // Select items without repetition
+  const selectedItems = [];
+  const usedIndexes = new Set();
+  
+  // Try to select 'count' unique items
+  for (let i = 0; i < count && usedIndexes.size < shopItems.length; i++) {
+    // Generate a random value between 0 and totalChance
+    const randomValue = seededRandom() * totalChance;
+    
+    // Find which item window the random value falls into
+    let selectedIndex = -1;
+    for (let j = 0; j < itemWindows.length; j++) {
+      const chanceWindow = itemWindows[j];
+      // Check if chanceWindow exists and if it matches our criteria
+      if (chanceWindow && randomValue >= chanceWindow.start && randomValue < chanceWindow.end && !usedIndexes.has(j)) {
+        selectedIndex = j;
+        break;
+      }
+    }
+    
+    // If no unused item was found, try again with a different random value
+    if (selectedIndex === -1) {
+      // Find first unused item
+      for (let j = 0; j < itemWindows.length; j++) {
+        if (!usedIndexes.has(j)) {
+          selectedIndex = j;
+          break;
+        }
+      }
+    }
+    
+    // Add the selected item
+    if (selectedIndex !== -1) {
+      usedIndexes.add(selectedIndex);
+      selectedItems.push(shopItems[selectedIndex]);
+    }
+  }
+  
+  return selectedItems;
+};
+
 // Cache the shop items for 24 hours
 const getShopItemsCached = unstable_cache(
-  async (day: number): Promise<ShopItemSimple[]> => {
-    // Generate a seed for the day that is the same for all users
-    const seed = generateShopSeed(day);
+  async (shopId: number, day: number): Promise<ShopItemSimple[]> => {
+    console.log(`[SHOP DEBUG] getShopItemsCached - Starting for shop_id: ${shopId}, day: ${day}`);
     
-    // Get random items from the items data using the seed
-    const selectedItems = getRandomShopItems(itemsData, MAX_SHOP_ITEMS, seed);
-    
-    // Calculate prices based on item rarity
-    return selectedItems.map((item: any, index: number) => {
-      // Base price multiplier based on rarity
-      const rarityMultipliers: Record<ItemRarity, number> = {
-        'Common': 1,
-        'Uncommon': 2,
-        'Rare': 4,
-        'Epic': 8,
-        'Legendary': 16
-      };
+    try {
+      // Fetch all items for this shop from the database
+      console.log(`[SHOP DEBUG] Calling fetchShopItemsFromDB for shop_id: ${shopId}`);
+      const allShopItems = await fetchShopItemsFromDB(shopId);
       
-      // Get multiplier with fallback to 1
-      const rarityMultiplier = rarityMultipliers[item.rarity as ItemRarity] || 1;
+      if (!allShopItems || allShopItems.length === 0) {
+        console.error(`[SHOP DEBUG] No items found for shop ID ${shopId}`);
+        return [];
+      }
       
-      // Calculate price based on item value and rarity
-      const price = Math.round(item.value * rarityMultiplier);
+      console.log(`[SHOP DEBUG] Successfully found ${allShopItems.length} items for shop_id: ${shopId}`);
       
-      // Assign an ID to the item based on its index in the array
-      // Add 1000 to avoid conflicts with existing items
-      const itemWithId = {
-        ...item,
-        id: index + 1000
-      };
+      // Generate a seed for the day that is the same for all users but unique per shop
+      const seed = generateShopSeed(day) * (shopId + 1);
+      console.log(`[SHOP DEBUG] Generated seed: ${seed} for day: ${day}, shop_id: ${shopId}`);
       
-      // Create a shop item
-      return {
-        id: generateId(), // Generate a unique ID for the shop item
-        item: itemWithId,
-        price: price
-      };
-    });
+      // Select random items based on chance values
+      console.log(`[SHOP DEBUG] Calling selectRandomItems with ${allShopItems.length} items, max: ${MAX_SHOP_ITEMS}`);
+      const selectedItems = selectRandomItems(allShopItems, MAX_SHOP_ITEMS, seed);
+      console.log(`[SHOP DEBUG] Selected ${selectedItems.length} items`);
+      
+      // Format the selected items
+      console.log(`[SHOP DEBUG] Formatting selected items`);
+      return selectedItems.map((shopItem: any) => {
+        // Calculate price based on item rarity
+        // Base price multiplier based on rarity
+        const rarityMultipliers: Record<ItemRarity, number> = {
+          'Common': 1,
+          'Uncommon': 2,
+          'Rare': 4,
+          'Epic': 8,
+          'Legendary': 16
+        };
+        
+        // Get multiplier with fallback to 1
+        const rarityMultiplier = rarityMultipliers[shopItem.item.rarity as ItemRarity] || 1;
+        
+        // Calculate price based on item value and rarity
+        const price = Math.round(shopItem.item.value * rarityMultiplier);
+        
+        // Return formatted shop item
+        return {
+          id: shopItem.id.toString(), // Ensure ID is a string
+          item: shopItem.item,
+          price: price
+        };
+      });
+    } catch (err) {
+      console.error('Error in getShopItemsCached:', err);
+      return [];
+    }
   },
   ['shop-items'],
   { revalidate: 86400 } // Cache for 24 hours (in seconds)
 );
 
 // Get shop items for the current day
-export async function getShopItems(): Promise<ShopItemSimple[]> {
+export async function getShopItems(shopId: number = 1): Promise<ShopItemSimple[]> {
   try {
     const currentDay = getCurrentGameDay();
     
-    // Get the cached shop items for the current day
-    const shopItems = await getShopItemsCached(currentDay);
+    // Get the cached shop items for the current day and specified shop
+    const shopItems = await getShopItemsCached(shopId, currentDay);
     
-    return shopItems
+    return shopItems;
   } catch (err) {
     console.error('Error in getShopItems:', err);
     return [];
@@ -89,17 +226,32 @@ export async function buyItem(itemId: string): Promise<ApiResponse<{ message: st
     
     const character = characterResponse.data;
     
-    // Get current shop items
-    const shopItems = await getShopItems();
-
-    // Find the item in the shop
-    const shopItem = shopItems.find(item => item.id === itemId);
-    if (!shopItem) {
+    // Get shop item directly from database
+    const { data: shopItem, error: shopItemError } = await supabase
+      .from('shop_items')
+      .select('*, item:item_id(*)')
+      .eq('id', itemId)
+      .single();
+    
+    if (shopItemError || !shopItem) {
+      console.error('Error fetching shop item:', shopItemError);
       return { success: false, error: 'Item not found in shop' };
     }
     
+    // Calculate price based on item rarity
+    const rarityMultipliers: Record<ItemRarity, number> = {
+      'Common': 1,
+      'Uncommon': 2,
+      'Rare': 4,
+      'Epic': 8,
+      'Legendary': 16
+    };
+    
+    const rarityMultiplier = rarityMultipliers[shopItem.item.rarity as ItemRarity] || 1;
+    const price = Math.round(shopItem.item.value * rarityMultiplier);
+    
     // Check if character has enough gold
-    if (character.gold < shopItem.price) {
+    if (character.gold < price) {
       return { success: false, error: 'Not enough gold' };
     }
     
@@ -107,7 +259,7 @@ export async function buyItem(itemId: string): Promise<ApiResponse<{ message: st
     // 1. Deduct gold from character
     const { error: updateGoldError } = await supabase
       .from('characters')
-      .update({ gold: character.gold - shopItem.price })
+      .update({ gold: character.gold - price })
       .eq('id', character.id);
     
     if (updateGoldError) {
@@ -115,87 +267,12 @@ export async function buyItem(itemId: string): Promise<ApiResponse<{ message: st
       return { success: false, error: 'Failed to update character gold' };
     }
     
-    // Log detailed information about the item being purchased
-    console.log('Attempting to purchase item:', {
-      shopItemId: itemId,
-      itemDetails: shopItem.item,
-      itemId: shopItem.item.id,
-      characterId: character.id,
-      price: shopItem.price,
-      characterGold: character.gold
-    });
-    
-    // First, check if the item exists in the items table
-    const { data: itemExists, error: itemCheckError } = await supabase
-      .from('items')
-      .select('id')
-      .eq('id', shopItem.item.id)
-      .maybeSingle();
-    
-    if (itemCheckError) {
-      console.error('Error checking if item exists:', itemCheckError);
-      // Rollback gold deduction
-      const { error: rollbackError } = await supabase
-        .from('characters')
-        .update({ gold: character.gold })
-        .eq('id', character.id);
-        
-      if (rollbackError) {
-        console.error('Error rolling back gold deduction:', rollbackError);
-      } else {
-        console.log('Successfully rolled back gold deduction');
-      }
-      
-      return { success: false, error: 'Failed to check if item exists in database' };
-    }
-    
-    // If the item doesn't exist in the database, we need to create it first
-    if (!itemExists) {
-      console.log('Item does not exist in database, creating it first:', shopItem.item);
-      
-      const { data: createdItem, error: createItemError } = await supabase
-        .from('items')
-        .insert({
-          id: shopItem.item.id,
-          name: shopItem.item.name,
-          type: shopItem.item.type,
-          rarity: shopItem.item.rarity,
-          weapon_type: shopItem.item.weapon_type || null,
-          base_damage: shopItem.item.base_damage || null,
-          base_defense: shopItem.item.base_defense || null,
-          effects: shopItem.item.effects || null,
-          value: shopItem.item.value,
-          image_url: shopItem.item.image_url || null,
-          created_at: new Date().toISOString()
-        })
-        .select();
-      
-      if (createItemError) {
-        console.error('Error creating item in database:', createItemError);
-        // Rollback gold deduction
-        const { error: rollbackError } = await supabase
-          .from('characters')
-          .update({ gold: character.gold })
-          .eq('id', character.id);
-          
-        if (rollbackError) {
-          console.error('Error rolling back gold deduction:', rollbackError);
-        } else {
-          console.log('Successfully rolled back gold deduction');
-        }
-        
-        return { success: false, error: 'Failed to create item in database' };
-      }
-      
-      console.log('Successfully created item in database:', createdItem);
-    }
-    
     // 2. Add item to character's inventory
     const { data: insertData, error: addItemError } = await supabase
       .from('character_inventory')
       .insert({
         character_id: character.id,
-        item_id: shopItem.item.id,
+        item_id: shopItem.item_id,
         quantity: 1,
         acquired_at: new Date().toISOString()
       })
@@ -235,7 +312,7 @@ export async function buyItem(itemId: string): Promise<ApiResponse<{ message: st
       success: true, 
       data: { 
         message: `Successfully purchased ${shopItem.item.name}`,
-        item: shopItem.item as Item
+        item: shopItem.item
       } 
     };
   } catch (err) {

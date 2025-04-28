@@ -41,8 +41,8 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
     setError(null);
     
     try {
-      // Load shop items
-      const shopItems = await getShopItems();
+      // Load shop items (using shop ID 1 for General Store by default)
+      const shopItems = await getShopItems(1);
       if (shopItems) {
         // Only take the first 6 items
         setShopItems(shopItems.slice(0, 6));

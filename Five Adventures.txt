@@ -11,13 +11,8 @@ Bugs
 Todo
 -------------
 
-- Improve World Boss combat area to utilize CombatScene or something very similar looking
-
-- Implement each item special effect into combat 
-- Implement enemy abilities and skills
-- Implement cooldown to abilities, its already in the data just not applied
-
 - Improve world boss
+  - World boss data should be separate from 'world_boss_progress' data. 'world_boss_progress' table needs to be created to track global weekly progress against that world boss. Character boss progress table already exists for individual progress, but we need a tracker for global progress that aggregates all of the attack damage dealt to it, among other things. (Players that've attacked it, its total hitpoints, the week number its spawned, etc). These fields already exist in the world_boss able and should be removed from there and moved to the new table, and all code referencing it for that data should be split off, or a join should be made to fetch the world_boss_progress for that specific week combined with the base world_boss static data that will not change week to week.
   - Add rewards for consolation prizes when boss is not defeated.
   - World boss progress state should have 'finished' and 'claimed' or use the end date / day to determine which ones may have pending rewards.
 
@@ -34,8 +29,6 @@ Todo
   - Advanced stats
   - About
   - Help
-
-- Enemies do not scale properly still.
 
 - Alert non-member users in several places about their character not saving. (Show create account suggestion)
 

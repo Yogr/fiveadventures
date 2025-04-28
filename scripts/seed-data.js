@@ -129,17 +129,54 @@ async function clearAllTables() {
   console.log('All tables cleared successfully.');
 }
 
+// Helper function to truly clear items table
+async function clearItemsTable() {
+  console.log('Completely clearing items table...');
+  
+  try {
+    // Use raw SQL to delete all rows regardless of ID
+    const { error } = await supabase.rpc('reset_items_table');
+    
+    if (error) {
+      console.error('Error clearing items table with RPC:', error);
+      
+      // Fallback to direct delete
+      const { error: deleteError } = await supabase
+        .from('items')
+        .delete()
+        .not('id', 'is', null);
+        
+      if (deleteError) {
+        console.error('Error clearing items table with direct delete:', deleteError);
+        return false;
+      }
+    }
+    
+    console.log('Items table cleared successfully.');
+    return true;
+  } catch (err) {
+    console.error('Exception clearing items table:', err);
+    return false;
+  }
+}
+
 // Seed items
 async function seedItems(filePaths) {
   console.log('Seeding items...');
   
+  // Completely clear items table first
+  await clearItemsTable();
+  
   // Convert to array if a single file path is provided
   const filePathArray = Array.isArray(filePaths) ? filePaths : [filePaths];
   
-  let nextId = await getNextId('items');
+  // Track the maximum ID we've seen to avoid duplicates
+  let maxId = 0;
+  let allItems = [];
   
+  // First collect all items from all files
   for (const filePath of filePathArray) {
-    console.log(`Processing items from: ${filePath}`);
+    console.log(`Reading items from: ${filePath}`);
     const items = readJsonFile(filePath);
     
     if (!items || !Array.isArray(items)) {
@@ -147,7 +184,28 @@ async function seedItems(filePaths) {
       continue;
     }
     
+    // Find the maximum ID in the current file
     for (const item of items) {
+      if (item.id && item.id > maxId) {
+        maxId = item.id;
+      }
+    }
+    
+    allItems = [...allItems, ...items];
+  }
+  
+  // Now assign IDs to any items without them
+  let nextId = Math.max(maxId + 1, 1);
+  
+  console.log(`Preparing to insert ${allItems.length} items (next ID: ${nextId})...`);
+  
+  // Process in smaller batches to avoid overwhelming the database
+  const batchSize = 10;
+  
+  for (let i = 0; i < allItems.length; i += batchSize) {
+    const batch = allItems.slice(i, i + batchSize);
+    
+    for (const item of batch) {
       // Generate ID if not provided
       if (!item.id) {
         item.id = nextId++;
@@ -158,10 +216,10 @@ async function seedItems(filePaths) {
         item.created_at = new Date().toISOString();
       }
       
-      // Insert item
+      // Insert item using upsert to handle duplicates
       const { error } = await supabase
         .from('items')
-        .insert(item);
+        .upsert(item, { onConflict: 'id' });
       
       if (error) {
         console.error(`Error inserting item ${item.name}:`, error);
@@ -170,7 +228,7 @@ async function seedItems(filePaths) {
       }
     }
     
-    console.log(`Completed processing items from: ${filePath}`);
+    console.log(`Processed batch ${i/batchSize + 1} of ${Math.ceil(allItems.length/batchSize)}`);
   }
   
   console.log('Items seeding completed.');
@@ -652,6 +710,70 @@ async function seedSkills(filePath) {
 }
 
 // Main function
+// Seed shop items
+async function seedShopItems(filePath) {
+  console.log('Seeding shop items from:', filePath);
+  
+  const shopItems = readJsonFile(filePath);
+  
+  if (!shopItems || !Array.isArray(shopItems)) {
+    console.error('Invalid shop items data format. Expected an array of shop definitions.');
+    return;
+  }
+  
+  console.log(`Found ${shopItems.length} shops to seed`);
+  
+  // First clear existing shop items to avoid duplicates
+  const { error: clearError } = await supabase
+    .from('shop_items')
+    .delete()
+    .gt('id', 0);
+  
+  if (clearError) {
+    console.error('Error clearing existing shop items:', clearError);
+    return;
+  }
+  
+  console.log('Cleared existing shop items');
+  
+  // Process each shop and its items
+  for (const shop of shopItems) {
+    console.log(`Processing shop: ID=${shop.shop_id}, Name=${shop.name}`);
+    
+    if (!shop.items || !Array.isArray(shop.items)) {
+      console.error(`No items found for shop ${shop.name}`);
+      continue;
+    }
+    
+    console.log(`Found ${shop.items.length} items for shop ${shop.name}`);
+    
+    for (const item of shop.items) {
+      // Create a shop_item record
+      const shopItem = {
+        shop_id: shop.shop_id,
+        item_id: item.item_id,
+        chance: item.chance,
+        price: 0, // Set default price value to avoid not-null constraint
+        created_at: new Date().toISOString()
+      };
+      
+      // Insert shop item
+      const { error: insertError } = await supabase
+        .from('shop_items')
+        .insert(shopItem);
+      
+      if (insertError) {
+        console.error(`Error inserting shop item for shop ${shop.name}:`, insertError);
+        continue;
+      }
+    }
+    
+    console.log(`Successfully inserted ${shop.items.length} items for shop ${shop.name}`);
+  }
+  
+  console.log('Shop items seeding completed.');
+}
+
 async function main() {
   const args = process.argv.slice(2);
   
@@ -667,6 +789,7 @@ Commands:
   rewardtables <file>             - Seed reward tables from JSON file
   skills <file>                   - Seed skills from JSON file
   areas <file>                    - Seed areas from JSON file
+  shopitems <file>                - Seed shop items from JSON file
   all <directory>                 - Seed all data from directory
 
 Examples:
@@ -677,6 +800,7 @@ Examples:
   node seed-data.js rewardtables ./data/rewardtables.json
   node seed-data.js skills ./data/skills.json
   node seed-data.js areas ./data/areas.json
+  node seed-data.js shopitems ./data/shop-items.json
   node seed-data.js all ./data
     `);
     return;
@@ -720,6 +844,9 @@ Examples:
       case 'areas':
         await clearAllTables();
         await seedAreas(filePath);
+        break;
+      case 'shopitems':
+        await seedShopItems(filePath);
         break;
       case 'all':
         const directory = filePath;
@@ -1017,7 +1144,7 @@ for (const adventureFile of adventureFileSequence) {
   }
 }
 
-console.log(`Processed ${processedFiles} adventure files with a total of ${totalAdventureCount} adventures.`);
+        console.log(`Processed ${processedFiles} adventure files with a total of ${totalAdventureCount} adventures.`);
 
 // Fall back to legacy adventure file if needed
 if (processedFiles === 0) {
@@ -1034,6 +1161,11 @@ if (processedFiles === 0) {
             : null;
             
           await seedWorldBoss(path.join(directory, 'worldboss.json'), rewardsPath);
+        }
+        
+        // Seed shop items data
+        if (fs.existsSync(path.join(directory, 'shop-items.json'))) {
+          await seedShopItems(path.join(directory, 'shop-items.json'));
         }
         break;
       default:
