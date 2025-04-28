@@ -12,7 +12,7 @@ interface ShopItemProps {
   id: string;
   item: Item;
   price: number;
-  onPurchase: () => void;
+  onPurchase: (item: Item, price: number) => void;
   playerGold: number;
 }
 
@@ -43,7 +43,7 @@ export default function ShopItem({ id, item, price, onPurchase, playerGold }: Sh
       
       if (result.success) {
         playRewardSound(); // Play reward sound on successful purchase
-        onPurchase();
+        onPurchase(item, price);
       } else {
         setError(result.error || 'Failed to purchase item');
       }

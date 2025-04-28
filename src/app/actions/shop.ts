@@ -304,9 +304,8 @@ export async function buyItem(itemId: string): Promise<ApiResponse<{ message: st
     
     console.log('Successfully added item to inventory:', insertData);
     
-    // Revalidate paths to update UI
-    revalidatePath('/shop');
-    revalidatePath('/adventure');
+    // Don't revalidate the entire path as it causes a page refresh
+    // Instead, we'll handle state updates on the client side
     
     return { 
       success: true, 
@@ -398,9 +397,8 @@ export async function sellItem(inventoryItemId: string): Promise<ApiResponse<{ m
       return { success: false, error: 'Failed to remove item from inventory' };
     }
     
-    // Revalidate paths to update UI
-    revalidatePath('/shop');
-    revalidatePath('/adventure');
+    // Don't revalidate the entire path as it causes a page refresh
+    // Instead, we'll handle state updates on the client side
     
     return { 
       success: true, 

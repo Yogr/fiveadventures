@@ -71,9 +71,15 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
   }, []);
   
   // Handle purchase
-  const handlePurchase = () => {
-    // Reload data to get updated shop and inventory
+  const handlePurchase = (purchasedItem: any, price: number) => {
+    // Update gold locally
+    setGold(prevGold => prevGold - price);
+    
+    // Update inventory locally (add the purchased item)
     loadData();
+    
+    // Show success message or toast if you have a UI component for that
+    console.log(`Successfully purchased ${purchasedItem.name} for ${price} gold`);
   };
   
   return (
