@@ -86,8 +86,8 @@ export default function WorldBossScene({
             currentHp={character.current_hitpoints}
             maxHp={getTotalMaxHitpoints(character)}
             effects={[]}
-            // Hide status bar for the character
-            className="status-bar-hidden"
+            isWorldBoss={true}
+            className=""
           />
         </div>
         
@@ -101,9 +101,9 @@ export default function WorldBossScene({
             maxHp={boss.total_hitpoints}
             scale={boss.scale || 4.0}
             isEnemy={true}
+            isWorldBoss={true}
             effects={[]}
-            // Hide status bar since we're showing it at the top
-            className="status-bar-hidden"
+            className=""
           />
         </div>
       </div>

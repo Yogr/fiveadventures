@@ -59,6 +59,7 @@ export default function CombatScene({
             imageAlt={character.name}
             currentHp={character.current_hitpoints}
             maxHp={getTotalMaxHitpoints(character)}
+            isWorldBoss={false}
             effects={characterEffects}
           />
         </div>
@@ -74,6 +75,7 @@ export default function CombatScene({
             scale={combat.monster.scale ? combat.monster.scale : 1.0}
             isEnemy={true}
             isElite={combat.monster.is_elite}
+            isWorldBoss={false}
             effects={monsterEffects}
             onInfoClick={onMonsterInfoClick}
           />

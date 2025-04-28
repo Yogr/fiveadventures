@@ -15,6 +15,7 @@ interface FighterDisplayProps {
   scale?: number;
   isEnemy?: boolean;
   isElite?: boolean;
+  isWorldBoss?: boolean;
   effects?: CombatEffect[];
   width?: number;
   height?: number;
@@ -32,6 +33,7 @@ export default function FighterDisplay({
   scale = 1.0,
   isEnemy = false,
   isElite = false,
+  isWorldBoss = false,
   effects = [],
   width = 80,
   height = 80,
@@ -62,60 +64,63 @@ export default function FighterDisplay({
 
   return (
     <div className={`flex flex-col items-center ${className} relative`}>
-      <div className="flex flex-col items-center relative">
-        {/* Name and info header - higher z-index */}
-        <div 
-          className="mb-2 px-3 py-1 bg-gray-900 bg-opacity-70 rounded-md text-center w-full"
-          style={{ zIndex: 20 }}
-        >
-          <div className="flex items-center justify-center">
-            <h3 className="text-base md:text-lg whitespace-nowrap">
-              {name}
-              {isElite && (
-                <span className="ml-2 text-xs text-yellow-400 border border-yellow-400 rounded-md px-1 py-0.5">
-                  ELITE
-                </span>
-              )}
-            </h3>
-            
-            {onInfoClick && (
-              <button 
-                onClick={onInfoClick}
-                className="ml-2 bg-blue-700 hover:bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                title="View details"
-              >
-                i
-              </button>
-            )}
-            
-            {additionalHeader}
-          </div>
-        </div>
-        
-        {/* Status Bar - higher z-index */}
-        <div 
-          className="w-32 md:w-40" 
-          style={{ 
-            zIndex: 20,
-            marginBottom: `${statusMargin + 8}px` // Base 8px plus scale-based margin
-          }}
-        >
-          <StatusBar 
-            current={currentHp} 
-            max={maxHp}
-          />
-        </div>
-        
-        {/* Effects display - highest z-index */}
-        {effects.length > 0 && (
+      {/* Only show status elements if not a world boss */}
+      {!isWorldBoss && (
+        <div className="flex flex-col items-center relative">
+          {/* Name and info header - higher z-index */}
           <div 
-            className="absolute top-0 left-1/2 transform -translate-x-1/2" 
-            style={{ zIndex: 30 }}
+            className="mb-2 px-3 py-1 bg-gray-900 bg-opacity-70 rounded-md text-center w-full"
+            style={{ zIndex: 20 }}
           >
-            <BuffBar effects={effects} size="md" />
+            <div className="flex items-center justify-center">
+              <h3 className="text-base md:text-lg whitespace-nowrap">
+                {name}
+                {isElite && (
+                  <span className="ml-2 text-xs text-yellow-400 border border-yellow-400 rounded-md px-1 py-0.5">
+                    ELITE
+                  </span>
+                )}
+              </h3>
+              
+              {onInfoClick && (
+                <button 
+                  onClick={onInfoClick}
+                  className="ml-2 bg-blue-700 hover:bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                  title="View details"
+                >
+                  i
+                </button>
+              )}
+              
+              {additionalHeader}
+            </div>
           </div>
-        )}
-      </div>
+          
+          {/* Status Bar - higher z-index */}
+          <div 
+            className="w-32 md:w-40" 
+            style={{ 
+              zIndex: 20,
+              marginBottom: `${statusMargin + 8}px` // Base 8px plus scale-based margin
+            }}
+          >
+            <StatusBar 
+              current={currentHp} 
+              max={maxHp}
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* Effects display - highest z-index */}
+      {effects.length > 0 && (
+        <div 
+          className="absolute top-0 left-1/2 transform -translate-x-1/2" 
+          style={{ zIndex: 30 }}
+        >
+          <BuffBar effects={effects} size="md" />
+        </div>
+      )}
       
       {/* Fighter container with shadow - lower z-index */}
       <div className="relative mt-1" style={{ zIndex: 10 }}>
