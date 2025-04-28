@@ -688,55 +688,83 @@ export async function startCombatTurn(
     
     if (monsterRemainingHp > 0) {
       // Monster's turn
-      // Base damage with randomness (±20%)
-      const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
-      let monsterDamageDealt = Math.floor(monster.attack * randomFactor);
+      let monsterDamageDealt = 0;
       
-      // Calculate total defense using the same function as in the character display
-      const totalDefense = calculateTotalDefense(character);
+      // Check if monster has abilities
+      const hasAbilities = monster.abilities && Object.keys(monster.abilities).length > 0;
       
-      // Reduced impact of defense
-      monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(totalDefense / 3));
+      // Decide if monster uses a basic attack or an ability
+      const useAbility = hasAbilities && Math.random() < 0.5; // 50% chance to use ability if available
       
-      console.log(`Combat: Monster attack - Damage: ${monsterDamageDealt}, Character defense: ${totalDefense}`);
-      
-      // Add to combat log
-      combatLog.push(`${monster.name} attacks for ${monsterDamageDealt} damage.`);
-      
-      // Check for monster abilities
-      if (monster.abilities) {
-        const abilities = monster.abilities as Record<string, any>;
+      if (!useAbility || !hasAbilities) {
+        // Monster performs a basic attack
+        // Base damage with randomness (±20%)
+        const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
+        monsterDamageDealt = Math.floor(monster.attack * randomFactor);
         
-        // Roll for each ability
-        for (const [abilityName, ability] of Object.entries(abilities)) {
-          const roll = Math.floor(Math.random() * 100) + 1;
-          const typedAbility = ability as Record<string, any>;
+        // Calculate total defense using the same function as in the character display
+        const totalDefense = calculateTotalDefense(character);
+        
+        // Reduced impact of defense
+        monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(totalDefense / 3));
+        
+        console.log(`Combat: Monster basic attack - Damage: ${monsterDamageDealt}, Character defense: ${totalDefense}`);
+        
+        // Add to combat log
+        combatLog.push(`${monster.name} attacks for ${monsterDamageDealt} damage.`);
+      } else {
+        // Monster uses an ability
+        const abilities = monster.abilities as Record<string, any> || {};
+        const abilityNames = Object.keys(abilities);
+        
+        // Randomly select one ability with equal probability
+        const randomAbilityIndex = Math.floor(Math.random() * abilityNames.length);
+        const chosenAbilityName = abilityNames[randomAbilityIndex] || '';
+        const chosenAbility = abilities[chosenAbilityName] as Record<string, any> || {};
+        
+        console.log(`Combat: Monster using ability: ${chosenAbilityName}`);
+        
+        // Add to combat log
+        combatLog.push(`${monster.name} uses ${chosenAbilityName}!`);
+        
+        // Process the selected ability
+        if (chosenAbility.damage) {
+          // Damage ability
+          monsterDamageDealt = chosenAbility.damage;
           
-          if (roll <= typedAbility.chance) {
-            // Ability triggers
-            if (typedAbility.damage) {
-              // Damage ability
-              monsterDamageDealt += typedAbility.damage;
-              
-              // Add to combat log
-              combatLog.push(`${monster.name} uses ${abilityName} for ${typedAbility.damage} additional damage.`);
-            }
+          // Apply base attack as well for damage abilities
+          const baseAttack = Math.floor(monster.attack * 0.6); // 60% of base attack
+          monsterDamageDealt += baseAttack;
+          
+          // Apply defense
+          const totalDefense = calculateTotalDefense(character);
+          monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(totalDefense / 3));
+          
+          // Add to combat log
+          combatLog.push(`${chosenAbilityName} deals ${monsterDamageDealt} damage to ${character.name}.`);
+        }
+        
+        // Handle status effects
+        if (chosenAbility.defense_boost || chosenAbility.immobilize || chosenAbility.damage_over_time) {
+          // Apply monster ability effect to combat record if it has a duration
+          if (chosenAbility.duration) {
+            console.log('Combat: Applying monster ability effect to combat record');
+            await applyMonsterAbilityEffect(combatId, String(chosenAbilityName), chosenAbility);
             
-            if (typedAbility.defense_boost || typedAbility.immobilize || typedAbility.damage_over_time) {
-              // Status effect ability
-              // Add to combat log
-              combatLog.push(`${monster.name} uses ${abilityName} ability.`);
-              
-              // Apply monster ability effect to combat record if it has a duration
-              if (typedAbility.duration) {
-                console.log('Combat: Applying monster ability effect to combat record');
-                await applyMonsterAbilityEffect(combatId, abilityName, typedAbility);
-                
-                // Add to combat log
-                combatLog.push(`${abilityName} effect applied to ${character.name}.`);
-              }
-            }
+            // Add to combat log
+            combatLog.push(`${chosenAbilityName} effect applied to ${character.name}.`);
           }
+        }
+        
+        // If no damage was dealt but this is a pure status effect ability
+        if (monsterDamageDealt === 0 && !chosenAbility.damage && !chosenAbility.damage_over_time) {
+          // Monster still does a weak basic attack
+          const minorAttack = Math.floor(monster.attack * 0.4); // 40% of normal attack
+          const totalDefense = calculateTotalDefense(character);
+          monsterDamageDealt = Math.max(1, minorAttack - Math.floor(totalDefense / 3));
+          
+          // Add to combat log
+          combatLog.push(`${monster.name} also strikes for ${monsterDamageDealt} damage.`);
         }
       }
       
