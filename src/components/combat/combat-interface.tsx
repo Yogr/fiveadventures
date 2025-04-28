@@ -585,14 +585,39 @@ export default function CombatInterface({ combatId, character: initialCharacter,
                     
                     <div className="flex mb-4">
                       <div className="mr-4">
-                        <div className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center">
-                          <Image
-                            src={`/image/enemy/${combat.monster.image_url}.png`}
-                            alt={combat.monster.name}
-                            width={80}
-                            height={80}
-                            className="-scale-x-100"
-                          />
+                        <div 
+                          style={{
+                            width: '80px', 
+                            height: '80px',
+                            position: 'relative',
+                            overflow: 'visible'
+                          }}
+                        >
+                          {/* Monster image centered within container */}
+                          <div
+                            style={{
+                              position: 'absolute',
+                              bottom: '0',
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              width: `${80 * (combat.monster.scale || 1.0)}px`,
+                              height: `${80 * (combat.monster.scale || 1.0)}px`,
+                            }}
+                          >
+                            <Image
+                              src={`/image/enemy/${combat.monster.image_url}.png`}
+                              alt={combat.monster.name}
+                              width={80 * (combat.monster.scale || 1.0)}
+                              height={80 * (combat.monster.scale || 1.0)}
+                              className="-scale-x-100"
+                              priority={true}
+                              style={{
+                                objectFit: 'contain',
+                                width: `${80 * (combat.monster.scale || 1.0)}px`,
+                                height: `${80 * (combat.monster.scale || 1.0)}px`,
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
                       <div className="flex-1">

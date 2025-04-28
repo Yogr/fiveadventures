@@ -5,21 +5,37 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Bugs
 ----------
-
-- Buffs need to time out
-
 - Shop loads fake items? Item not found? Awards random items?
 
 
 Todo
 -------------
+
+- Improve World Boss combat area to utilize CombatScene or something very similar looking
+
+- Implement each item special effect into combat 
+- Implement enemy abilities and skills
+- Implement cooldown to abilities, its already in the data just not applied
+
 - Improve world boss
+  - Add rewards for consolation prizes when boss is not defeated.
+  - World boss progress state should have 'finished' and 'claimed' or use the end date / day to determine which ones may have pending rewards.
+
+- Rebalance attacks and skills. Spells are too strong
+- Re-design the skill button UI so the name is at bottom and energy cost is top right
+- Add spell effects to combat
+- Play test and balance all 5 characters
+- Add artwork for the catacombs
+- Start next set of adventures
+- Get provider auth working
 
 - Add menu nav
   - User Profile
   - Advanced stats
   - About
   - Help
+
+- Enemies do not scale properly still.
 
 - Alert non-member users in several places about their character not saving. (Show create account suggestion)
 
@@ -34,7 +50,19 @@ Todo
   - Eventually we will have more dungeons, so make sure architecture supports dungeon descriptions and metadata as well as dungeon IDs with their own enemies and rewards etc
   - Charac
 
+
+------- Soft Launch Game -------------
+
+- Put in Ads
+
 - Guilds
+  - Chat
+  - Weekly guild raid : Actually do combat? multiple turns?
+  - Guild level + rewards (+5% exp gain, +5% gold gain, etc)
+  - Emblem/Crest creator
+  - 
+
+- Trading hub / Marketplace
 
 - 'Order of the 7' subscription - $4.99
   - Monthly delivery of 10,000 gold, 20 dungeon keys, removes ads, currency X
@@ -45,16 +73,6 @@ Todo
   - $9.99: 
   - $19.99: 
 
-
-- Create the various platform apps and actually hook up full auth stuff
-
-- Improve adventures and decisions
-  - Tweak enemy stats so they are more balanced
-  - Decisions should show a stat icon if they are determined by a stat
-  - Make sure the decision outcome randomizer selection makes sense
-  - Only show 2 options for most adventures, allow for a 3rd 'unlockable' option if character meets the stat floor
-
-- Set up the 'global' adventures
 - Make adventures for other areas
   - Create a thorough adventure template with explicit criteria a.k.a the above adventure improvements. Then have the AI create the adventures for each area.
 

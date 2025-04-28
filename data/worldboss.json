@@ -5,11 +5,8 @@
     "week": 1,
     "total_hitpoints": 10000,
     "current_hitpoints": 10000,
-    "player_count": 0,
-    "attack_count": 0,
-    "total_damage": 0,
-    "is_defeated": false,
-    "image_url": null
+    "image_url": "ancient_dragon",
+    "scale": 4.0
   },
   {
     "name": "Forest Guardian",
@@ -17,11 +14,8 @@
     "week": 2,
     "total_hitpoints": 15000,
     "current_hitpoints": 15000,
-    "player_count": 0,
-    "attack_count": 0,
-    "total_damage": 0,
-    "is_defeated": false,
-    "image_url": null
+    "image_url": "forest_guardian",
+    "scale": 4.0
   },
   {
     "name": "Kraken of the Deep",
@@ -29,11 +23,8 @@
     "week": 3,
     "total_hitpoints": 20000,
     "current_hitpoints": 20000,
-    "player_count": 0,
-    "attack_count": 0,
-    "total_damage": 0,
-    "is_defeated": false,
-    "image_url": null
+    "image_url": "kraken",
+    "scale": 4.5
   },
   {
     "name": "Undead Lich King",
@@ -41,11 +32,8 @@
     "week": 4,
     "total_hitpoints": 25000,
     "current_hitpoints": 25000,
-    "player_count": 0,
-    "attack_count": 0,
-    "total_damage": 0,
-    "is_defeated": false,
-    "image_url": null
+    "image_url": "lich_king",
+    "scale": 3.5
   },
   {
     "name": "Elemental Titan",
@@ -53,11 +41,8 @@
     "week": 5,
     "total_hitpoints": 30000,
     "current_hitpoints": 30000,
-    "player_count": 0,
-    "attack_count": 0,
-    "total_damage": 0,
-    "is_defeated": false,
-    "image_url": null
+    "image_url": "elemental_titan",
+    "scale": 5.0
   },
   {
     "name": "Shadow Demon",
@@ -65,58 +50,39 @@
     "week": 6,
     "total_hitpoints": 35000,
     "current_hitpoints": 35000,
-    "player_count": 0,
-    "attack_count": 0,
-    "total_damage": 0,
-    "is_defeated": false,
-    "image_url": null
+    "image_url": "shadow_demon",
+    "scale": 4.0
   },
   {
     "name": "Celestial Phoenix",
     "description": "A divine bird of immense power that has been corrupted by chaos magic. Its flames burn with both creation and destruction.",
     "week": 7,
     "total_hitpoints": 40000,
-    "current_hitpoints": 40000,
-    "player_count": 0,
-    "attack_count": 0,
-    "total_damage": 0,
-    "is_defeated": false,
-    "image_url": null
+    "image_url": "celestial_phoenix",
+    "scale": 4.5
   },
   {
     "name": "Mountain Colossus",
     "description": "A giant made of living stone that has slumbered for centuries. Now awakened, it threatens to reshape the land with its immense strength.",
     "week": 8,
     "total_hitpoints": 45000,
-    "current_hitpoints": 45000,
-    "player_count": 0,
-    "attack_count": 0,
-    "total_damage": 0,
-    "is_defeated": false,
-    "image_url": null
+    "image_url": "mountain_colossus",
+    "scale": 5.5
   },
   {
     "name": "Arcane Construct",
     "description": "A magical creation designed by ancient wizards as the ultimate weapon. It has broken free from its creators' control and now seeks to absorb all magic in the world.",
     "week": 9,
     "total_hitpoints": 50000,
-    "current_hitpoints": 50000,
-    "player_count": 0,
-    "attack_count": 0,
-    "total_damage": 0,
-    "is_defeated": false,
-    "image_url": null
+    "image_url": null,
+    "scale": 4.5
   },
   {
     "name": "Chaos Dragon",
     "description": "The most powerful dragon in existence, capable of manipulating reality itself. Its mere presence warps the fabric of the world around it.",
     "week": 10,
     "total_hitpoints": 100000,
-    "current_hitpoints": 100000,
-    "player_count": 0,
-    "attack_count": 0,
-    "total_damage": 0,
-    "is_defeated": false,
-    "image_url": null
+    "image_url": null,
+    "scale": 6.0
   }
 ]

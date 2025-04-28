@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { WorldBoss, CharacterBossProgress, Character, BossReward } from '@/lib/types';
-import WorldBossStats from './world-boss-stats';
+import WorldBossScene from './WorldBossScene';
 import WorldBossAttackPanel from './world-boss-attack-panel';
 import WorldBossRewardsPanel from './world-boss-rewards-panel';
 import { canAttackWorldBossToday, getPendingRewards } from '@/app/actions/worldboss';
@@ -26,6 +26,7 @@ export default function WorldBossContainer({
   const [pendingRewards, setPendingRewards] = useState<BossReward[]>(initialPendingRewards);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [combatLog, setCombatLog] = useState<string[]>([]);
   
   // Check if character can attack today
   useEffect(() => {
@@ -46,6 +47,9 @@ export default function WorldBossContainer({
   
   // Handle attack completion
   const handleAttackComplete = (damage: number, canAttackAgain: boolean, bossDefeated: boolean) => {
+    // Add attack message to combat log
+    const attackMessage = `${character.name} dealt ${damage.toLocaleString()} damage to ${boss.name}!`;
+    setCombatLog(prev => [...prev.slice(-2), attackMessage]); // Keep only the last 3 messages maximum
     // Update boss stats
     setBoss(prevBoss => ({
       ...prevBoss,
@@ -86,7 +90,13 @@ export default function WorldBossContainer({
   
   return (
     <div>
-      <WorldBossStats boss={boss} />
+      {/* Display the WorldBossScene with character and boss */}
+      <WorldBossScene 
+        character={character}
+        boss={boss}
+        combatLog={combatLog}
+        areaImage="abyssal-realm"
+      />
       
       <WorldBossAttackPanel
         characterId={character.id}

@@ -42,7 +42,16 @@ export default function FighterDisplay({
   // Determine avatar CSS class for animations
   const avatarClass = isEnemy ? 'monster-avatar' : 'character-avatar';
 
-  console.log('FighterDisplayy, effects:', effects, 'isEnemy:', isEnemy, 'isElite:', isElite, 'className:', className);
+  // Calculate shadow size based on scale
+  const shadowWidth = Math.round(20 * scale);
+  const shadowHeight = Math.round(6 * scale);
+  
+  // Calculate image dimensions based on scale
+  const imageWidth = Math.round(width * scale);
+  const imageHeight = Math.round(height * scale);
+
+  // Use fixed container size for consistent layout
+  const containerSize = 80; // Fixed container size
 
   return (
     <div className={`flex flex-col items-center ${className} relative`}>
@@ -87,19 +96,52 @@ export default function FighterDisplay({
         </div>
       )}
       
-      {/* Semi-transparent oval beneath the fighter */}
+      {/* Fighter container with shadow */}
       <div className="relative">
-        <div className="absolute bottom-0 left-1/2 w-20 h-6 bg-black bg-opacity-30 rounded-full -z-10 transform -translate-x-1/2 translate-y-1"></div>
+        {/* Semi-transparent oval beneath the fighter */}
+        <div 
+          className="absolute bottom-0 left-1/2 bg-black bg-opacity-30 rounded-full -z-10 transform -translate-x-1/2 translate-y-1"
+          style={{ 
+            width: `${shadowWidth}px`, 
+            height: `${shadowHeight}px` 
+          }}
+        ></div>
         
-        {/* Fighter image */}
-        <div className={`w-16 h-16 md:w-20 md:h-20 flex align-bottom pb-2 items-end ${avatarClass} ${isElite ? 'filter-brightness-110' : ''}`}>
-          <Image
-            src={image}
-            alt={imageAlt}
-            width={width * scale}
-            height={height * scale}
-            className={isEnemy ? "-scale-x-100" : ""}
-          />
+        {/* Fighter image container */}
+        <div 
+          className={`${avatarClass} ${isElite ? 'filter-brightness-110' : ''}`}
+          style={{
+            width: `${containerSize}px`, 
+            height: `${containerSize}px`,
+            position: 'relative',
+            overflow: 'visible'
+          }}
+        >
+          {/* Fighter image centered within container */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '0',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: `${imageWidth}px`,
+              height: `${imageHeight}px`,
+            }}
+          >
+            <Image
+              src={image}
+              alt={imageAlt}
+              width={imageWidth}
+              height={imageHeight}
+              className={isEnemy ? "-scale-x-100" : ""}
+              priority={true}
+              style={{
+                objectFit: 'contain',
+                width: `${imageWidth}px`,
+                height: `${imageHeight}px`,
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

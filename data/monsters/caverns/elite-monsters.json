@@ -10,6 +10,7 @@
     "gold_reward": 45,
     "difficulty": 4,
     "attack_type": "Physical",
+    "scale": 1.8,
     "abilities": {
       "life_drain": {
         "damage": 10,
@@ -46,6 +47,7 @@
     "gold_reward": 50,
     "difficulty": 4,
     "attack_type": "Physical",
+    "scale": 1.7,
     "abilities": {
       "virulent_bite": {
         "damage": 8,
@@ -83,6 +85,7 @@
     "gold_reward": 65,
     "difficulty": 5,
     "attack_type": "Magical",
+    "scale": 2.2,
     "abilities": {
       "prismatic_beam": {
         "damage": 15,
@@ -121,6 +124,7 @@
     "gold_reward": 60,
     "difficulty": 4,
     "attack_type": "Magical",
+    "scale": 1.2,
     "abilities": {
       "earth_spike": {
         "damage": 12,
@@ -156,6 +160,7 @@
     "gold_reward": 70,
     "difficulty": 5,
     "attack_type": "Physical",
+    "scale": 3.0,
     "abilities": {
       "boulder_crush": {
         "damage": 18,
@@ -193,6 +198,7 @@
     "gold_reward": 55,
     "difficulty": 5,
     "attack_type": "Magical",
+    "scale": 2.5,
     "abilities": {
       "memory_theft": {
         "damage": 10,
@@ -228,6 +234,7 @@
     "gold_reward": 100,
     "difficulty": 7,
     "attack_type": "Magical",
+    "scale": 3.5,
     "abilities": {
       "crystal_nova": {
         "damage": 25,

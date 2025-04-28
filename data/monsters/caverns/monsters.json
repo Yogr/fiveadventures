@@ -10,6 +10,7 @@
     "gold_reward": 25,
     "difficulty": 2,
     "attack_type": "Physical",
+    "scale": 0.9,
     "abilities": {
       "echolocation": {
         "dodge_chance": 15,
@@ -38,6 +39,7 @@
     "gold_reward": 20,
     "difficulty": 2,
     "attack_type": "Physical",
+    "scale": 1.2,
     "abilities": {
       "disease_bite": {
         "damage": 4,
@@ -67,6 +69,7 @@
     "gold_reward": 30,
     "difficulty": 3,
     "attack_type": "Physical",
+    "scale": 1.3,
     "abilities": {
       "acid_splash": {
         "damage": 7,
@@ -95,6 +98,7 @@
     "gold_reward": 35,
     "difficulty": 3,
     "attack_type": "Physical",
+    "scale": 1.5,
     "abilities": {
       "crystal_web": {
         "immobilize": 1,
@@ -122,6 +126,7 @@
     "gold_reward": 40,
     "difficulty": 2,
     "attack_type": "Physical",
+    "scale": 0.8,
     "abilities": {
       "pickaxe_strike": {
         "damage": 6,
@@ -151,6 +156,7 @@
     "gold_reward": 25,
     "difficulty": 3,
     "attack_type": "Magical",
+    "scale": 1.7,
     "abilities": {
       "spore_cloud": {
         "damage": 4,
@@ -180,6 +186,7 @@
     "gold_reward": 35,
     "difficulty": 4,
     "attack_type": "Physical",
+    "scale": 2.0,
     "abilities": {
       "crushing_pincer": {
         "damage": 12,
@@ -207,6 +214,7 @@
     "gold_reward": 15,
     "difficulty": 1,
     "attack_type": "Physical",
+    "scale": 0.8,
     "abilities": {
       "swarm": {
         "damage": 8,

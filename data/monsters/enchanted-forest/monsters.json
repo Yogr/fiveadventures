@@ -10,6 +10,7 @@
     "gold_reward": 15,
     "difficulty": 1,
     "attack_type": "Physical",
+    "scale": 1.0,
     "abilities": {
       "bite": {
         "damage": 3,
@@ -31,6 +32,7 @@
     "gold_reward": 20,
     "difficulty": 1,
     "attack_type": "Physical",
+    "scale": 0.8,
     "abilities": {
       "sneak_attack": {
         "damage": 4,
@@ -52,6 +54,7 @@
     "gold_reward": 30,
     "difficulty": 2,
     "attack_type": "Physical",
+    "scale": 1.5,
     "abilities": {
       "web": {
         "immobilize": 1,
@@ -79,6 +82,7 @@
     "gold_reward": 35,
     "difficulty": 2,
     "attack_type": "Physical",
+    "scale": 1.0,
     "abilities": {
       "quick_strike": {
         "damage": 4,
@@ -100,6 +104,7 @@
     "gold_reward": 25,
     "difficulty": 1,
     "attack_type": "Magical",
+    "scale": 0.8,
     "abilities": {
       "nature_magic": {
         "damage": 5,

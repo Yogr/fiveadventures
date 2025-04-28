@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { CharacterBossProgress } from '@/lib/types';
 import { attackWorldBoss } from '@/app/actions/worldboss';
 import { formatNumber } from '@/lib/utils';
@@ -25,6 +25,53 @@ export default function WorldBossAttackPanel({
     bossDefeated: boolean;
   } | null>(null);
   
+  // Function to show damage numbers and animations
+  const showAttackEffects = (damage: number) => {
+    // Get the damage numbers container
+    const container = document.getElementById('worldboss-damage-numbers');
+    if (!container) return;
+    
+    // Create a new damage number element
+    const damageEl = document.createElement('div');
+    damageEl.className = 'damage-number';
+    damageEl.textContent = formatNumber(damage);
+    
+    // Position it near the boss (right side of the screen)
+    const xPos = Math.random() * 100 + 550; // Right side of screen
+    const yPos = Math.random() * 50 + 150; // Mid-height
+    damageEl.style.left = `${xPos}px`;
+    damageEl.style.top = `${yPos}px`;
+    
+    // Add it to the container
+    container.appendChild(damageEl);
+    
+    // Remove it after animation completes
+    setTimeout(() => {
+      if (damageEl.parentNode === container) {
+        container.removeChild(damageEl);
+      }
+    }, 1000);
+    // Add attack animation to character avatar
+    const characterAvatar = document.querySelector('.character-avatar');
+    if (characterAvatar) {
+      characterAvatar.classList.add('attacking');
+      setTimeout(() => {
+        characterAvatar.classList.remove('attacking');
+      }, 500);
+    }
+    
+    // Add hit animation to boss avatar
+    const bossAvatar = document.querySelector('.monster-avatar');
+    if (bossAvatar) {
+      setTimeout(() => {
+        bossAvatar.classList.add('hit');
+        setTimeout(() => {
+          bossAvatar.classList.remove('hit');
+        }, 500);
+      }, 300);
+    }
+  };
+  
   const handleAttack = async () => {
     if (!canAttack || isAttacking) return;
     
@@ -45,6 +92,9 @@ export default function WorldBossAttackPanel({
         damage: result.damage,
         bossDefeated: result.bossDefeated
       });
+      
+      // Show damage number and animations
+      showAttackEffects(result.damage);
       
       // Notify parent component
       onAttackComplete(result.damage, result.canAttackAgain, result.bossDefeated);

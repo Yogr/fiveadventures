@@ -142,7 +142,9 @@ export type CharacterAdventure = Database['public']['Tables']['character_adventu
 };
 
 // World Boss Types
-export type WorldBoss = Database['public']['Tables']['world_boss']['Row'];
+export type WorldBoss = Database['public']['Tables']['world_boss']['Row'] & {
+  scale?: number;
+};
 
 export type CharacterBossProgress = Database['public']['Tables']['character_boss_progress']['Row'] & {
   boss: WorldBoss;
