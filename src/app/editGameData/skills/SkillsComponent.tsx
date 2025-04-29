@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
+import EffectsEditor from '../components/EffectsEditor';
 import { getSkills, saveSkill, deleteSkill } from '@/app/actions/data-editor';
 import Image from 'next/image';
 
@@ -85,9 +86,17 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   const handleAdd = () => {
+    // Find next highest ID
+    let nextHighestId = 1;
+    for (const skill of skills) {
+      if (skill && skill.id >= nextHighestId) {
+        nextHighestId = skill.id + 1;
+      }
+    }
+
     // Add new skill
     const newSkill: Skill = {
-      id: Date.now(), // Temporary ID
+      id: nextHighestId,
       name: 'New Skill',
       description: 'Description of new skill',
       class: 'Warrior',
@@ -311,21 +320,15 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1">Effects (JSON)</label>
-                <textarea
-                  value={JSON.stringify(selectedSkill.effects, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      const effects = JSON.parse(e.target.value);
-                      setSelectedSkill({
-                        ...selectedSkill,
-                        effects
-                      });
-                    } catch (error) {
-                      // Invalid JSON - don't update
-                    }
+                <label className="block text-sm font-medium mb-1">Effects</label>
+                <EffectsEditor 
+                  effects={selectedSkill.effects || {}}
+                  onChange={(newEffects) => {
+                    setSelectedSkill({
+                      ...selectedSkill,
+                      effects: newEffects
+                    })
                   }}
-                  className="admin-textarea font-mono text-sm"
                   disabled={!isAdmin}
                 />
               </div>

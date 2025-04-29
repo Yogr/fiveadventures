@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
+import EffectsEditor from '../components/EffectsEditor';
 import { getItems, saveItem, deleteItem } from '@/app/actions/data-editor';
 import Image from 'next/image';
 
@@ -315,21 +316,15 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1">Effects (JSON)</label>
-                <textarea
-                  value={JSON.stringify(selectedItem.effects, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      const effects = JSON.parse(e.target.value);
-                      setSelectedItem({
-                        ...selectedItem,
-                        effects
-                      });
-                    } catch (error) {
-                      // Invalid JSON - don't update
-                    }
+                <label className="block text-sm font-medium mb-1">Effects</label>
+                <EffectsEditor 
+                  effects={selectedItem.effects || {}}
+                  onChange={(newEffects) => {
+                    setSelectedItem({
+                      ...selectedItem,
+                      effects: newEffects
+                    })
                   }}
-                  className="admin-textarea font-mono text-sm"
                   disabled={!isAdmin}
                 />
               </div>

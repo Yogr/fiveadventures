@@ -196,14 +196,40 @@ export async function deleteArea(id: number) {
   return { success: true };
 }
 
-// Fetch adventures from the database
+// Fetch adventures from the database including decisions and outcomes
 export async function getAdventures() {
   const supabase = await createClient();
   
-  // Fetch all adventures from the database
+  // Fetch all adventures with their decisions and outcomes
   const { data: adventures, error } = await supabase
     .from('adventures')
-    .select('*')
+    .select(`
+      *,
+      adventure_decisions:adventure_decisions(
+        id,
+        description,
+        requirements,
+        type,
+        icon,
+        stat_check,
+        base_success_rate,
+        mastery,
+        adventure_outcomes:adventure_outcomes(
+          id,
+          description,
+          experience_bonus,
+          gold_bonus,
+          reward_table_id,
+          hitpoints_change,
+          energy_change,
+          stat_requirements,
+          success_rate_formula,
+          has_combat,
+          monster_ids,
+          is_success
+        )
+      )
+    `)
     .order('id');
   
   if (error) {
@@ -211,7 +237,16 @@ export async function getAdventures() {
     return { success: false, error: error.message };
   }
   
-  return { success: true, data: adventures };
+  // Process the data to make it easier to work with
+  const processedAdventures = adventures.map(adventure => ({
+    ...adventure,
+    decisions: (adventure.adventure_decisions || []).map((decision: any) => ({
+      ...decision,
+      outcomes: decision.adventure_outcomes || []
+    }))
+  }));
+  
+  return { success: true, data: processedAdventures };
 }
 
 // Save an adventure to the database (handles both insert and update)
@@ -571,4 +606,145 @@ export async function getWorldBosses() {
   }
   
   return { success: true, data: worldBosses };
+}
+
+// Save an adventure decision to the database
+export async function saveAdventureDecision(decision: any) {
+  // First check if user has admin privileges
+  await requireAdmin();
+  
+  const supabase = await createClient();
+  
+  try {
+    // Format the decision data
+    const decisionData = {
+      id: decision.id,
+      adventure_id: decision.adventure_id,
+      description: decision.description,
+      requirements: decision.requirements,
+      type: decision.type,
+      icon: decision.icon,
+      stat_check: decision.stat_check,
+      base_success_rate: decision.base_success_rate,
+      mastery: decision.mastery,
+      created_at: decision.created_at || new Date().toISOString()
+    };
+    
+    // Insert or update the decision
+    const { data: savedDecision, error: decisionError } = await supabase
+      .from('adventure_decisions')
+      .upsert(decisionData, { onConflict: 'id' })
+      .select();
+    
+    if (decisionError) {
+      throw decisionError;
+    }
+    
+    return { success: true, data: savedDecision ? savedDecision[0] : null };
+  } catch (error: any) {
+    console.error('Error saving adventure decision:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Delete an adventure decision from the database
+export async function deleteAdventureDecision(id: number) {
+  // First check if user has admin privileges
+  await requireAdmin();
+  
+  const supabase = await createClient();
+  
+  try {
+    // First delete all related outcomes
+    const { error: outcomesError } = await supabase
+      .from('adventure_outcomes')
+      .delete()
+      .eq('decision_id', id);
+      
+    if (outcomesError) {
+      throw outcomesError;
+    }
+    
+    // Then delete the decision
+    const { error: decisionError } = await supabase
+      .from('adventure_decisions')
+      .delete()
+      .eq('id', id);
+      
+    if (decisionError) {
+      throw decisionError;
+    }
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error deleting adventure decision:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Save an adventure outcome to the database
+export async function saveAdventureOutcome(outcome: any) {
+  // First check if user has admin privileges
+  await requireAdmin();
+  
+  const supabase = await createClient();
+  
+  try {
+    // Format the outcome data
+    const outcomeData = {
+      id: outcome.id,
+      decision_id: outcome.decision_id,
+      description: outcome.description,
+      experience_bonus: outcome.experience_bonus,
+      gold_bonus: outcome.gold_bonus,
+      reward_table_id: outcome.reward_table_id,
+      hitpoints_change: outcome.hitpoints_change,
+      energy_change: outcome.energy_change,
+      stat_requirements: outcome.stat_requirements,
+      success_rate_formula: outcome.success_rate_formula,
+      has_combat: outcome.has_combat,
+      monster_ids: outcome.monster_ids,
+      is_success: outcome.is_success,
+      created_at: outcome.created_at || new Date().toISOString()
+    };
+    
+    // Insert or update the outcome
+    const { data: savedOutcome, error: outcomeError } = await supabase
+      .from('adventure_outcomes')
+      .upsert(outcomeData, { onConflict: 'id' })
+      .select();
+    
+    if (outcomeError) {
+      throw outcomeError;
+    }
+    
+    return { success: true, data: savedOutcome ? savedOutcome[0] : null };
+  } catch (error: any) {
+    console.error('Error saving adventure outcome:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Delete an adventure outcome from the database
+export async function deleteAdventureOutcome(id: number) {
+  // First check if user has admin privileges
+  await requireAdmin();
+  
+  const supabase = await createClient();
+  
+  try {
+    const { error } = await supabase
+      .from('adventure_outcomes')
+      .delete()
+      .eq('id', id);
+      
+    if (error) {
+      throw error;
+    }
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error deleting adventure outcome:', error);
+    return { success: false, error: error.message };
+  }
 }
