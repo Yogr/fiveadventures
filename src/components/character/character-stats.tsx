@@ -34,8 +34,8 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
   const energyPercentage = (character.current_energy / totalMaxEnergy) * 100;
   
   return (
-    <div className="bg-yellow-950 bg-opacity-90 p-2 md:p-3 rounded-lg relative border-2 border-amber-900 border-t-amber-700 border-l-amber-700">
-      <div className="flex items-start">
+    <div className="bg-gradient-to-b from-yellow-950 to-black p-2 md:p-3 rounded-lg relative border-2 border-amber-900 border-t-amber-700 border-l-amber-700">
+      <div className="flex justify-around items-start">
         {/* Left side with avatar and name */}
         <div className="flex flex-col items-center mr-2">
           {/* Character name */}

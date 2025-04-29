@@ -49,7 +49,7 @@ export default function WorldBossRewardsPanel({
   }
   
   return (
-    <div className="bg-amber-950 bg-opacity-50 p-4 rounded-lg mt-4">
+    <div className="bg-gradient-to-b from-yellow-950 to-black p-4 rounded-lg mt-4 border border-amber-900">
       <h4 className="text-amber-200 font-bold mb-3 text-center">Pending Rewards</h4>
       
       <div className="grid gap-2 mb-4">

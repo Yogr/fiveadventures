@@ -28,7 +28,7 @@ const AdventureView = memo(function AdventureView({ adventure, character }: Adve
   };
   
   return (
-    <div className="bg-yellow-950 p-0 animate-fadeIn rounded-lg border-2 border-amber-900 border-t-amber-700 border-l-amber-700">
+    <div className="bg-gradient-to-b from-yellow-950 to-black p-0 animate-fadeIn rounded-lg border-2 border-amber-900 border-t-amber-700 border-l-amber-700">
       <AdventureDisplay 
         title={adventure.title}
         description={adventure.description}

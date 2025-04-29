@@ -80,7 +80,7 @@ export default function SellBar({
   };
   
   return (
-    <div className="bg-gray-900 bg-opacity-80 rounded-md p-3 mt-4">
+    <div className="bg-gradient-to-b from-yellow-950 to-black rounded-md p-3 mt-4 border border-amber-900">
       {/* Error message */}
       {error && (
         <div className="bg-red-600 text-white p-2 rounded-md mb-4">
