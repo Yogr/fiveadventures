@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { GiSwordman } from 'react-icons/gi';
+import { HiShoppingBag } from 'react-icons/hi';
+import { GiDragonHead } from 'react-icons/gi';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
@@ -124,7 +127,7 @@ export default function GameNavigation({
   return (
     <div className="w-full flex flex-col">
       {/* Top navigation bar */}
-      <div className="w-full bg-yellow-950 border-b border-amber-900 flex items-center justify-between px-4 py-1">
+      <div className="w-full bg-gradient-to-b from-yellow-950 to-black border-b border-amber-900 flex items-center justify-between px-4 py-1">
         {/* Day counter - left section */}
         <div className="text-sm text-amber-300 flex-1">
           <span>Day: {currentDay}</span>
@@ -134,30 +137,36 @@ export default function GameNavigation({
         <div className="flex items-center justify-center gap-2 flex-1">
           <Link 
             href={ROUTES.ADVENTURE}
-            className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium ${
-              activeTab === 'adventure' ? 'bg-red-700' : 'bg-red-600 hover:bg-red-500'
+            className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium flex items-center gap-1.5 ${
+              activeTab === 'adventure' 
+                ? 'bg-gradient-to-b from-red-600 to-red-800 border border-red-500 shadow-md' 
+                : 'bg-gradient-to-b from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 border border-red-400 shadow-sm hover:shadow-md'
             }`}
           >
-            Adventure
+            <GiSwordman className="text-xs" /> Adventure
           </Link>
           
           <Link 
             href={ROUTES.SHOP}
-            className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium ${
-              activeTab === 'shop' ? 'bg-yellow-700' : 'bg-yellow-600 hover:bg-yellow-500'
+            className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium flex items-center gap-1.5 ${
+              activeTab === 'shop' 
+                ? 'bg-gradient-to-b from-yellow-600 to-yellow-800 border border-yellow-500 shadow-md' 
+                : 'bg-gradient-to-b from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 border border-yellow-400 shadow-sm hover:shadow-md'
             }`}
           >
-            Shop
+            <HiShoppingBag className="text-xs" /> Shop
           </Link>
           
           <div className="relative flex items-center">
             <Link 
               href={ROUTES.WORLD_BOSS}
-              className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium whitespace-nowrap ${
-                activeTab === 'worldboss' ? 'bg-purple-700' : 'bg-purple-600 hover:bg-purple-500'
+              className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === 'worldboss' 
+                  ? 'bg-gradient-to-b from-purple-600 to-purple-800 border border-purple-500 shadow-md' 
+                  : 'bg-gradient-to-b from-purple-500 to-purple-700 hover:from-purple-400 hover:to-purple-600 border border-purple-400 shadow-sm hover:shadow-md'
               }`}
             >
-              World Boss
+              <GiDragonHead className="text-xs" /> World Boss
             </Link>
             
             {showWorldBossCompanion && (
@@ -176,14 +185,14 @@ export default function GameNavigation({
                 await signOut();
                 window.location.href = '/';
               }} 
-              className="rounded px-2 py-0.5 text-sm text-center text-white font-medium bg-blue-600 hover:bg-blue-500"
+              className="rounded px-2 py-0.5 text-sm text-center text-white font-medium bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 border border-blue-400 shadow-sm hover:shadow-md"
             >
               Logout
             </button>
           ) : (
             <Link 
               href="/login"
-              className="rounded px-2 py-0.5 text-sm text-center text-white font-medium bg-blue-600 hover:bg-blue-500"
+              className="rounded px-2 py-0.5 text-sm text-center text-white font-medium bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 border border-blue-400 shadow-sm hover:shadow-md"
             >
               Login
             </Link>
