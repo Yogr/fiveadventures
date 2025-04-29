@@ -5,7 +5,7 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Bugs
 ----------
-- Shop loads fake items? Item not found? Awards random items?
+
 
 
 Todo
@@ -17,7 +17,6 @@ Todo
   - World boss progress state should have 'finished' and 'claimed' or use the end date / day to determine which ones may have pending rewards.
 
 - Rebalance attacks and skills. Spells are too strong
-- Re-design the skill button UI so the name is at bottom and energy cost is top right
 - Add spell effects to combat
 - Play test and balance all 5 characters
 - Add artwork for the catacombs
@@ -29,8 +28,6 @@ Todo
   - Advanced stats
   - About
   - Help
-
-- Alert non-member users in several places about their character not saving. (Show create account suggestion)
 
 - Leaderboards
   - Daily Cron Job to calculate all character gear scores

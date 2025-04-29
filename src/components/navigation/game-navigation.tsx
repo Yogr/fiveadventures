@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { GiSwordman } from 'react-icons/gi';
-import { HiShoppingBag } from 'react-icons/hi';
+import { HiShoppingBag, HiExclamation } from 'react-icons/hi';
 import { GiDragonHead } from 'react-icons/gi';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -190,12 +190,26 @@ export default function GameNavigation({
               Logout
             </button>
           ) : (
-            <Link 
-              href="/login"
-              className="rounded px-2 py-0.5 text-sm text-center text-white font-medium bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 border border-blue-400 shadow-sm hover:shadow-md"
-            >
-              Login
-            </Link>
+            <div className="relative flex items-center">
+              <Link 
+                href="/login"
+                className="rounded px-2 py-0.5 text-sm text-center text-white font-medium bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 border border-blue-400 shadow-sm hover:shadow-md"
+              >
+                Login
+              </Link>
+              
+              {/* Warning bubble for unlinked characters with completed adventures */}
+              {!user && character.status === 'unlinked' && character.daily_adventure_count > 0 && (
+                <div className="absolute -top-1 -right-1 group">
+                  <div className="bg-amber-500 text-amber-950 rounded-full w-4 h-4 flex items-center justify-center">
+                    <HiExclamation size={12} />
+                  </div>
+                  <div className="absolute hidden group-hover:block right-0 top-5 w-48 p-2 bg-amber-100 border border-amber-500 text-amber-900 text-xs rounded shadow-lg z-50">
+                    Sign in to save your character's progress!
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
