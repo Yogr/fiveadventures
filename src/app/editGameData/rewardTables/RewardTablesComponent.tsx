@@ -97,9 +97,18 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
   };
   
   const handleAdd = () => {
-    // Add new reward table
+    // Find the next highest ID
+    let nextHighestId = 1;
+    for (let i = 0; i < rewardTables.length; i++) {
+      const table = rewardTables[i];
+      if (table && table.id >= nextHighestId) {
+        nextHighestId = table.id + 1;
+      }
+    }
+    
+    // Add new reward table with incremental ID
     const newTable: RewardTable = {
-      id: Date.now(), // Temporary ID
+      id: nextHighestId,
       name: 'New Reward Table',
       description: 'Description of new reward table',
       items: []
@@ -138,10 +147,19 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
     
     // Make sure we have access to the selected table
     const tableItems = selectedTable.items;
+
+    // Find the next highest ID for the item
+    let nextItemId = 1;
+    for (let i = 0; i < tableItems.length; i++) {
+      const item = tableItems[i];
+      if (item && item.id >= nextItemId) {
+        nextItemId = item.id + 1;
+      }
+    }
     
     // Create a new item with the first available item in the dropdown
     const newItem: RewardItem = {
-      id: Date.now(), // Temporary ID
+      id: nextItemId, // Use incremental ID
       item_id: items[0]?.id || 0, // Provide fallback values for type safety
       item_name: items[0]?.name || "Unknown Item",
       chance: 10

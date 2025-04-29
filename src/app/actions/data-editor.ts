@@ -355,120 +355,56 @@ export async function saveRewardTable(rewardTable: any) {
   await requireAdmin();
   
   const supabase = await createClient();
-  let result;
   
-  // Start a transaction to ensure all operations succeed or fail together
   try {
-    // Check if reward table has an id - if yes, update, if no, insert
-    if (rewardTable.id && typeof rewardTable.id === 'number' && rewardTable.id < 1000000) {
-      // Update existing reward table
-      result = await supabase
-        .from('reward_tables')
-        .update({
-          name: rewardTable.name,
-          description: rewardTable.description
-        })
-        .eq('id', rewardTable.id)
-        .select();
-        
-      // If we have items to update, handle them
-      if (rewardTable.items && Array.isArray(rewardTable.items)) {
-        // First, remove all existing items that aren't in the new list
-        const itemIds = rewardTable.items.map((item: any) => 
-          typeof item.id === 'number' && item.id < 1000000 ? item.id : null
-        ).filter(Boolean);
-        
-        // Delete items that are no longer present (if any existing IDs were provided)
-        if (itemIds.length > 0) {
-          await supabase
-            .from('reward_items')
-            .delete()
-            .eq('reward_table_id', rewardTable.id)
-            .not('id', 'in', `(${itemIds.join(',')})`);
-        } else {
-          // If no existing IDs were provided, delete all items for this table
-          await supabase
-            .from('reward_items')
-            .delete()
-            .eq('reward_table_id', rewardTable.id);
-        }
-        
-        // Now upsert all items
-        for (const item of rewardTable.items) {
-          if (item.id && typeof item.id === 'number' && item.id < 1000000) {
-            // Update existing item
-            await supabase
-              .from('reward_items')
-              .update({
-                item_id: item.item_id,
-                chance: item.chance
-              })
-              .eq('id', item.id)
-              .eq('reward_table_id', rewardTable.id);
-          } else {
-            // Get the next available ID for the new reward item
-            const { data: maxIdData } = await supabase
-              .from('reward_items')
-              .select('id')
-              .eq('reward_table_id', rewardTable.id)
-              .order('id', { ascending: false })
-              .limit(1);
-              
-            // Determine the next ID (default to 1 if no existing items)
-            const nextId = (maxIdData && maxIdData.length > 0 && maxIdData[0] && maxIdData[0].id) ? 
-              maxIdData[0].id + 1 : 1;
-            
-            // Insert new item
-            await supabase
-              .from('reward_items')
-              .insert({
-                id: nextId,
-                reward_table_id: rewardTable.id,
-                item_id: item.item_id,
-                chance: item.chance,
-                created_at: new Date().toISOString()
-              });
-          }
-        }
-      }
-    } else {
-      // Insert new reward table
-      result = await supabase
-        .from('reward_tables')
-        .insert({
-          name: rewardTable.name,
-          description: rewardTable.description,
+    // 1. Upsert the reward table record
+    const tableData = {
+      id: rewardTable.id,
+      name: rewardTable.name,
+      description: rewardTable.description,
+      created_at: rewardTable.created_at || new Date().toISOString()
+    };
+    
+    const { data: savedTable, error: tableError } = await supabase
+      .from('reward_tables')
+      .upsert(tableData, { onConflict: 'id' })
+      .select();
+    
+    if (tableError) {
+      throw tableError;
+    }
+    
+    const tableId = savedTable[0].id;
+    
+    // 2. Handle reward items if they exist
+    if (rewardTable.items && Array.isArray(rewardTable.items)) {
+      // Delete all existing items for this table
+      await supabase
+        .from('reward_items')
+        .delete()
+        .eq('reward_table_id', tableId);
+      
+      // If there are items to add, insert them with sequential IDs
+      if (rewardTable.items.length > 0) {
+        const itemsToInsert = rewardTable.items.map((item: any, index: number) => ({
+          id: index + 1, // Sequential IDs starting from 1
+          reward_table_id: tableId,
+          item_id: item.item_id,
+          chance: item.chance,
           created_at: new Date().toISOString()
-        })
-        .select();
+        }));
         
-      // If we have a successful insert and items to add
-      if (result.data && result.data.length > 0 && rewardTable.items && Array.isArray(rewardTable.items)) {
-        const newTableId = result.data[0].id;
+        const { error: itemsError } = await supabase
+          .from('reward_items')
+          .insert(itemsToInsert);
         
-        // Add all items to the new table
-        for (let i = 0; i < rewardTable.items.length; i++) {
-          const item = rewardTable.items[i];
-          await supabase
-            .from('reward_items')
-            .insert({
-              id: i + 1, // Start IDs at 1
-              reward_table_id: newTableId,
-              item_id: item.item_id,
-              chance: item.chance,
-              created_at: new Date().toISOString()
-            });
+        if (itemsError) {
+          throw itemsError;
         }
       }
     }
     
-    const { error, data } = result;
-    
-    if (error) {
-      throw error;
-    }
-    
-    return { success: true, data: data ? data[0] : null };
+    return { success: true, data: savedTable[0] };
   } catch (error: any) {
     console.error('Error saving reward table:', error);
     return { success: false, error: error.message };
