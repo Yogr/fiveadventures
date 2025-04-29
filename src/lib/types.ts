@@ -57,7 +57,6 @@ export type SkillEffect = {
 // Monster Types
 export type Monster = Database['public']['Tables']['monsters']['Row'] & {
   is_elite?: boolean;
-  base_monster_id?: number | null;
 };
 
 export type MonsterAbility = {

@@ -16,7 +16,6 @@ Elite encounters are special, more challenging versions of regular monsters that
 Elite monsters are stored in the `monsters` table with the following additional fields:
 
 - `is_elite`: Boolean flag indicating if the monster is an elite version
-- `base_monster_id`: Reference to the regular monster this elite version is based on
 
 ### Elite Monster Data
 
@@ -29,7 +28,7 @@ Elite monster data is stored in `data/elite-monsters.json`. Each elite monster h
 
 ### Code Changes
 
-1. **Database Schema**: Added `is_elite` and `base_monster_id` columns to the `monsters` table
+1. **Database Schema**: Added `is_elite` column to the `monsters` table
 2. **Type Definitions**: Updated Monster type to include the new fields
 3. **Adventure Logic**: Modified `getAdventure` and `completeAdventure` functions to use elite monsters for the 5th adventure
 4. **Combat Interface**: Updated to visually distinguish elite monsters
@@ -44,6 +43,4 @@ Elite monster data is stored in `data/elite-monsters.json`. Each elite monster h
 
 ## Technical Notes
 
-- Elite monster IDs start at 101 (regular monsters are 1-100)
-- Elite monsters have a reference to their base monster via `base_monster_id`
 - The combat interface checks for the `is_elite` flag to apply special styling

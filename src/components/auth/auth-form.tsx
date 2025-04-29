@@ -17,9 +17,12 @@ export default function AuthForm() {
     setSuccess(false)
 
     try {
+      const email = formData.get('email') as string
+      const password = formData.get('password') as string
+      
       const result = isSignUp 
-        ? await signUp(formData)
-        : await signIn(formData)
+        ? await signUp(email, password)
+        : await signIn(email, password)
 
       if (result.error) {
         setError(result.error)

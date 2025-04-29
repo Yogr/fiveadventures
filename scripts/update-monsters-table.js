@@ -19,20 +19,18 @@ async function updateMonstersTable() {
     // Check if the columns already exist
     const { data: columns, error: columnsError } = await supabase
       .from('monsters')
-      .select('is_elite, base_monster_id, rare_item_chance')
+      .select('is_elite, rare_item_chance')
       .limit(1);
     
     if (columnsError) {
       // If the columns don't exist, add them
-      console.log('Adding is_elite, base_monster_id, and rare_item_chance columns to monsters table...');
+      console.log('Adding is_elite column to monsters table...');
       
       // Use raw SQL to add the columns
       const { error: addColumnsError } = await supabase.rpc('exec', {
         query: `
           ALTER TABLE monsters 
-          ADD COLUMN IF NOT EXISTS is_elite BOOLEAN DEFAULT FALSE,
-          ADD COLUMN IF NOT EXISTS base_monster_id INTEGER,
-          ADD COLUMN IF NOT EXISTS rare_item_chance INTEGER;
+          ADD COLUMN IF NOT EXISTS is_elite BOOLEAN DEFAULT FALSE
         `
       });
       
@@ -42,29 +40,8 @@ async function updateMonstersTable() {
       }
       
       console.log('Columns added successfully.');
-    } else {
-      if (columns[0] && columns[0].rare_item_chance === undefined) {
-        console.log('Adding rare_item_chance column to monsters table...');
-        
-        // Add the rare_item_chance column if it doesn't exist
-        const { error: addColumnError } = await supabase.rpc('exec', {
-          query: `
-            ALTER TABLE monsters 
-            ADD COLUMN IF NOT EXISTS rare_item_chance INTEGER;
-          `
-        });
-        
-        if (addColumnError) {
-          console.error('Error adding rare_item_chance column:', addColumnError);
-          return;
-        }
-        
-        console.log('rare_item_chance column added successfully.');
-      } else {
-        console.log('All columns already exist.');
-      }
-    }
-    
+    } 
+
     console.log('Monsters table updated successfully.');
   } catch (error) {
     console.error('Error updating monsters table:', error);
