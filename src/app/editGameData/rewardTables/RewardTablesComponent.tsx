@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
-import { getRewardTables, getItems } from '@/app/actions/data-editor';
+import { getRewardTables, getItems, saveRewardTable, deleteRewardTable } from '@/app/actions/data-editor';
 
 // Define the RewardTable type based on database schema
 type RewardTable = {
@@ -61,8 +61,39 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
   const handleSave = async () => {
     if (!selectedTable) return;
     
-    // Need to implement a saveRewardTable function in data-editor.ts
-    alert('Saving reward table to database is not implemented yet.');
+    try {
+      // Show optimistic UI - you could add a loading state here
+      
+      const response = await saveRewardTable(selectedTable);
+      
+      if (response.success) {
+        // If reward table was newly created, update its ID from the database
+        if (typeof selectedTable.id !== 'number' || selectedTable.id > 1000000) {
+          const savedTable = response.data;
+          
+          // Update the reward tables list with the new data
+          setRewardTables(rewardTables.map(table => 
+            table.id === selectedTable.id ? savedTable : table
+          ));
+          
+          // Update selected table
+          setSelectedTable(savedTable);
+        } else {
+          // Simply refresh the reward tables list
+          const tablesResponse = await getRewardTables();
+          if (tablesResponse.success && tablesResponse.data) {
+            setRewardTables(tablesResponse.data);
+          }
+        }
+        
+        alert('Reward table saved successfully!');
+      } else {
+        alert(`Error saving reward table: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('Error in save operation:', error);
+      alert('An unexpected error occurred while saving');
+    }
   };
   
   const handleAdd = () => {
@@ -78,10 +109,25 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
     setSelectedTable(newTable);
   };
   
-  const handleDelete = (id: string | number) => {
-    // Need to implement a deleteRewardTable function in data-editor.ts
-    // For now, just update the UI
-    setRewardTables(rewardTables.filter(rt => rt.id !== id));
+  const handleDelete = async (id: string | number) => {
+    // Only handle numeric IDs - don't try to delete temporary items from DB
+    if (typeof id === 'number' && id < 1000000) {
+      try {
+        const response = await deleteRewardTable(id);
+        
+        if (!response.success) {
+          alert(`Error deleting reward table: ${response.error}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Error deleting reward table:', error);
+        alert('An unexpected error occurred while deleting');
+        return;
+      }
+    }
+    
+    // Update UI
+    setRewardTables(rewardTables.filter(table => table.id !== id));
     if (selectedTable && selectedTable.id === id) {
       setSelectedTable(null);
     }

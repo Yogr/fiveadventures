@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
-import { getSkills } from '@/app/actions/data-editor';
+import { getSkills, saveSkill, deleteSkill } from '@/app/actions/data-editor';
 import Image from 'next/image';
 
 // Define the Skill type based on database schema
@@ -49,8 +49,39 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
   const handleSave = async () => {
     if (!selectedSkill) return;
     
-    // Need to implement a saveSkill function in data-editor.ts
-    alert('Saving skill to database is not implemented yet.');
+    try {
+      // Show optimistic UI - you could add a loading state here
+      
+      const response = await saveSkill(selectedSkill);
+      
+      if (response.success) {
+        // If skill was newly created, update its ID from the database
+        if (typeof selectedSkill.id !== 'number' || selectedSkill.id > 1000000) {
+          const savedSkill = response.data;
+          
+          // Update the skills list with the new skill data
+          setSkills(skills.map(skill => 
+            skill.id === selectedSkill.id ? savedSkill : skill
+          ));
+          
+          // Update selected skill
+          setSelectedSkill(savedSkill);
+        } else {
+          // Simply refresh the skills list
+          const skillsResponse = await getSkills();
+          if (skillsResponse.success && skillsResponse.data) {
+            setSkills(skillsResponse.data);
+          }
+        }
+        
+        alert('Skill saved successfully!');
+      } else {
+        alert(`Error saving skill: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('Error in save operation:', error);
+      alert('An unexpected error occurred while saving');
+    }
   };
   
   const handleAdd = () => {
@@ -73,10 +104,25 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
     setSelectedSkill(newSkill);
   };
   
-  const handleDelete = (id: string | number) => {
-    // Need to implement a deleteSkill function in data-editor.ts
-    // For now, just update the UI
-    setSkills(skills.filter(s => s.id !== id));
+  const handleDelete = async (id: string | number) => {
+    // Only handle numeric IDs - don't try to delete temporary items from DB
+    if (typeof id === 'number' && id < 1000000) {
+      try {
+        const response = await deleteSkill(id);
+        
+        if (!response.success) {
+          alert(`Error deleting skill: ${response.error}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Error deleting skill:', error);
+        alert('An unexpected error occurred while deleting');
+        return;
+      }
+    }
+    
+    // Update UI
+    setSkills(skills.filter(skill => skill.id !== id));
     if (selectedSkill && selectedSkill.id === id) {
       setSelectedSkill(null);
     }

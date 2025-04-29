@@ -12,7 +12,7 @@ type ListComponentProps = {
   items: Item[];
   onSelect: (item: Item) => void;
   onAdd?: () => void;
-  onDelete?: (id: number | string) => void;
+  onDelete?: (id: number) => void;
   selectedId?: number | string | null;
   isReadOnly: boolean;
 };
@@ -55,12 +55,12 @@ export default function ListComponent({
                   }`}
                   onClick={() => onSelect(item)}
                 >
-                  {item.name}
+                  {item.id} - {item.name}
                 </button>
                 
                 {!isReadOnly && onDelete && selectedId === item.id && (
                   <button
-                    onClick={() => onDelete(item.id)}
+                    onClick={() => onDelete(Number(item.id))}
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-400 hover:text-red-300 transition-colors"
                     aria-label={`Delete ${item.name}`}
                   >

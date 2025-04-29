@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
-import { getWorldBosses, getRewardTables } from '@/app/actions/data-editor';
+import { getWorldBosses, getRewardTables, saveWorldBoss, deleteWorldBoss } from '@/app/actions/data-editor';
 import Image from 'next/image';
 
 // Define the WorldBoss type based on database schema
@@ -63,8 +63,39 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
   const handleSave = async () => {
     if (!selectedBoss) return;
     
-    // Need to implement a saveWorldBoss function in data-editor.ts
-    alert('Saving world boss to database is not implemented yet.');
+    try {
+      // Show optimistic UI - you could add a loading state here
+      
+      const response = await saveWorldBoss(selectedBoss);
+      
+      if (response.success) {
+        // If world boss was newly created, update its ID from the database
+        if (typeof selectedBoss.id !== 'number' || selectedBoss.id > 1000000) {
+          const savedBoss = response.data;
+          
+          // Update the world bosses list with the new data
+          setWorldBosses(worldBosses.map(boss => 
+            boss.id === selectedBoss.id ? savedBoss : boss
+          ));
+          
+          // Update selected boss
+          setSelectedBoss(savedBoss);
+        } else {
+          // Simply refresh the world bosses list
+          const bossesResponse = await getWorldBosses();
+          if (bossesResponse.success && bossesResponse.data) {
+            setWorldBosses(bossesResponse.data);
+          }
+        }
+        
+        alert('World boss saved successfully!');
+      } else {
+        alert(`Error saving world boss: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('Error in save operation:', error);
+      alert('An unexpected error occurred while saving');
+    }
   };
   
   const handleAdd = () => {
@@ -88,9 +119,24 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
     setSelectedBoss(newBoss);
   };
   
-  const handleDelete = (id: string | number) => {
-    // Need to implement a deleteWorldBoss function in data-editor.ts
-    // For now, just update the UI
+  const handleDelete = async (id: string | number) => {
+    // Only handle numeric IDs - don't try to delete temporary items from DB
+    if (typeof id === 'number' && id < 1000000) {
+      try {
+        const response = await deleteWorldBoss(id);
+        
+        if (!response.success) {
+          alert(`Error deleting world boss: ${response.error}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Error deleting world boss:', error);
+        alert('An unexpected error occurred while deleting');
+        return;
+      }
+    }
+    
+    // Update UI
     setWorldBosses(worldBosses.filter(boss => boss.id !== id));
     if (selectedBoss && selectedBoss.id === id) {
       setSelectedBoss(null);

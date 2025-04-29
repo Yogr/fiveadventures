@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
-import { getAdventures } from '@/app/actions/data-editor';
+import { getAdventures, saveAdventure, deleteAdventure, getAreas } from '@/app/actions/data-editor';
 import Image from 'next/image';
 
 // Define the Adventure type based on database schema
@@ -47,8 +47,39 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
   const handleSave = async () => {
     if (!selectedAdventure) return;
     
-    // Need to implement a saveAdventure function in data-editor.ts
-    alert('Saving adventure to database is not implemented yet.');
+    try {
+      // Show optimistic UI - you could add a loading state here
+      
+      const response = await saveAdventure(selectedAdventure);
+      
+      if (response.success) {
+        // If adventure was newly created, update its ID from the database
+        if (typeof selectedAdventure.id !== 'number' || selectedAdventure.id > 1000000) {
+          const savedAdventure = response.data;
+          
+          // Update the adventures list with the new data
+          setAdventures(adventures.map(adventure => 
+            adventure.id === selectedAdventure.id ? savedAdventure : adventure
+          ));
+          
+          // Update selected adventure
+          setSelectedAdventure(savedAdventure);
+        } else {
+          // Simply refresh the adventures list
+          const adventuresResponse = await getAdventures();
+          if (adventuresResponse.success && adventuresResponse.data) {
+            setAdventures(adventuresResponse.data);
+          }
+        }
+        
+        alert('Adventure saved successfully!');
+      } else {
+        alert(`Error saving adventure: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('Error in save operation:', error);
+      alert('An unexpected error occurred while saving');
+    }
   };
   
   const handleAdd = () => {
@@ -69,10 +100,25 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
     setSelectedAdventure(newAdventure);
   };
   
-  const handleDelete = (id: string | number) => {
-    // Need to implement a deleteAdventure function in data-editor.ts
-    // For now, just update the UI
-    setAdventures(adventures.filter(a => a.id !== id));
+  const handleDelete = async (id: string | number) => {
+    // Only handle numeric IDs - don't try to delete temporary items from DB
+    if (typeof id === 'number' && id < 1000000) {
+      try {
+        const response = await deleteAdventure(id);
+        
+        if (!response.success) {
+          alert(`Error deleting adventure: ${response.error}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Error deleting adventure:', error);
+        alert('An unexpected error occurred while deleting');
+        return;
+      }
+    }
+    
+    // Update UI
+    setAdventures(adventures.filter(adventure => adventure.id !== id));
     if (selectedAdventure && selectedAdventure.id === id) {
       setSelectedAdventure(null);
     }

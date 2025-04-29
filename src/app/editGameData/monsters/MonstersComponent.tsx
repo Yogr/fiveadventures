@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
-import { getMonsters } from '@/app/actions/data-editor';
+import { getMonsters, saveMonster, deleteMonster } from '@/app/actions/data-editor';
 import Image from 'next/image';
 
 // Define the Monster type based on database schema
@@ -22,7 +22,7 @@ type Monster = {
   image_url: string | null;
   is_elite?: boolean;
   scale?: number | null;
-  reward_table?: number | null;
+  reward_table_id?: number | null;
   is_boss?: boolean;
   rare_item_chance?: number | null;
 };
@@ -55,40 +55,92 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
   const handleSave = async () => {
     if (!selectedMonster) return;
     
-    // Need to implement a saveMonster function in data-editor.ts
-    alert('Saving monster to database is not implemented yet.');
+    try {
+      // Show optimistic UI - you could add a loading state here
+      
+      const response = await saveMonster(selectedMonster);
+      
+      if (response.success) {
+        // If monster was newly created, update its ID from the database
+        if (typeof selectedMonster.id !== 'number' || selectedMonster.id > 1000000) {
+          const savedMonster = response.data;
+          
+          // Update the monsters list with the new monster data
+          setMonsters(monsters.map(monster => 
+            monster.id === selectedMonster.id ? savedMonster : monster
+          ));
+          
+          // Update selected monster
+          setSelectedMonster(savedMonster);
+        } else {
+          // Simply refresh the monsters list
+          const monstersResponse = await getMonsters();
+          if (monstersResponse.success && monstersResponse.data) {
+            setMonsters(monstersResponse.data);
+          }
+        }
+        
+        alert('Monster saved successfully!');
+      } else {
+        alert(`Error saving monster: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('Error in save operation:', error);
+      alert('An unexpected error occurred while saving');
+    }
   };
   
   const handleAdd = () => {
     // Add new monster
+    let nextHighestId = -1;
+    for (let i = 0; i < monsters.length; i++) {
+      const monster = monsters[i];
+      if (monster && monster.id >= nextHighestId) {
+        nextHighestId = monster.id + 1;
+      }
+    }
+
     const newMonster: Monster = {
-      id: Date.now(), // Temporary ID
+      id: nextHighestId,
       name: 'New Monster',
       description: 'Description of new monster',
-      hitpoints: 10,
-      attack: 3,
-      defense: 1,
-      experience_reward: 5,
-      gold_reward: 3,
+      hitpoints: 100,
+      attack: 10,
+      defense: 5,
+      experience_reward: 50,
+      gold_reward: 20,
       difficulty: 1,
-      attack_type: 'physical',
+      attack_type: 'Physical',
       abilities: {},
       image_url: null,
       is_elite: false,
-      scale: 1.0,
-      reward_table: null,
+      reward_table_id: null,
       is_boss: false,
-      rare_item_chance: 5
+      rare_item_chance: 5,
+      scale: 1.0
     };
     
     setMonsters([...monsters, newMonster]);
     setSelectedMonster(newMonster);
   };
   
-  const handleDelete = (id: string | number) => {
-    // Need to implement a deleteMonster function in data-editor.ts
-    // For now, just update the UI
-    setMonsters(monsters.filter(m => m.id !== id));
+  const handleDelete = async (id: number) => {
+    // Only handle numeric IDs - don't try to delete temporary items from DB
+    try {
+      const response = await deleteMonster(id);
+      
+      if (!response.success) {
+        alert(`Error deleting monster: ${response.error}`);
+        return;
+      }
+    } catch (error) {
+      console.error('Error deleting monster:', error);
+      alert('An unexpected error occurred while deleting');
+      return;
+    }
+
+    // Update UI
+    setMonsters(monsters.filter(monster => monster.id !== id));
     if (selectedMonster && selectedMonster.id === id) {
       setSelectedMonster(null);
     }
@@ -278,10 +330,10 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                   <label className="block text-sm font-medium mb-1">Reward Table ID</label>
                   <input
                     type="number"
-                    value={selectedMonster.reward_table || ''}
+                    value={selectedMonster.reward_table_id || ''}
                     onChange={(e) => setSelectedMonster({
                       ...selectedMonster,
-                      reward_table: e.target.value ? parseInt(e.target.value) : null
+                      reward_table_id: e.target.value ? parseInt(e.target.value) : null
                     })}
                     className="admin-input"
                     disabled={!isAdmin}

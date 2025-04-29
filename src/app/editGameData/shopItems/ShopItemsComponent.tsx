@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
-import { getShopItems, getItems, getAreas } from '@/app/actions/data-editor';
+import { getShopItems, getItems, getAreas, saveShopItem, deleteShopItem } from '@/app/actions/data-editor';
 
 // Define the ShopItem type based on database schema
 type ShopItem = {
@@ -73,8 +73,39 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
   const handleSave = async () => {
     if (!selectedItem) return;
     
-    // Need to implement a saveShopItem function in data-editor.ts
-    alert('Saving shop item to database is not implemented yet.');
+    try {
+      // Show optimistic UI - you could add a loading state here
+      
+      const response = await saveShopItem(selectedItem);
+      
+      if (response.success) {
+        // If shop item was newly created, update its ID from the database
+        if (typeof selectedItem.id !== 'number' || selectedItem.id > 1000000) {
+          const savedItem = response.data;
+          
+          // Update the shop items list with the new data
+          setShopItems(shopItems.map(item => 
+            item.id === selectedItem.id ? savedItem : item
+          ));
+          
+          // Update selected item
+          setSelectedItem(savedItem);
+        } else {
+          // Simply refresh the shop items list
+          const shopItemsResponse = await getShopItems();
+          if (shopItemsResponse.success && shopItemsResponse.data) {
+            setShopItems(shopItemsResponse.data);
+          }
+        }
+        
+        alert('Shop item saved successfully!');
+      } else {
+        alert(`Error saving shop item: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('Error in save operation:', error);
+      alert('An unexpected error occurred while saving');
+    }
   };
   
   const handleAdd = () => {
@@ -100,9 +131,24 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
     setSelectedItem(newItem);
   };
   
-  const handleDelete = (id: string | number) => {
-    // Need to implement a deleteShopItem function in data-editor.ts
-    // For now, just update the UI
+  const handleDelete = async (id: string | number) => {
+    // Only handle numeric IDs - don't try to delete temporary items from DB
+    if (typeof id === 'number' && id < 1000000) {
+      try {
+        const response = await deleteShopItem(id);
+        
+        if (!response.success) {
+          alert(`Error deleting shop item: ${response.error}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Error deleting shop item:', error);
+        alert('An unexpected error occurred while deleting');
+        return;
+      }
+    }
+    
+    // Update UI
     setShopItems(shopItems.filter(item => item.id !== id));
     if (selectedItem && selectedItem.id === id) {
       setSelectedItem(null);

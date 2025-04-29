@@ -54,23 +54,10 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
       const response = await saveItem(selectedItem);
       
       if (response.success) {
-        // If item was newly created, update its ID from the database
-        if (typeof selectedItem.id !== 'number' || selectedItem.id > 1000000000) {
-          const savedItem = response.data;
-          
-          // Update the items list with the new item data
-          setItems(items.map(item => 
-            item.id === selectedItem.id ? savedItem : item
-          ));
-          
-          // Update selected item
-          setSelectedItem(savedItem);
-        } else {
-          // Simply refresh the items list
-          const itemsResponse = await getItems();
-          if (itemsResponse.success && itemsResponse.data) {
-            setItems(itemsResponse.data);
-          }
+        // Simply refresh the items list
+        const itemsResponse = await getItems();
+        if (itemsResponse.success && itemsResponse.data) {
+          setItems(itemsResponse.data);
         }
         
         alert('Item saved successfully!');
@@ -84,10 +71,17 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   const handleAdd = () => {
-    // Add new item with a temporary ID
-    const tempId = Date.now(); // This will be replaced with DB ID on save
+    
+    let nextHighestId = -1;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item && item.id >= nextHighestId) {
+        nextHighestId = item.id + 1;
+      }
+    }
+
     const newItem: Item = {
-      id: tempId,
+      id: nextHighestId,
       name: 'New Item',
       type: 'Weapon',
       rarity: 'Common',
@@ -155,18 +149,33 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
             <h2 className="text-xl font-bold">{selectedItem.name}</h2>
             
             <div className="space-y-2">
-              <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
-                <input
-                  type="text"
-                  value={selectedItem.name}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem,
-                    name: e.target.value
-                  })}
-                  className="admin-input w-full"
-                  disabled={!isAdmin}
-                />
+              <div className=" grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Name</label>
+                  <input
+                    type="text"
+                    value={selectedItem.name}
+                    onChange={(e) => setSelectedItem({
+                      ...selectedItem,
+                      name: e.target.value
+                    })}
+                    className="admin-input w-full"
+                    disabled={!isAdmin}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">ID</label>
+                  <input
+                    type="text"
+                    value={selectedItem.id}
+                    onChange={(e) => setSelectedItem({
+                      ...selectedItem,
+                      id: Number(e.target.value)
+                    })}
+                    className="admin-input w-full"
+                    disabled={!isAdmin}
+                  />
+                </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">

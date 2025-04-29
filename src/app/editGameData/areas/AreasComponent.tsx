@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
-import { getAreas } from '@/app/actions/data-editor';
+import { getAreas, saveArea, deleteArea } from '@/app/actions/data-editor';
 import Image from 'next/image';
 
 // Define the Area type based on database schema
@@ -43,8 +43,39 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
   const handleSave = async () => {
     if (!selectedArea) return;
     
-    // Need to implement a saveArea function in data-editor.ts
-    alert('Saving area to database is not implemented yet.');
+    try {
+      // Show optimistic UI - you could add a loading state here
+      
+      const response = await saveArea(selectedArea);
+      
+      if (response.success) {
+        // If area was newly created, update its ID from the database
+        if (typeof selectedArea.id !== 'number' || selectedArea.id > 1000000) {
+          const savedArea = response.data;
+          
+          // Update the areas list with the new area data
+          setAreas(areas.map(area => 
+            area.id === selectedArea.id ? savedArea : area
+          ));
+          
+          // Update selected area
+          setSelectedArea(savedArea);
+        } else {
+          // Simply refresh the areas list
+          const areasResponse = await getAreas();
+          if (areasResponse.success && areasResponse.data) {
+            setAreas(areasResponse.data);
+          }
+        }
+        
+        alert('Area saved successfully!');
+      } else {
+        alert(`Error saving area: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('Error in save operation:', error);
+      alert('An unexpected error occurred while saving');
+    }
   };
   
   const handleAdd = () => {
@@ -61,10 +92,25 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
     setSelectedArea(newArea);
   };
   
-  const handleDelete = (id: string | number) => {
-    // Need to implement a deleteArea function in data-editor.ts
-    // For now, just update the UI
-    setAreas(areas.filter(a => a.id !== id));
+  const handleDelete = async (id: string | number) => {
+    // Only handle numeric IDs - don't try to delete temporary items from DB
+    if (typeof id === 'number' && id < 1000000) {
+      try {
+        const response = await deleteArea(id);
+        
+        if (!response.success) {
+          alert(`Error deleting area: ${response.error}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Error deleting area:', error);
+        alert('An unexpected error occurred while deleting');
+        return;
+      }
+    }
+    
+    // Update UI
+    setAreas(areas.filter(area => area.id !== id));
     if (selectedArea && selectedArea.id === id) {
       setSelectedArea(null);
     }
