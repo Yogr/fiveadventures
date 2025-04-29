@@ -69,6 +69,28 @@ export async function middleware(request: NextRequest) {
   // We don't need to redirect users since we allow unauthenticated play
   // But we'll keep the middleware for session refreshing and cookie handling
 
+  // Check if user is trying to access the data editor but doesn't have admin privileges
+  if (request.nextUrl.pathname.startsWith('/editGameData')) {
+    if (!user) {
+      // If not logged in, redirect to login page
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    // Check if the user has admin status
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('status')
+      .eq('id', user.id)
+      .single()
+
+    if (error || !userData || userData.status !== 'admin') {
+      // If not an admin, redirect to homepage
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  }
+
   return response
 }
 

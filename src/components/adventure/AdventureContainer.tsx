@@ -19,8 +19,6 @@ import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 const AdventureContainerInner = memo(function AdventureContainerInner() {
   const {
     state,
-    dispatch,
-    loadCharacterData,
     loadAreaData,
     handleCombatEnd
   } = useAdventure();
@@ -184,7 +182,6 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
     <AdventureView 
       adventure={adventure}
       character={character}
-      area={selectedArea}
     />
   );
 });

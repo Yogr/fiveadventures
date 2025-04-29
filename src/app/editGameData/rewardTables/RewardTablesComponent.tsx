@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
+import { getRewardTables, getItems } from '@/app/actions/data-editor';
 
 // Define the RewardTable type based on database schema
 type RewardTable = {
@@ -26,46 +27,42 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
   const [items, setItems] = useState<{ id: number; name: string }[]>([]); // All available items
   
   useEffect(() => {
-    // Placeholder for fetching reward tables data
-    // This would be replaced with actual API call in future steps
-    setIsLoading(false);
-    
-    // Fake items data for dropdown
-    setItems([
-      { id: 1, name: 'Iron Sword' },
-      { id: 2, name: 'Leather Armor' },
-      { id: 3, name: 'Health Potion' },
-      { id: 4, name: 'Fire Amulet' },
-      { id: 5, name: 'Magic Staff' }
-    ]);
-    
-    setRewardTables([
-      {
-        id: 1,
-        name: 'Forest Loot',
-        description: 'Common items found in the enchanted forest.',
-        items: [
-          { id: 1, item_id: 1, item_name: 'Iron Sword', chance: 20 },
-          { id: 2, item_id: 2, item_name: 'Leather Armor', chance: 30 },
-          { id: 3, item_id: 3, item_name: 'Health Potion', chance: 50 }
-        ]
-      },
-      {
-        id: 2,
-        name: 'Rare Magic Items',
-        description: 'Rare magical items found in special locations.',
-        items: [
-          { id: 1, item_id: 4, item_name: 'Fire Amulet', chance: 40 },
-          { id: 2, item_id: 5, item_name: 'Magic Staff', chance: 60 }
-        ]
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        // Load reward tables
+        const tablesResponse = await getRewardTables();
+        if (tablesResponse.success && tablesResponse.data) {
+          setRewardTables(tablesResponse.data);
+        } else {
+          console.error('Failed to load reward tables:', tablesResponse.error);
+        }
+        
+        // Load items for dropdown
+        const itemsResponse = await getItems();
+        if (itemsResponse.success && itemsResponse.data) {
+          setItems(itemsResponse.data.map(item => ({
+            id: item.id,
+            name: item.name
+          })));
+        } else {
+          console.error('Failed to load items:', itemsResponse.error);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setIsLoading(false);
       }
-    ]);
+    }
+    
+    loadData();
   }, []);
   
   const handleSave = async () => {
-    // Save changes - would be implemented in future steps
-    console.log('Saving changes to reward table:', selectedTable);
-    alert('Changes saved successfully!');
+    if (!selectedTable) return;
+    
+    // Need to implement a saveRewardTable function in data-editor.ts
+    alert('Saving reward table to database is not implemented yet.');
   };
   
   const handleAdd = () => {
@@ -82,7 +79,8 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
   };
   
   const handleDelete = (id: string | number) => {
-    // Delete reward table
+    // Need to implement a deleteRewardTable function in data-editor.ts
+    // For now, just update the UI
     setRewardTables(rewardTables.filter(rt => rt.id !== id));
     if (selectedTable && selectedTable.id === id) {
       setSelectedTable(null);
@@ -90,16 +88,16 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
   };
   
   const handleAddItem = () => {
-    if (!selectedTable || !items.length) return;
+    if (!selectedTable || items.length === 0) return;
     
-    // Extract values to help TypeScript know they're defined
-    const { id, items: tableItems } = selectedTable;
+    // Make sure we have access to the selected table
+    const tableItems = selectedTable.items;
     
-    // Use the first available item as default
+    // Create a new item with the first available item in the dropdown
     const newItem: RewardItem = {
       id: Date.now(), // Temporary ID
-      item_id: items[0].id,
-      item_name: items[0].name,
+      item_id: items[0]?.id || 0, // Provide fallback values for type safety
+      item_name: items[0]?.name || "Unknown Item",
       chance: 10
     };
     
@@ -170,7 +168,7 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
   };
   
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-amber-100">Loading reward tables from database...</div>;
   }
   
   // Map reward tables to match the Item interface expected by ListComponent
@@ -185,13 +183,13 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
       <ListComponent
         items={tableItems}
         onSelect={(item) => setSelectedTable(item.table as RewardTable)}
-        onAdd={handleAdd}
-        onDelete={handleDelete}
+        onAdd={isAdmin ? handleAdd : undefined}
+        onDelete={isAdmin ? handleDelete : undefined}
         selectedId={selectedTable?.id}
         isReadOnly={!isAdmin}
       />
       
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 text-amber-100">
         {selectedTable ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">{selectedTable.name}</h2>
@@ -206,7 +204,7 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
                     ...selectedTable,
                     name: e.target.value
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input"
                   disabled={!isAdmin}
                 />
               </div>
@@ -219,7 +217,7 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
                     ...selectedTable,
                     description: e.target.value
                   })}
-                  className="w-full p-2 border rounded h-24"
+                  className="admin-textarea"
                   disabled={!isAdmin}
                 />
               </div>
@@ -230,28 +228,28 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
                   {isAdmin && (
                     <button
                       onClick={handleAddItem}
-                      className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                      className="px-2 py-1 bg-amber-600 text-amber-100 rounded hover:bg-amber-700 text-sm"
                     >
                       Add Item
                     </button>
                   )}
                 </div>
                 
-                <div className="border rounded overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                <div className="border border-amber-700 rounded overflow-hidden">
+                  <table className="min-w-full divide-y divide-amber-800">
+                    <thead className="bg-amber-800">
                       <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chance (%)</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-amber-200 uppercase tracking-wider">Item</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-amber-200 uppercase tracking-wider">Chance (%)</th>
                         {isAdmin && (
-                          <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-amber-200 uppercase tracking-wider">Actions</th>
                         )}
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-amber-900/60 divide-y divide-amber-800">
                       {selectedTable.items.length === 0 ? (
                         <tr>
-                          <td colSpan={isAdmin ? 3 : 2} className="px-6 py-4 text-center text-sm text-gray-500">
+                          <td colSpan={isAdmin ? 3 : 2} className="px-6 py-4 text-center text-sm text-amber-300">
                             No items in this reward table.
                           </td>
                         </tr>
@@ -263,14 +261,14 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
                                 <select
                                   value={item.item_id}
                                   onChange={(e) => handleItemChange(item.id, 'item_id', parseInt(e.target.value))}
-                                  className="p-1 border rounded w-full"
+                                  className="admin-input w-full"
                                 >
                                   {items.map((i) => (
                                     <option key={i.id} value={i.id}>{i.name}</option>
                                   ))}
                                 </select>
                               ) : (
-                                <span className="text-sm">{item.item_name}</span>
+                                <span className="text-sm text-amber-200">{item.item_name}</span>
                               )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -281,17 +279,17 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
                                   max="100"
                                   value={item.chance}
                                   onChange={(e) => handleItemChange(item.id, 'chance', parseInt(e.target.value) || 0)}
-                                  className="p-1 border rounded w-24"
+                                  className="admin-input w-24"
                                 />
                               ) : (
-                                <span className="text-sm">{item.chance}%</span>
+                                <span className="text-sm text-amber-200">{item.chance}%</span>
                               )}
                             </td>
                             {isAdmin && (
                               <td className="px-6 py-4 whitespace-nowrap text-right">
                                 <button
                                   onClick={() => handleRemoveItem(item.id)}
-                                  className="text-red-600 hover:text-red-800"
+                                  className="text-red-400 hover:text-red-300"
                                 >
                                   Remove
                                 </button>
@@ -305,10 +303,10 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
                 </div>
                 
                 {selectedTable.items.length > 0 && (
-                  <div className="mt-2 text-sm text-gray-500">
+                  <div className="mt-2 text-sm text-amber-300">
                     Total chance: {selectedTable.items.reduce((sum, item) => sum + item.chance, 0)}%
                     {selectedTable.items.reduce((sum, item) => sum + item.chance, 0) !== 100 && isAdmin && (
-                      <span className="ml-2 text-red-500">
+                      <span className="ml-2 text-red-400">
                         (Warning: Total should be 100%)
                       </span>
                     )}
@@ -330,7 +328,7 @@ export default function RewardTablesComponent({ isAdmin }: { isAdmin: boolean })
             )}
           </div>
         ) : (
-          <div className="text-gray-500">Select a reward table from the list {isAdmin ? 'or add a new one' : ''}</div>
+          <div className="text-amber-300">Select a reward table from the list {isAdmin ? 'or add a new one' : ''}</div>
         )}
       </div>
     </div>

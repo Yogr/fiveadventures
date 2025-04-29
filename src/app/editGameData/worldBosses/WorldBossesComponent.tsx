@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
+import { getWorldBosses, getRewardTables } from '@/app/actions/data-editor';
+import Image from 'next/image';
 
 // Define the WorldBoss type based on database schema
 type WorldBoss = {
@@ -27,76 +29,42 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
   const [rewardTables, setRewardTables] = useState<{ id: number; name: string }[]>([]); // Available reward tables
   
   useEffect(() => {
-    // Placeholder for fetching world bosses data
-    // This would be replaced with actual API call in future steps
-    setIsLoading(false);
-    
-    // Fake reward tables data for dropdown
-    setRewardTables([
-      { id: 1, name: 'Common Boss Loot' },
-      { id: 2, name: 'Rare Boss Loot' },
-      { id: 3, name: 'Legendary Boss Loot' }
-    ]);
-    
-    setWorldBosses([
-      {
-        id: 1,
-        name: 'Ancient Dragon',
-        description: 'A massive dragon that has lived for centuries in the mountains.',
-        hitpoints: 1000,
-        attack: 50,
-        defense: 30,
-        image_url: '/image/boss/ancient_dragon.png',
-        abilities: {
-          fire_breath: { damage: 75, cooldown: 3 },
-          tail_swipe: { damage: 40, cooldown: 1 }
-        },
-        reward_table_id: 3,
-        respawn_time: 86400, // 24 hours in seconds
-        active: true,
-        scale: 2.0
-      },
-      {
-        id: 2,
-        name: 'Forest Guardian',
-        description: 'An ancient spirit that protects the enchanted forest.',
-        hitpoints: 800,
-        attack: 40,
-        defense: 35,
-        image_url: '/image/boss/forest_guardian.png',
-        abilities: {
-          root: { effect: 'stun', duration: 2, cooldown: 4 },
-          nature_fury: { damage: 60, cooldown: 2 }
-        },
-        reward_table_id: 2,
-        respawn_time: 43200, // 12 hours in seconds
-        active: true,
-        scale: 1.8
-      },
-      {
-        id: 3,
-        name: 'Shadow Demon',
-        description: 'A terrifying demon from the shadow realm.',
-        hitpoints: 1200,
-        attack: 60,
-        defense: 25,
-        image_url: '/image/boss/shadow_demon.png',
-        abilities: {
-          shadow_bolt: { damage: 80, cooldown: 2 },
-          fear: { effect: 'flee', duration: 3, cooldown: 5 }
-        },
-        reward_table_id: 3,
-        respawn_time: 86400, // 24 hours in seconds
-        active: false,
-        scale: 2.2
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        // Load world bosses from database
+        const bossesResponse = await getWorldBosses();
+        if (bossesResponse.success && bossesResponse.data) {
+          setWorldBosses(bossesResponse.data);
+        } else {
+          console.error('Failed to load world bosses:', bossesResponse.error);
+        }
+        
+        // Load reward tables for dropdown
+        const rewardTablesResponse = await getRewardTables();
+        if (rewardTablesResponse.success && rewardTablesResponse.data) {
+          setRewardTables(rewardTablesResponse.data.map(table => ({
+            id: table.id,
+            name: table.name
+          })));
+        } else {
+          console.error('Failed to load reward tables:', rewardTablesResponse.error);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setIsLoading(false);
       }
-    ]);
+    }
+    
+    loadData();
   }, []);
   
   const handleSave = async () => {
-    // Save changes - would be implemented in future steps
-    console.log('Saving changes to world boss:', selectedBoss);
-    alert('Changes saved successfully!');
+    if (!selectedBoss) return;
+    
+    // Need to implement a saveWorldBoss function in data-editor.ts
+    alert('Saving world boss to database is not implemented yet.');
   };
   
   const handleAdd = () => {
@@ -121,7 +89,8 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
   };
   
   const handleDelete = (id: string | number) => {
-    // Delete world boss
+    // Need to implement a deleteWorldBoss function in data-editor.ts
+    // For now, just update the UI
     setWorldBosses(worldBosses.filter(boss => boss.id !== id));
     if (selectedBoss && selectedBoss.id === id) {
       setSelectedBoss(null);
@@ -143,7 +112,7 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
   };
   
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-amber-100">Loading world bosses from database...</div>;
   }
   
   // Map world bosses to match the Item interface expected by ListComponent
@@ -158,13 +127,13 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
       <ListComponent
         items={bossItems}
         onSelect={(item) => setSelectedBoss(item.boss as WorldBoss)}
-        onAdd={handleAdd}
-        onDelete={handleDelete}
+        onAdd={isAdmin ? handleAdd : undefined}
+        onDelete={isAdmin ? handleDelete : undefined}
         selectedId={selectedBoss?.id}
         isReadOnly={!isAdmin}
       />
       
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 text-amber-100">
         {selectedBoss ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">{selectedBoss.name}</h2>
@@ -176,7 +145,7 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
                   type="text"
                   value={selectedBoss.name}
                   onChange={(e) => handleChange('name', e.target.value)}
-                  className="w-full p-2 border rounded"
+                  className="admin-input w-full"
                   disabled={!isAdmin}
                 />
               </div>
@@ -186,7 +155,7 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
                 <textarea
                   value={selectedBoss.description}
                   onChange={(e) => handleChange('description', e.target.value)}
-                  className="w-full p-2 border rounded h-24"
+                  className="admin-textarea"
                   disabled={!isAdmin}
                 />
               </div>
@@ -199,7 +168,7 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
                     min="1"
                     value={selectedBoss.hitpoints}
                     onChange={(e) => handleChange('hitpoints', parseInt(e.target.value) || 1)}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -211,7 +180,7 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
                     min="1"
                     value={selectedBoss.attack}
                     onChange={(e) => handleChange('attack', parseInt(e.target.value) || 1)}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -223,7 +192,7 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
                     min="0"
                     value={selectedBoss.defense}
                     onChange={(e) => handleChange('defense', parseInt(e.target.value) || 0)}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -238,7 +207,7 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
                     min="0.1"
                     value={selectedBoss.scale}
                     onChange={(e) => handleChange('scale', parseFloat(e.target.value) || 1.0)}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -250,10 +219,10 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
                     min="300"
                     value={selectedBoss.respawn_time}
                     onChange={(e) => handleChange('respawn_time', parseInt(e.target.value) || 86400)}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-amber-400 mt-1">
                     {(selectedBoss.respawn_time / 3600).toFixed(1)} hours
                   </div>
                 </div>
@@ -265,10 +234,10 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
                       type="checkbox"
                       checked={selectedBoss.active}
                       onChange={(e) => handleChange('active', e.target.checked)}
-                      className="h-4 w-4 border-gray-300 rounded"
+                      className="h-4 w-4 border-amber-300 rounded bg-gray-700"
                       disabled={!isAdmin}
                     />
-                    <span className="ml-2 text-sm text-gray-700">Boss is active</span>
+                    <span className="ml-2 text-sm text-amber-200">Boss is active</span>
                   </div>
                 </div>
               </div>
@@ -281,7 +250,7 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
                     const val = e.target.value === '' ? null : parseInt(e.target.value);
                     handleChange('reward_table_id', val);
                   }}
-                  className="w-full p-2 border rounded"
+                  className="admin-input w-full"
                   disabled={!isAdmin}
                 >
                   <option value="">No reward table</option>
@@ -297,14 +266,16 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
                   type="text"
                   value={selectedBoss.image_url || ''}
                   onChange={(e) => handleChange('image_url', e.target.value || null)}
-                  className="w-full p-2 border rounded"
+                  className="admin-input w-full"
                   disabled={!isAdmin}
                 />
                 {selectedBoss.image_url && (
-                  <div className="mt-2 border p-2 inline-block">
-                    <img 
-                      src={selectedBoss.image_url} 
-                      alt={selectedBoss.name} 
+                  <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
+                    <Image 
+                      src={`/image/boss/${selectedBoss.image_url}.png`}
+                      alt={selectedBoss.name}
+                      width={128}
+                      height={128}
                       className="h-32 w-32 object-contain"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
@@ -327,7 +298,7 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
                       // Invalid JSON - don't update
                     }
                   }}
-                  className="w-full p-2 border rounded h-48 font-mono text-sm"
+                  className="admin-textarea font-mono text-sm"
                   disabled={!isAdmin}
                 />
               </div>
@@ -346,7 +317,7 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
             )}
           </div>
         ) : (
-          <div className="text-gray-500">Select a world boss from the list {isAdmin ? 'or add a new one' : ''}</div>
+          <div className="text-amber-300">Select a world boss from the list {isAdmin ? 'or add a new one' : ''}</div>
         )}
       </div>
     </div>

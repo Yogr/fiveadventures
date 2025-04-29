@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
+import { getMonsters } from '@/app/actions/data-editor';
+import Image from 'next/image';
 
 // Define the Monster type based on database schema
 type Monster = {
@@ -31,79 +33,30 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Placeholder for fetching monsters data
-    // This would be replaced with actual API call in future steps
-    setIsLoading(false);
-    setMonsters([
-      {
-        id: 1,
-        name: 'Forest Wolf',
-        description: 'A ferocious wolf that prowls the enchanted forest.',
-        hitpoints: 15,
-        attack: 5,
-        defense: 2,
-        experience_reward: 10,
-        gold_reward: 5,
-        difficulty: 1,
-        attack_type: 'physical',
-        abilities: {},
-        image_url: '/image/enemy/forest_wolf.png',
-        is_elite: false,
-        scale: 1.0,
-        reward_table: 1,
-        is_boss: false,
-        rare_item_chance: 5
-      },
-      {
-        id: 2,
-        name: 'Cave Troll',
-        description: 'A massive troll that lives in the dark caverns.',
-        hitpoints: 40,
-        attack: 12,
-        defense: 6,
-        experience_reward: 30,
-        gold_reward: 20,
-        difficulty: 3,
-        attack_type: 'physical',
-        abilities: {
-          special_attack: { name: 'Smash', damage_multiplier: 1.5, cooldown: 3 }
-        },
-        image_url: '/image/enemy/cave_troll.png',
-        is_elite: false,
-        scale: 1.2,
-        reward_table: 2,
-        is_boss: false,
-        rare_item_chance: 10
-      },
-      {
-        id: 3,
-        name: 'Forest Guardian',
-        description: 'An ancient protector of the enchanted forest.',
-        hitpoints: 100,
-        attack: 20,
-        defense: 15,
-        experience_reward: 100,
-        gold_reward: 75,
-        difficulty: 5,
-        attack_type: 'magic',
-        abilities: {
-          heal: { amount: 10, cooldown: 4 },
-          nature_wrath: { damage: 15, cooldown: 2 }
-        },
-        image_url: '/image/enemy/forest_guardian.png',
-        is_elite: true,
-        scale: 1.5,
-        reward_table: 3,
-        is_boss: true,
-        rare_item_chance: 25
+    async function loadMonsters() {
+      setIsLoading(true);
+      try {
+        const response = await getMonsters();
+        if (response.success && response.data) {
+          setMonsters(response.data);
+        } else {
+          console.error('Failed to load monsters:', response.error);
+        }
+      } catch (error) {
+        console.error('Error loading monsters:', error);
+      } finally {
+        setIsLoading(false);
       }
-    ]);
+    }
+    
+    loadMonsters();
   }, []);
   
   const handleSave = async () => {
-    // Save changes - would be implemented in future steps
-    console.log('Saving changes to monster:', selectedMonster);
-    alert('Changes saved successfully!');
+    if (!selectedMonster) return;
+    
+    // Need to implement a saveMonster function in data-editor.ts
+    alert('Saving monster to database is not implemented yet.');
   };
   
   const handleAdd = () => {
@@ -133,7 +86,8 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   const handleDelete = (id: string | number) => {
-    // Delete monster
+    // Need to implement a deleteMonster function in data-editor.ts
+    // For now, just update the UI
     setMonsters(monsters.filter(m => m.id !== id));
     if (selectedMonster && selectedMonster.id === id) {
       setSelectedMonster(null);
@@ -141,7 +95,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-amber-100">Loading monsters from database...</div>;
   }
   
   // Map monsters to match the Item interface expected by ListComponent
@@ -156,13 +110,13 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
       <ListComponent
         items={monsterItems}
         onSelect={(item) => setSelectedMonster(item.monster as Monster)}
-        onAdd={handleAdd}
-        onDelete={handleDelete}
+        onAdd={isAdmin ? handleAdd : undefined}
+        onDelete={isAdmin ? handleDelete : undefined}
         selectedId={selectedMonster?.id}
         isReadOnly={!isAdmin}
       />
       
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 text-amber-100">
         {selectedMonster ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">{selectedMonster.name}</h2>
@@ -177,7 +131,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedMonster,
                     name: e.target.value
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input"
                   disabled={!isAdmin}
                 />
               </div>
@@ -190,7 +144,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedMonster,
                     description: e.target.value
                   })}
-                  className="w-full p-2 border rounded h-24"
+                  className="admin-textarea"
                   disabled={!isAdmin}
                 />
               </div>
@@ -205,7 +159,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedMonster,
                       hitpoints: parseInt(e.target.value) || 0
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -219,7 +173,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedMonster,
                       attack: parseInt(e.target.value) || 0
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -233,7 +187,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedMonster,
                       defense: parseInt(e.target.value) || 0
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -249,7 +203,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedMonster,
                       experience_reward: parseInt(e.target.value) || 0
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -263,7 +217,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedMonster,
                       gold_reward: parseInt(e.target.value) || 0
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -279,7 +233,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedMonster,
                       difficulty: parseInt(e.target.value) || 1
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -294,7 +248,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedMonster,
                       attack_type: e.target.value
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   >
                     <option value="physical">Physical</option>
@@ -313,7 +267,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedMonster,
                       scale: parseFloat(e.target.value) || 1.0
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -329,7 +283,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedMonster,
                       reward_table: e.target.value ? parseInt(e.target.value) : null
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -345,7 +299,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedMonster,
                       rare_item_chance: parseInt(e.target.value) || 0
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -362,10 +316,10 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                         ...selectedMonster,
                         is_elite: e.target.checked
                       })}
-                      className="h-4 w-4 border-gray-300 rounded"
+                      className="h-4 w-4 border-amber-300 rounded bg-gray-700"
                       disabled={!isAdmin}
                     />
-                    <span className="ml-2 text-sm text-gray-700">This is an elite monster</span>
+                    <span className="ml-2 text-sm text-amber-200">This is an elite monster</span>
                   </div>
                 </div>
                 
@@ -379,10 +333,10 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                         ...selectedMonster,
                         is_boss: e.target.checked
                       })}
-                      className="h-4 w-4 border-gray-300 rounded"
+                      className="h-4 w-4 border-amber-300 rounded bg-gray-700"
                       disabled={!isAdmin}
                     />
-                    <span className="ml-2 text-sm text-gray-700">This is a boss monster</span>
+                    <span className="ml-2 text-sm text-amber-200">This is a boss monster</span>
                   </div>
                 </div>
               </div>
@@ -396,14 +350,16 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedMonster,
                     image_url: e.target.value || null
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input"
                   disabled={!isAdmin}
                 />
                 {selectedMonster.image_url && (
-                  <div className="mt-2 border p-2 inline-block">
-                    <img 
-                      src={selectedMonster.image_url} 
-                      alt={selectedMonster.name} 
+                  <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
+                    <Image 
+                      src={`/image/enemy/${selectedMonster.image_url}.png`}
+                      alt={selectedMonster.name}
+                      width={128 * selectedMonster.scale!}
+                      height={128 * selectedMonster.scale!}
                       className="h-24 w-24 object-contain"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
@@ -429,7 +385,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                       // Invalid JSON - don't update
                     }
                   }}
-                  className="w-full p-2 border rounded h-48 font-mono text-sm"
+                  className="admin-textarea font-mono text-sm"
                   disabled={!isAdmin}
                 />
               </div>
@@ -448,7 +404,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
             )}
           </div>
         ) : (
-          <div className="text-gray-500">Select a monster from the list {isAdmin ? 'or add a new one' : ''}</div>
+          <div className="text-amber-300">Select a monster from the list {isAdmin ? 'or add a new one' : ''}</div>
         )}
       </div>
     </div>

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
+import { getSkills } from '@/app/actions/data-editor';
+import Image from 'next/image';
 
 // Define the Skill type based on database schema
 type Skill = {
@@ -12,10 +14,11 @@ type Skill = {
   class: string;
   energy_cost: number;
   cooldown: number;
+  level_required: number;
+  attribute: string;
+  power: number;
   effects: any;
   image_url: string | null;
-  attribute: string | null;
-  power: number | null;
 };
 
 export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
@@ -24,41 +27,30 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Placeholder for fetching skills data
-    // This would be replaced with actual API call in future steps
-    setIsLoading(false);
-    setSkills([
-      {
-        id: 1,
-        name: 'Slash',
-        description: 'A strong melee attack that deals physical damage.',
-        class: 'Warrior',
-        energy_cost: 10,
-        cooldown: 0,
-        effects: { damage: 5, type: 'physical' },
-        image_url: '/image/skill/slash.png',
-        attribute: 'strength',
-        power: 1.5
-      },
-      {
-        id: 2,
-        name: 'Fireball',
-        description: 'Launches a ball of fire at the enemy.',
-        class: 'Wizard',
-        energy_cost: 20,
-        cooldown: 1,
-        effects: { damage: 8, type: 'fire', burn: { chance: 30, duration: 2, damage: 2 } },
-        image_url: '/image/skill/fireball.png',
-        attribute: 'intelligence',
-        power: 2.0
+    async function loadSkills() {
+      setIsLoading(true);
+      try {
+        const response = await getSkills();
+        if (response.success && response.data) {
+          setSkills(response.data);
+        } else {
+          console.error('Failed to load skills:', response.error);
+        }
+      } catch (error) {
+        console.error('Error loading skills:', error);
+      } finally {
+        setIsLoading(false);
       }
-    ]);
+    }
+    
+    loadSkills();
   }, []);
   
   const handleSave = async () => {
-    // Save changes - would be implemented in future steps
-    console.log('Saving changes to skill:', selectedSkill);
-    alert('Changes saved successfully!');
+    if (!selectedSkill) return;
+    
+    // Need to implement a saveSkill function in data-editor.ts
+    alert('Saving skill to database is not implemented yet.');
   };
   
   const handleAdd = () => {
@@ -70,10 +62,11 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
       class: 'Warrior',
       energy_cost: 10,
       cooldown: 0,
+      level_required: 1,
+      attribute: 'strength',
+      power: 1,
       effects: {},
-      image_url: null,
-      attribute: null,
-      power: null
+      image_url: null
     };
     
     setSkills([...skills, newSkill]);
@@ -81,7 +74,8 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   const handleDelete = (id: string | number) => {
-    // Delete skill
+    // Need to implement a deleteSkill function in data-editor.ts
+    // For now, just update the UI
     setSkills(skills.filter(s => s.id !== id));
     if (selectedSkill && selectedSkill.id === id) {
       setSelectedSkill(null);
@@ -89,7 +83,7 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-amber-100">Loading skills from database...</div>;
   }
   
   // Map skills to match the Item interface expected by ListComponent
@@ -104,13 +98,13 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
       <ListComponent
         items={skillItems}
         onSelect={(item) => setSelectedSkill(item.skill as Skill)}
-        onAdd={handleAdd}
-        onDelete={handleDelete}
+        onAdd={isAdmin ? handleAdd : undefined}
+        onDelete={isAdmin ? handleDelete : undefined}
         selectedId={selectedSkill?.id}
         isReadOnly={!isAdmin}
       />
       
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 text-amber-100">
         {selectedSkill ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">{selectedSkill.name}</h2>
@@ -125,7 +119,7 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedSkill,
                     name: e.target.value
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input"
                   disabled={!isAdmin}
                 />
               </div>
@@ -138,7 +132,7 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedSkill,
                     description: e.target.value
                   })}
-                  className="w-full p-2 border rounded h-24"
+                  className="admin-textarea"
                   disabled={!isAdmin}
                 />
               </div>
@@ -151,7 +145,7 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedSkill,
                     class: e.target.value
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input"
                   disabled={!isAdmin}
                 >
                   <option value="Warrior">Warrior</option>
@@ -172,7 +166,7 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedSkill,
                       energy_cost: parseInt(e.target.value) || 0
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -186,7 +180,7 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedSkill,
                       cooldown: parseInt(e.target.value) || 0
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -194,17 +188,30 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Attribute</label>
-                  <select
-                    value={selectedSkill.attribute || ''}
+                  <label className="block text-sm font-medium mb-1">Level Required</label>
+                  <input
+                    type="number"
+                    value={selectedSkill.level_required}
                     onChange={(e) => setSelectedSkill({
                       ...selectedSkill,
-                      attribute: e.target.value || null
+                      level_required: parseInt(e.target.value) || 1
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
+                    disabled={!isAdmin}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Attribute</label>
+                  <select
+                    value={selectedSkill.attribute}
+                    onChange={(e) => setSelectedSkill({
+                      ...selectedSkill,
+                      attribute: e.target.value
+                    })}
+                    className="admin-input"
                     disabled={!isAdmin}
                   >
-                    <option value="">None</option>
                     <option value="strength">Strength</option>
                     <option value="intelligence">Intelligence</option>
                     <option value="agility">Agility</option>
@@ -212,21 +219,21 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
                     <option value="wisdom">Wisdom</option>
                   </select>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Power Multiplier</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={selectedSkill.power || ''}
-                    onChange={(e) => setSelectedSkill({
-                      ...selectedSkill,
-                      power: parseFloat(e.target.value) || null
-                    })}
-                    className="w-full p-2 border rounded"
-                    disabled={!isAdmin}
-                  />
-                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Power</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={selectedSkill.power}
+                  onChange={(e) => setSelectedSkill({
+                    ...selectedSkill,
+                    power: parseFloat(e.target.value) || 0
+                  })}
+                  className="admin-input"
+                  disabled={!isAdmin}
+                />
               </div>
               
               <div>
@@ -238,15 +245,16 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedSkill,
                     image_url: e.target.value || null
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input"
                   disabled={!isAdmin}
                 />
                 {selectedSkill.image_url && (
-                  <div className="mt-2 border p-2 inline-block">
-                    <img 
-                      src={selectedSkill.image_url} 
+                  <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
+                    <Image
+                      src={`/image/skill/${selectedSkill.image_url}.png`} 
                       alt={selectedSkill.name} 
-                      className="h-16 w-16 object-contain"
+                      width={128}
+                      height={128}                      className="h-16 w-16 object-contain"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = 'https://via.placeholder.com/64?text=No+Image';
@@ -271,7 +279,7 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
                       // Invalid JSON - don't update
                     }
                   }}
-                  className="w-full p-2 border rounded h-48 font-mono text-sm"
+                  className="admin-textarea font-mono text-sm"
                   disabled={!isAdmin}
                 />
               </div>
@@ -290,7 +298,7 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
             )}
           </div>
         ) : (
-          <div className="text-gray-500">Select a skill from the list {isAdmin ? 'or add a new one' : ''}</div>
+          <div className="text-amber-300">Select a skill from the list {isAdmin ? 'or add a new one' : ''}</div>
         )}
       </div>
     </div>

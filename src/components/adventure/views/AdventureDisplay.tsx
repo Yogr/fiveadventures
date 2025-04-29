@@ -6,18 +6,16 @@ interface AdventureDisplayProps {
   title: string;
   description: string;
   imageUrl: string;
-  areaName: string;
 }
 
-const AdventureDisplay = ({ title, description, imageUrl, areaName }: AdventureDisplayProps) => {
-  const formattedAreaName = areaName.toLowerCase().replace('the ','').replace(/\s+/g, '-');
+const AdventureDisplay = ({ title, description, imageUrl }: AdventureDisplayProps) => {
   
   return (
     <div className="relative w-full h-48">
       {/* Background image */}
       <div className="absolute inset-0">
         <Image
-          src={`/image/adventure/${formattedAreaName}/${imageUrl}.png`}
+          src={`/image/adventure/${imageUrl}.png`}
           alt={title}
           fill
           className="object-cover rounded-md"

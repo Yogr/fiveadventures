@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
+import { getShopItems, getItems, getAreas } from '@/app/actions/data-editor';
 
 // Define the ShopItem type based on database schema
 type ShopItem = {
@@ -27,83 +28,65 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
   const [areas, setAreas] = useState<{ id: number; name: string }[]>([]); // All available areas
   
   useEffect(() => {
-    // Placeholder for fetching shop items data
-    // This would be replaced with actual API call in future steps
-    setIsLoading(false);
-    
-    // Fake game items data for dropdown
-    setGameItems([
-      { id: 1, name: 'Iron Sword' },
-      { id: 2, name: 'Leather Armor' },
-      { id: 3, name: 'Health Potion' },
-      { id: 4, name: 'Fire Amulet' },
-      { id: 5, name: 'Magic Staff' }
-    ]);
-    
-    // Fake areas data for dropdown
-    setAreas([
-      { id: 1, name: 'Enchanted Forest' },
-      { id: 2, name: 'Caverns' },
-      { id: 3, name: 'Volcanic Wastes' }
-    ]);
-    
-    setShopItems([
-      {
-        id: 1,
-        item_id: 1,
-        item_name: 'Iron Sword',
-        price: 100,
-        currency: 'gold',
-        quantity: 5,
-        restock_time: 3600,
-        category: 'Weapons',
-        level_required: 1,
-        area_id: 1,
-        area_name: 'Enchanted Forest'
-      },
-      {
-        id: 2,
-        item_id: 2,
-        item_name: 'Leather Armor',
-        price: 80,
-        currency: 'gold',
-        quantity: 3,
-        restock_time: 3600,
-        category: 'Armor',
-        level_required: 1,
-        area_id: 1,
-        area_name: 'Enchanted Forest'
-      },
-      {
-        id: 3,
-        item_id: 3,
-        item_name: 'Health Potion',
-        price: 25,
-        currency: 'gold',
-        quantity: 10,
-        restock_time: 1800,
-        category: 'Consumables',
-        level_required: null,
-        area_id: null,
-        area_name: null
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        // Load shop items from database
+        const shopResponse = await getShopItems();
+        if (shopResponse.success && shopResponse.data) {
+          setShopItems(shopResponse.data);
+        } else {
+          console.error('Failed to load shop items:', shopResponse.error);
+        }
+        
+        // Load items for dropdown
+        const itemsResponse = await getItems();
+        if (itemsResponse.success && itemsResponse.data) {
+          setGameItems(itemsResponse.data.map(item => ({
+            id: item.id,
+            name: item.name
+          })));
+        } else {
+          console.error('Failed to load items:', itemsResponse.error);
+        }
+        
+        // Load areas for dropdown
+        const areasResponse = await getAreas();
+        if (areasResponse.success && areasResponse.data) {
+          setAreas(areasResponse.data.map(area => ({
+            id: area.id,
+            name: area.name
+          })));
+        } else {
+          console.error('Failed to load areas:', areasResponse.error);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setIsLoading(false);
       }
-    ]);
+    }
+    
+    loadData();
   }, []);
   
   const handleSave = async () => {
-    // Save changes - would be implemented in future steps
-    console.log('Saving changes to shop item:', selectedItem);
-    alert('Changes saved successfully!');
+    if (!selectedItem) return;
+    
+    // Need to implement a saveShopItem function in data-editor.ts
+    alert('Saving shop item to database is not implemented yet.');
   };
   
   const handleAdd = () => {
     // Add new shop item
-    if (!gameItems.length) return;
+    if (gameItems.length === 0) return;
     
+    // Make sure we have at least one item
+    const firstItem = gameItems[0]; // Extract to variable for type safety
     const newItem: ShopItem = {
       id: Date.now(), // Temporary ID
-      item_id: gameItems[0].id,
-      item_name: gameItems[0].name,
+      item_id: firstItem?.id || 0, // Use optional chaining and fallback
+      item_name: firstItem?.name || "Unknown Item",
       price: 50,
       currency: 'gold',
       quantity: 1,
@@ -118,7 +101,8 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   const handleDelete = (id: string | number) => {
-    // Delete shop item
+    // Need to implement a deleteShopItem function in data-editor.ts
+    // For now, just update the UI
     setShopItems(shopItems.filter(item => item.id !== id));
     if (selectedItem && selectedItem.id === id) {
       setSelectedItem(null);
@@ -160,7 +144,7 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-amber-100">Loading shop items from database...</div>;
   }
   
   // Map shop items to match the Item interface expected by ListComponent
@@ -175,13 +159,13 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
       <ListComponent
         items={shopItemsList}
         onSelect={(item) => setSelectedItem(item.shopItem as ShopItem)}
-        onAdd={handleAdd}
-        onDelete={handleDelete}
+        onAdd={isAdmin ? handleAdd : undefined}
+        onDelete={isAdmin ? handleDelete : undefined}
         selectedId={selectedItem?.id}
         isReadOnly={!isAdmin}
       />
       
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 text-amber-100">
         {selectedItem ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">{selectedItem.item_name || `Shop Item #${selectedItem.id}`}</h2>
@@ -192,7 +176,7 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                 <select
                   value={selectedItem.item_id}
                   onChange={(e) => handleItemChange('item_id', parseInt(e.target.value))}
-                  className="w-full p-2 border rounded"
+                  className="admin-input w-full"
                   disabled={!isAdmin}
                 >
                   {gameItems.map((item) => (
@@ -209,7 +193,7 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                     min="0"
                     value={selectedItem.price}
                     onChange={(e) => handleItemChange('price', parseInt(e.target.value) || 0)}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -219,7 +203,7 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                   <select
                     value={selectedItem.currency}
                     onChange={(e) => handleItemChange('currency', e.target.value)}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   >
                     <option value="gold">Gold</option>
@@ -240,7 +224,7 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                       const val = parseInt(e.target.value);
                       handleItemChange('quantity', val === -1 ? null : val);
                     }}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -255,7 +239,7 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                       const val = parseInt(e.target.value);
                       handleItemChange('restock_time', val === -1 ? null : val);
                     }}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -267,7 +251,7 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                   <select
                     value={selectedItem.category}
                     onChange={(e) => handleItemChange('category', e.target.value)}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   >
                     <option value="Weapons">Weapons</option>
@@ -288,7 +272,7 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                       const val = parseInt(e.target.value);
                       handleItemChange('level_required', val === 0 ? null : val);
                     }}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -302,7 +286,7 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                     const val = e.target.value === "" ? null : parseInt(e.target.value);
                     handleItemChange('area_id', val);
                   }}
-                  className="w-full p-2 border rounded"
+                  className="admin-input w-full"
                   disabled={!isAdmin}
                 >
                   <option value="">No specific area</option>
@@ -326,7 +310,7 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
             )}
           </div>
         ) : (
-          <div className="text-gray-500">Select a shop item from the list {isAdmin ? 'or add a new one' : ''}</div>
+          <div className="text-amber-300">Select a shop item from the list {isAdmin ? 'or add a new one' : ''}</div>
         )}
       </div>
     </div>

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
+import { getAdventures } from '@/app/actions/data-editor';
+import Image from 'next/image';
 
 // Define the Adventure type based on database schema
 type Adventure = {
@@ -23,39 +25,30 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Placeholder for fetching adventures data
-    // This would be replaced with actual API call in future steps
-    setIsLoading(false);
-    setAdventures([
-      {
-        id: 1,
-        title: 'The Lost Artifact',
-        description: 'Search for a valuable artifact hidden in the forest.',
-        min_experience: 20,
-        min_gold: 10,
-        is_violent: true,
-        has_combat: true,
-        area_ids: [1],
-        image_url: '/image/adventure/enchanted-forest/lost-artifact.png'
-      },
-      {
-        id: 2,
-        title: 'Cave Exploration',
-        description: 'Explore the dangerous caves filled with treasures.',
-        min_experience: 50,
-        min_gold: 25,
-        is_violent: true,
-        has_combat: true,
-        area_ids: [2],
-        image_url: '/image/adventure/caverns/cave-exploration.png'
+    async function loadAdventures() {
+      setIsLoading(true);
+      try {
+        const response = await getAdventures();
+        if (response.success && response.data) {
+          setAdventures(response.data);
+        } else {
+          console.error('Failed to load adventures:', response.error);
+        }
+      } catch (error) {
+        console.error('Error loading adventures:', error);
+      } finally {
+        setIsLoading(false);
       }
-    ]);
+    }
+    
+    loadAdventures();
   }, []);
   
   const handleSave = async () => {
-    // Save changes - would be implemented in future steps
-    console.log('Saving changes to adventure:', selectedAdventure);
-    alert('Changes saved successfully!');
+    if (!selectedAdventure) return;
+    
+    // Need to implement a saveAdventure function in data-editor.ts
+    alert('Saving adventure to database is not implemented yet.');
   };
   
   const handleAdd = () => {
@@ -77,7 +70,8 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   const handleDelete = (id: string | number) => {
-    // Delete adventure
+    // Need to implement a deleteAdventure function in data-editor.ts
+    // For now, just update the UI
     setAdventures(adventures.filter(a => a.id !== id));
     if (selectedAdventure && selectedAdventure.id === id) {
       setSelectedAdventure(null);
@@ -85,7 +79,7 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-amber-100">Loading adventures from database...</div>;
   }
   
   // Map adventures to match the Item interface expected by ListComponent
@@ -100,13 +94,13 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
       <ListComponent
         items={adventureItems}
         onSelect={(item) => setSelectedAdventure(item.adventure as Adventure)}
-        onAdd={handleAdd}
-        onDelete={handleDelete}
+        onAdd={isAdmin ? handleAdd : undefined}
+        onDelete={isAdmin ? handleDelete : undefined}
         selectedId={selectedAdventure?.id}
         isReadOnly={!isAdmin}
       />
       
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 text-amber-100">
         {selectedAdventure ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">{selectedAdventure.title}</h2>
@@ -121,7 +115,7 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedAdventure,
                     title: e.target.value
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input"
                   disabled={!isAdmin}
                 />
               </div>
@@ -134,7 +128,7 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedAdventure,
                     description: e.target.value
                   })}
-                  className="w-full p-2 border rounded h-24"
+                  className="admin-textarea"
                   disabled={!isAdmin}
                 />
               </div>
@@ -149,7 +143,7 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedAdventure,
                       min_experience: parseInt(e.target.value) || 0
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -163,7 +157,7 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedAdventure,
                       min_gold: parseInt(e.target.value) || 0
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -180,10 +174,10 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
                         ...selectedAdventure,
                         is_violent: e.target.checked
                       })}
-                      className="h-4 w-4 border-gray-300 rounded"
+                      className="h-4 w-4 border-amber-300 rounded bg-gray-700"
                       disabled={!isAdmin}
                     />
-                    <span className="ml-2 text-sm text-gray-700">Adventure contains violence</span>
+                    <span className="ml-2 text-sm text-amber-200">Adventure contains violence</span>
                   </div>
                 </div>
                 
@@ -197,17 +191,17 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
                         ...selectedAdventure,
                         has_combat: e.target.checked
                       })}
-                      className="h-4 w-4 border-gray-300 rounded"
+                      className="h-4 w-4 border-amber-300 rounded bg-gray-700"
                       disabled={!isAdmin}
                     />
-                    <span className="ml-2 text-sm text-gray-700">Adventure includes combat</span>
+                    <span className="ml-2 text-sm text-amber-200">Adventure includes combat</span>
                   </div>
                 </div>
               </div>
               
               <div>
                 <label className="block text-sm font-medium mb-1">Area IDs</label>
-                <p className="text-sm text-gray-500 mb-2">Area IDs (comma separated)</p>
+                <p className="text-sm text-amber-400 mb-2">Area IDs (comma separated)</p>
                 <input
                   type="text"
                   value={selectedAdventure.area_ids?.join(', ') || ''}
@@ -222,7 +216,7 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
                       area_ids: areaIds.length > 0 ? areaIds : null
                     });
                   }}
-                  className="w-full p-2 border rounded"
+                  className="admin-input"
                   disabled={!isAdmin}
                 />
               </div>
@@ -236,14 +230,16 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedAdventure,
                     image_url: e.target.value || null
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input"
                   disabled={!isAdmin}
                 />
                 {selectedAdventure.image_url && (
-                  <div className="mt-2 border p-2 inline-block">
-                    <img 
-                      src={selectedAdventure.image_url} 
-                      alt={selectedAdventure.title} 
+                  <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
+                    <Image 
+                      src={`/image/adventure/${selectedAdventure.image_url}.png`}
+                      alt={selectedAdventure.title}
+                      width={240}
+                      height={120}
                       className="h-32 w-64 object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
@@ -268,7 +264,7 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
             )}
           </div>
         ) : (
-          <div className="text-gray-500">Select an adventure from the list {isAdmin ? 'or add a new one' : ''}</div>
+          <div className="text-amber-300">Select an adventure from the list {isAdmin ? 'or add a new one' : ''}</div>
         )}
       </div>
     </div>

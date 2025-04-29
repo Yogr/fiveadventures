@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
-import SaveButton from '../components/SaveButton';
+import { CLASS_BASE_STATS } from '@/lib/utils';
 
 // Define the Class type
 type Class = {
@@ -15,8 +15,28 @@ type Class = {
     agility: number;
     luck: number;
     wisdom: number;
+    hitpoints: number;
+    energy: number;
   };
   startingSkills: number[];
+};
+
+// Class descriptions
+const CLASS_DESCRIPTIONS = {
+  Warrior: "A strong fighter skilled in melee combat and physical prowess. Warriors excel at frontline combat and can withstand significant damage.",
+  Wizard: "A powerful spellcaster with arcane knowledge. Wizards control devastating magical attacks and utility spells.",
+  Thief: "A nimble rogue specializing in stealth and precision strikes. Thieves excel at critical strikes and finding treasures.",
+  Ranger: "A skilled hunter with exceptional accuracy in ranged combat. Rangers are versatile fighters who excel in nature environments.",
+  Cleric: "A divine spellcaster with healing abilities and protective magic. Clerics provide essential support to their allies."
+};
+
+// Starting skills for each class (placeholder IDs)
+const CLASS_STARTING_SKILLS = {
+  Warrior: [1, 4, 8],
+  Wizard: [2, 6, 9],
+  Thief: [3, 7, 12],
+  Ranger: [5, 10, 14],
+  Cleric: [11, 13, 15]
 };
 
 export default function ClassesComponent({ isAdmin }: { isAdmin: boolean }) {
@@ -25,78 +45,24 @@ export default function ClassesComponent({ isAdmin }: { isAdmin: boolean }) {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Placeholder for fetching classes data
-    // This would be replaced with actual API call in future steps
+    // Load classes from the hard-coded data
+    const classData = Object.entries(CLASS_BASE_STATS).map(([name, stats], index) => ({
+      id: index + 1,
+      name,
+      description: CLASS_DESCRIPTIONS[name as keyof typeof CLASS_DESCRIPTIONS] || "",
+      baseStats: stats,
+      startingSkills: CLASS_STARTING_SKILLS[name as keyof typeof CLASS_STARTING_SKILLS] || []
+    }));
+    
+    setClasses(classData);
     setIsLoading(false);
-    setClasses([
-      {
-        id: 1,
-        name: 'Warrior',
-        description: 'A strong fighter skilled in melee combat.',
-        baseStats: {
-          strength: 10,
-          intelligence: 5,
-          agility: 7,
-          luck: 5,
-          wisdom: 5
-        },
-        startingSkills: [1, 2, 3]
-      },
-      {
-        id: 2,
-        name: 'Wizard',
-        description: 'A powerful spellcaster with arcane knowledge.',
-        baseStats: {
-          strength: 4,
-          intelligence: 10,
-          agility: 6,
-          luck: 5,
-          wisdom: 8
-        },
-        startingSkills: [4, 5, 6]
-      }
-    ]);
   }, []);
   
-  const handleSave = async () => {
-    // Save changes - would be implemented in future steps
-    console.log('Saving changes to class:', selectedClass);
-    alert('Changes saved successfully!');
-  };
-  
-  const handleAdd = () => {
-    // Add new class
-    const newClass: Class = {
-      id: Date.now(), // Temporary ID
-      name: 'New Class',
-      description: 'Description of new class',
-      baseStats: {
-        strength: 5,
-        intelligence: 5,
-        agility: 5,
-        luck: 5,
-        wisdom: 5
-      },
-      startingSkills: []
-    };
-    
-    setClasses([...classes, newClass]);
-    setSelectedClass(newClass);
-  };
-  
-  const handleDelete = (id: string | number) => {
-    // Delete class
-    setClasses(classes.filter(c => c.id !== id));
-    if (selectedClass && selectedClass.id === id) {
-      setSelectedClass(null);
-    }
-  };
-  
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-amber-100">Loading...</div>;
   }
   
-  // Map classes to match the Item interface expected by ListComponent
+  // Map classes to match the interface expected by ListComponent
   const classItems = classes.map(classItem => ({
     id: classItem.id,
     name: classItem.name,
@@ -108,130 +74,105 @@ export default function ClassesComponent({ isAdmin }: { isAdmin: boolean }) {
       <ListComponent
         items={classItems}
         onSelect={(item) => setSelectedClass(item.class as Class)}
-        onAdd={handleAdd}
-        onDelete={handleDelete}
+        onAdd={undefined} // No adding new classes
+        onDelete={undefined} // No deleting classes
         selectedId={selectedClass?.id}
-        isReadOnly={!isAdmin}
+        isReadOnly={true} // Always read-only since classes are hard-coded
       />
       
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 text-amber-100">
         {selectedClass ? (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold">{selectedClass.name}</h2>
+            <h2 className="text-2xl font-bold">{selectedClass.name}</h2>
             
-            <div className="space-y-2">
-              <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
-                <input
-                  type="text"
-                  value={selectedClass.name}
-                  onChange={(e) => setSelectedClass({
-                    ...selectedClass,
-                    name: e.target.value
-                  })}
-                  className="w-full p-2 border rounded"
-                  disabled={!isAdmin}
-                />
-              </div>
-              
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Description</label>
                 <textarea
                   value={selectedClass.description}
-                  onChange={(e) => setSelectedClass({
-                    ...selectedClass,
-                    description: e.target.value
-                  })}
-                  className="w-full p-2 border rounded h-24"
-                  disabled={!isAdmin}
+                  className="admin-textarea"
+                  disabled={true}
+                  readOnly
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1">Base Stats</label>
-                <div className="grid grid-cols-2 gap-2">
+                <h3 className="text-lg font-medium mb-2">Base Stats</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs">Strength</label>
+                    <label className="block text-sm font-medium mb-1">Strength</label>
                     <input
                       type="number"
                       value={selectedClass.baseStats.strength}
-                      onChange={(e) => setSelectedClass({
-                        ...selectedClass,
-                        baseStats: {
-                          ...selectedClass.baseStats,
-                          strength: parseInt(e.target.value) || 0
-                        }
-                      })}
-                      className="w-full p-2 border rounded"
-                      disabled={!isAdmin}
+                      className="admin-input"
+                      disabled={true}
+                      readOnly
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-xs">Intelligence</label>
+                    <label className="block text-sm font-medium mb-1">Intelligence</label>
                     <input
                       type="number"
                       value={selectedClass.baseStats.intelligence}
-                      onChange={(e) => setSelectedClass({
-                        ...selectedClass,
-                        baseStats: {
-                          ...selectedClass.baseStats,
-                          intelligence: parseInt(e.target.value) || 0
-                        }
-                      })}
-                      className="w-full p-2 border rounded"
-                      disabled={!isAdmin}
+                      className="admin-input"
+                      disabled={true}
+                      readOnly
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-xs">Agility</label>
+                    <label className="block text-sm font-medium mb-1">Agility</label>
                     <input
                       type="number"
                       value={selectedClass.baseStats.agility}
-                      onChange={(e) => setSelectedClass({
-                        ...selectedClass,
-                        baseStats: {
-                          ...selectedClass.baseStats,
-                          agility: parseInt(e.target.value) || 0
-                        }
-                      })}
-                      className="w-full p-2 border rounded"
-                      disabled={!isAdmin}
+                      className="admin-input"
+                      disabled={true}
+                      readOnly
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-xs">Luck</label>
+                    <label className="block text-sm font-medium mb-1">Luck</label>
                     <input
                       type="number"
                       value={selectedClass.baseStats.luck}
-                      onChange={(e) => setSelectedClass({
-                        ...selectedClass,
-                        baseStats: {
-                          ...selectedClass.baseStats,
-                          luck: parseInt(e.target.value) || 0
-                        }
-                      })}
-                      className="w-full p-2 border rounded"
-                      disabled={!isAdmin}
+                      className="admin-input"
+                      disabled={true}
+                      readOnly
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-xs">Wisdom</label>
+                    <label className="block text-sm font-medium mb-1">Wisdom</label>
                     <input
                       type="number"
                       value={selectedClass.baseStats.wisdom}
-                      onChange={(e) => setSelectedClass({
-                        ...selectedClass,
-                        baseStats: {
-                          ...selectedClass.baseStats,
-                          wisdom: parseInt(e.target.value) || 0
-                        }
-                      })}
-                      className="w-full p-2 border rounded"
-                      disabled={!isAdmin}
+                      className="admin-input"
+                      disabled={true}
+                      readOnly
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Hitpoints</label>
+                    <input
+                      type="number"
+                      value={selectedClass.baseStats.hitpoints}
+                      className="admin-input"
+                      disabled={true}
+                      readOnly
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Energy</label>
+                    <input
+                      type="number"
+                      value={selectedClass.baseStats.energy}
+                      className="admin-input"
+                      disabled={true}
+                      readOnly
                     />
                   </div>
                 </div>
@@ -239,41 +180,19 @@ export default function ClassesComponent({ isAdmin }: { isAdmin: boolean }) {
               
               <div>
                 <label className="block text-sm font-medium mb-1">Starting Skills</label>
-                <p className="text-sm text-gray-500 mb-2">Skill IDs (comma separated)</p>
-                <input
-                  type="text"
-                  value={selectedClass.startingSkills.join(', ')}
-                  onChange={(e) => {
-                    const skillIds = e.target.value
-                      .split(',')
-                      .map(id => parseInt(id.trim()))
-                      .filter(id => !isNaN(id));
-                    
-                    setSelectedClass({
-                      ...selectedClass,
-                      startingSkills: skillIds
-                    });
-                  }}
-                  className="w-full p-2 border rounded"
-                  disabled={!isAdmin}
-                />
+                <div className="bg-gray-800 text-amber-100 p-4 rounded border border-amber-700">
+                  <span className="text-amber-300 font-medium">Skill IDs: </span>
+                  {selectedClass.startingSkills.join(', ')}
+                </div>
               </div>
             </div>
             
-            {isAdmin && (
-              <div className="mt-6">
-                <SaveButton onClick={handleSave} />
-              </div>
-            )}
-            
-            {!isAdmin && (
-              <div className="mt-6 text-red-500">
-                You need admin privileges to save changes.
-              </div>
-            )}
+            <div className="mt-6 text-amber-400">
+              <p>Classes are hard-coded in the system and cannot be modified.</p>
+            </div>
           </div>
         ) : (
-          <div className="text-gray-500">Select a class from the list {isAdmin ? 'or add a new one' : ''}</div>
+          <div className="text-amber-300">Select a class from the list to view details</div>
         )}
       </div>
     </div>

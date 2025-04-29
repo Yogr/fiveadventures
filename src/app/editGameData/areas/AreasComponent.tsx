@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
+import { getAreas } from '@/app/actions/data-editor';
+import Image from 'next/image';
 
 // Define the Area type based on database schema
 type Area = {
@@ -19,38 +21,30 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Placeholder for fetching areas data
-    // This would be replaced with actual API call in future steps
-    setIsLoading(false);
-    setAreas([
-      {
-        id: 1,
-        name: 'Enchanted Forest',
-        description: 'A mystical forest filled with magical creatures and ancient trees.',
-        image: '/image/area/enchanted-forest.png',
-        level_requirement: 1
-      },
-      {
-        id: 2,
-        name: 'Caverns',
-        description: 'Dark, winding caves filled with treasures and dangers.',
-        image: '/image/area/caverns.png',
-        level_requirement: 3
-      },
-      {
-        id: 3,
-        name: 'Volcanic Wastes',
-        description: 'Scorching hot lands with rivers of lava and fire elementals.',
-        image: '/image/area/volcanic-wastes.png',
-        level_requirement: 10
+    async function loadAreas() {
+      setIsLoading(true);
+      try {
+        const response = await getAreas();
+        if (response.success && response.data) {
+          setAreas(response.data);
+        } else {
+          console.error('Failed to load areas:', response.error);
+        }
+      } catch (error) {
+        console.error('Error loading areas:', error);
+      } finally {
+        setIsLoading(false);
       }
-    ]);
+    }
+    
+    loadAreas();
   }, []);
   
   const handleSave = async () => {
-    // Save changes - would be implemented in future steps
-    console.log('Saving changes to area:', selectedArea);
-    alert('Changes saved successfully!');
+    if (!selectedArea) return;
+    
+    // Need to implement a saveArea function in data-editor.ts
+    alert('Saving area to database is not implemented yet.');
   };
   
   const handleAdd = () => {
@@ -68,7 +62,8 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   const handleDelete = (id: string | number) => {
-    // Delete area
+    // Need to implement a deleteArea function in data-editor.ts
+    // For now, just update the UI
     setAreas(areas.filter(a => a.id !== id));
     if (selectedArea && selectedArea.id === id) {
       setSelectedArea(null);
@@ -76,7 +71,7 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-amber-100">Loading areas from database...</div>;
   }
   
   // Map areas to match the Item interface expected by ListComponent
@@ -91,13 +86,13 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
       <ListComponent
         items={areaItems}
         onSelect={(item) => setSelectedArea(item.area as Area)}
-        onAdd={handleAdd}
-        onDelete={handleDelete}
+        onAdd={isAdmin ? handleAdd : undefined}
+        onDelete={isAdmin ? handleDelete : undefined}
         selectedId={selectedArea?.id}
         isReadOnly={!isAdmin}
       />
       
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 text-amber-100">
         {selectedArea ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">{selectedArea.name}</h2>
@@ -112,7 +107,7 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedArea,
                     name: e.target.value
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input"
                   disabled={!isAdmin}
                 />
               </div>
@@ -125,7 +120,7 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedArea,
                     description: e.target.value
                   })}
-                  className="w-full p-2 border rounded h-24"
+                  className="admin-textarea"
                   disabled={!isAdmin}
                 />
               </div>
@@ -139,13 +134,13 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedArea,
                     level_requirement: parseInt(e.target.value) || 1
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input"
                   disabled={!isAdmin}
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1">Image Path</label>
+                <label className="block text-sm font-medium mb-1">Image Name</label>
                 <input
                   type="text"
                   value={selectedArea.image}
@@ -153,15 +148,21 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedArea,
                     image: e.target.value
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input"
                   disabled={!isAdmin}
                 />
+                <div className="text-xs text-amber-400 mt-1">
+                  Image files should be placed in public/image/area/ (enter just the name without extension)
+                </div>
+                
                 {selectedArea.image && (
-                  <div className="mt-2 border p-2 inline-block">
-                    <img 
-                      src={selectedArea.image} 
-                      alt={selectedArea.name} 
-                      className="h-24 w-48 object-cover"
+                  <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
+                    <Image 
+                      src={`/image/area/${selectedArea.image}.png`} 
+                      alt={selectedArea.name}
+                      width={240}
+                      height={120}
+                      className="h-32 w-56 object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = 'https://via.placeholder.com/240x120?text=No+Image';
@@ -185,7 +186,7 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
             )}
           </div>
         ) : (
-          <div className="text-gray-500">Select an area from the list {isAdmin ? 'or add a new one' : ''}</div>
+          <div className="text-amber-300">Select an area from the list {isAdmin ? 'or add a new one' : ''}</div>
         )}
       </div>
     </div>

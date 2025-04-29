@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
+import { getItems, saveItem, deleteItem } from '@/app/actions/data-editor';
+import Image from 'next/image';
 
 // Define the Item type based on database schema
 type Item = {
@@ -24,62 +26,68 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Placeholder for fetching items data
-    // This would be replaced with actual API call in future steps
-    setIsLoading(false);
-    setItems([
-      {
-        id: 1,
-        name: 'Iron Sword',
-        type: 'Weapon',
-        rarity: 'Common',
-        weapon_type: 'Slashing',
-        base_damage: 5,
-        base_defense: null,
-        effects: {},
-        value: 50,
-        image_url: '/image/weapon/iron_sword.png'
-      },
-      {
-        id: 2,
-        name: 'Leather Armor',
-        type: 'Armor',
-        rarity: 'Common',
-        weapon_type: null,
-        base_damage: null,
-        base_defense: 3,
-        effects: {},
-        value: 45,
-        image_url: '/image/armor/leather.png'
-      },
-      {
-        id: 3,
-        name: 'Fire Amulet',
-        type: 'Trinket',
-        rarity: 'Rare',
-        weapon_type: null,
-        base_damage: null,
-        base_defense: null,
-        effects: { 
-          resistance: { fire: 10 },
-          spell_boost: { fire: 5 }
-        },
-        value: 200,
-        image_url: '/image/trinket/fire_amulet.png'
+    async function loadItems() {
+      setIsLoading(true);
+      try {
+        const response = await getItems();
+        if (response.success && response.data) {
+          setItems(response.data);
+        } else {
+          console.error('Failed to load items:', response.error);
+        }
+      } catch (error) {
+        console.error('Error loading items:', error);
+      } finally {
+        setIsLoading(false);
       }
-    ]);
+    }
+    
+    loadItems();
   }, []);
   
   const handleSave = async () => {
-    // Save changes - would be implemented in future steps
-    console.log('Saving changes to item:', selectedItem);
-    alert('Changes saved successfully!');
+    if (!selectedItem) return;
+    
+    try {
+      // Show optimistic UI - you could add a loading state here
+      
+      const response = await saveItem(selectedItem);
+      
+      if (response.success) {
+        // If item was newly created, update its ID from the database
+        if (typeof selectedItem.id !== 'number' || selectedItem.id > 1000000000) {
+          const savedItem = response.data;
+          
+          // Update the items list with the new item data
+          setItems(items.map(item => 
+            item.id === selectedItem.id ? savedItem : item
+          ));
+          
+          // Update selected item
+          setSelectedItem(savedItem);
+        } else {
+          // Simply refresh the items list
+          const itemsResponse = await getItems();
+          if (itemsResponse.success && itemsResponse.data) {
+            setItems(itemsResponse.data);
+          }
+        }
+        
+        alert('Item saved successfully!');
+      } else {
+        alert(`Error saving item: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('Error in save operation:', error);
+      alert('An unexpected error occurred while saving');
+    }
   };
   
   const handleAdd = () => {
-    // Add new item
+    // Add new item with a temporary ID
+    const tempId = Date.now(); // This will be replaced with DB ID on save
     const newItem: Item = {
-      id: Date.now(), // Temporary ID
+      id: tempId,
       name: 'New Item',
       type: 'Weapon',
       rarity: 'Common',
@@ -95,8 +103,24 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
     setSelectedItem(newItem);
   };
   
-  const handleDelete = (id: string | number) => {
-    // Delete item
+  const handleDelete = async (id: string | number) => {
+    // Only handle numeric IDs - don't try to delete temporary items from DB
+    if (typeof id === 'number' && id < 1000000000) {
+      try {
+        const response = await deleteItem(id);
+        
+        if (!response.success) {
+          alert(`Error deleting item: ${response.error}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Error deleting item:', error);
+        alert('An unexpected error occurred while deleting');
+        return;
+      }
+    }
+    
+    // Update UI
     setItems(items.filter(item => item.id !== id));
     if (selectedItem && selectedItem.id === id) {
       setSelectedItem(null);
@@ -104,7 +128,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-amber-100">Loading items from database...</div>;
   }
   
   // Map items to match the Item interface expected by ListComponent
@@ -125,7 +149,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
         isReadOnly={!isAdmin}
       />
       
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 text-amber-100">
         {selectedItem ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">{selectedItem.name}</h2>
@@ -140,7 +164,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedItem,
                     name: e.target.value
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input w-full"
                   disabled={!isAdmin}
                 />
               </div>
@@ -154,7 +178,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedItem,
                       type: e.target.value
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input w-full"
                     disabled={!isAdmin}
                   >
                     <option value="Weapon">Weapon</option>
@@ -172,7 +196,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedItem,
                       rarity: e.target.value
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input w-full"
                     disabled={!isAdmin}
                   >
                     <option value="Common">Common</option>
@@ -193,7 +217,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedItem,
                       weapon_type: e.target.value || null
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input w-full"
                     disabled={!isAdmin}
                   >
                     <option value="Slashing">Slashing</option>
@@ -215,7 +239,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                         ...selectedItem,
                         base_damage: e.target.value ? parseInt(e.target.value) : null
                       })}
-                      className="w-full p-2 border rounded"
+                      className="admin-input w-full"
                       disabled={!isAdmin}
                     />
                   </div>
@@ -231,7 +255,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                         ...selectedItem,
                         base_defense: e.target.value ? parseInt(e.target.value) : null
                       })}
-                      className="w-full p-2 border rounded"
+                      className="admin-input w-full"
                       disabled={!isAdmin}
                     />
                   </div>
@@ -246,7 +270,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                       ...selectedItem,
                       value: parseInt(e.target.value) || 0
                     })}
-                    className="w-full p-2 border rounded"
+                    className="admin-input w-full"
                     disabled={!isAdmin}
                   />
                 </div>
@@ -261,14 +285,16 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                     ...selectedItem,
                     image_url: e.target.value || null
                   })}
-                  className="w-full p-2 border rounded"
+                  className="admin-input w-full"
                   disabled={!isAdmin}
                 />
                 {selectedItem.image_url && (
                   <div className="mt-2 border p-2 inline-block">
-                    <img 
-                      src={selectedItem.image_url} 
-                      alt={selectedItem.name} 
+                    <Image
+                      src={`/image/${selectedItem.type.toLowerCase()}/${selectedItem.image_url}.png`}
+                      alt={selectedItem.name}
+                      width={128}
+                      height={128}
                       className="h-16 w-16 object-contain"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
@@ -294,7 +320,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                       // Invalid JSON - don't update
                     }
                   }}
-                  className="w-full p-2 border rounded h-48 font-mono text-sm"
+                  className="admin-textarea font-mono text-sm"
                   disabled={!isAdmin}
                 />
               </div>

@@ -20,8 +20,8 @@ export default function AdminMenu() {
   ];
   
   return (
-    <div className="w-64 bg-gray-100 min-h-screen p-4 border-r">
-      <h2 className="text-xl font-bold mb-6 text-center text-blue-800">Game Data Editor</h2>
+    <div className="w-64 bg-amber-950 min-h-screen p-4 border-r border-amber-800">
+      <h2 className="text-xl font-bold mb-6 text-center text-amber-300">Game Data Editor</h2>
       
       <nav>
         <ul className="space-y-2">
@@ -34,8 +34,8 @@ export default function AdminMenu() {
                   href={item.path}
                   className={`block px-4 py-2 rounded transition-colors ${
                     isActive 
-                      ? 'bg-blue-600 text-white font-medium' 
-                      : 'hover:bg-gray-200'
+                      ? 'bg-amber-700 text-amber-100 font-medium shadow-md' 
+                      : 'text-amber-200 hover:bg-amber-900 hover:text-amber-100'
                   }`}
                 >
                   {item.name}
@@ -46,10 +46,10 @@ export default function AdminMenu() {
         </ul>
       </nav>
       
-      <div className="mt-8 pt-4 border-t">
+      <div className="mt-8 pt-4 border-t border-amber-800">
         <Link 
           href="/"
-          className="block px-4 py-2 rounded text-gray-700 hover:bg-gray-200 transition-colors"
+          className="block px-4 py-2 rounded text-amber-300 hover:bg-amber-900 hover:text-amber-100 transition-colors"
         >
           ← Back to Game
         </Link>

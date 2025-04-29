@@ -26,13 +26,13 @@ export default function ListComponent({
   isReadOnly
 }: ListComponentProps) {
   return (
-    <div className="w-64 border-r pr-4">
+    <div className="w-64 border-r border-amber-800 pr-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-medium text-gray-700">Items ({items.length})</h3>
+        <h3 className="font-medium text-amber-300">Items ({items.length})</h3>
         {!isReadOnly && onAdd && (
           <button
             onClick={onAdd}
-            className="bg-blue-600 text-white text-sm px-2 py-1 rounded hover:bg-blue-700 transition-colors"
+            className="bg-amber-700 text-amber-100 text-sm px-2 py-1 rounded hover:bg-amber-600 transition-colors"
             aria-label="Add new item"
           >
             Add New
@@ -42,7 +42,7 @@ export default function ListComponent({
       
       <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
         {items.length === 0 ? (
-          <div className="text-gray-500 text-sm">No items yet.</div>
+          <div className="text-amber-400/70 text-sm">No items yet.</div>
         ) : (
           <ul className="space-y-1">
             {items.map((item) => (
@@ -50,8 +50,8 @@ export default function ListComponent({
                 <button
                   className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                     selectedId === item.id
-                      ? 'bg-blue-100 text-blue-800 font-medium'
-                      : 'hover:bg-gray-100'
+                      ? 'bg-amber-700/70 text-amber-100 font-medium shadow-sm'
+                      : 'text-amber-200 hover:bg-amber-800/70 hover:text-amber-100'
                   }`}
                   onClick={() => onSelect(item)}
                 >
@@ -61,7 +61,7 @@ export default function ListComponent({
                 {!isReadOnly && onDelete && selectedId === item.id && (
                   <button
                     onClick={() => onDelete(item.id)}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 transition-colors"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-400 hover:text-red-300 transition-colors"
                     aria-label={`Delete ${item.name}`}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

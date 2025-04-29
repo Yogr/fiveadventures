@@ -1,8 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { useRouter } from 'next/navigation';
-import type { Adventure, AdventureDecision, Area, Character } from '@/lib/types';
+import type { Adventure, AdventureDecision, Character } from '@/lib/types';
 import { useAdventure } from '../AdventureContext';
 import AdventureDisplay from './AdventureDisplay';
 import DecisionCard from '../DecisionCard';
@@ -10,11 +9,9 @@ import DecisionCard from '../DecisionCard';
 interface AdventureViewProps {
   adventure: Adventure;
   character: Character;
-  area: Area;
 }
 
-const AdventureView = memo(function AdventureView({ adventure, character, area }: AdventureViewProps) {
-  const router = useRouter();
+const AdventureView = memo(function AdventureView({ adventure, character }: AdventureViewProps) {
   const { state, selectDecision, completeAdventure } = useAdventure();
   const { selectedDecision, loading } = state;
   
@@ -36,7 +33,6 @@ const AdventureView = memo(function AdventureView({ adventure, character, area }
         title={adventure.title}
         description={adventure.description}
         imageUrl={adventure.image_url || "default"}
-        areaName={area.name}
       />
       
       {/* Decisions */}

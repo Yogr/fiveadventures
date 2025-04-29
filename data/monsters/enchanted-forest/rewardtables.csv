@@ -1,3 +1,0 @@
-id,name,description,items
-101,"Enchanted Forest Common","Common rewards found in the Enchanted Forest","[{""item_id"":1,""chance"":30},{""item_id"":2,""chance"":25},{""item_id"":3,""chance"":20},{""item_id"":5,""chance"":15},{""item_id"":8,""chance"":10}]"
-102,"Faerie Queen Treasures","Special rewards from defeating the Queen of the Faeries","[{""item_id"":11,""chance"":30},{""item_id"":12,""chance"":25},{""item_id"":13,""chance"":20},{""item_id"":14,""chance"":15},{""item_id"":16,""chance"":10}]"

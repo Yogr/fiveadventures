@@ -32,7 +32,7 @@ export default async function GameDataEditorLayout({
   // and this is enforced again by the server actions for actual data mutations
   
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-amber-900 text-amber-100">
       {children}
     </div>
   );
