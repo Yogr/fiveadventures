@@ -24,7 +24,7 @@ export default async function RootLayout({
   
   // Get user settings if logged in
   if (user) {
-    userId = user.id;
+    userId = user.id as string;
     const settingsResponse = await getUserSettings(userId);
     if (settingsResponse.success) {
       musicEnabled = settingsResponse.data?.musicEnabled || false;
