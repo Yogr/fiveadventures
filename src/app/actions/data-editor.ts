@@ -557,7 +557,7 @@ export async function saveWorldBoss(worldBoss: any) {
   
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from('world_bosses')
+    .from('world_boss')
     .upsert(worldBoss, { onConflict: 'id' })
     .select();
   
@@ -578,7 +578,7 @@ export async function deleteWorldBoss(id: number) {
   
   // Delete the world boss
   const { error } = await supabase
-    .from('world_bosses')
+    .from('world_boss')
     .delete()
     .eq('id', id);
   
@@ -596,7 +596,7 @@ export async function getWorldBosses() {
   
   // Fetch all world bosses from the database
   const { data: worldBosses, error } = await supabase
-    .from('world_bosses')
+    .from('world_boss')
     .select('*')
     .order('id');
   

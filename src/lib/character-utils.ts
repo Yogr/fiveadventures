@@ -327,66 +327,32 @@ export function getItemStatBoosts(item: Item | null): Record<string, number> {
  * @param character The character object
  * @param activeEffects Optional active effects that may modify the character's damage
  */
-export function calculateTotalDamage(character: Character, activeEffects?: Record<string, any>[]): number {
+export function calculateTotalDamage(character: Character, weapon?:Item, activeEffects?: Record<string, any>[]): number {
   let baseDamage = 0;
+
+  console.log('Calculating total damage, weapon is ', weapon);
   
   // If unarmed, use base damage of 5
-  if (!character.equipment?.weapon) {
+  if (!weapon) {
     baseDamage = 5;
   } else {
     // Use weapon's base damage as the starting point
-    baseDamage = character.equipment.weapon.base_damage || 5;
-    
-    // Add stat-based bonuses based on weapon type and character stats
-    const weapon = character.equipment.weapon;
+    baseDamage = weapon.base_damage || 5;
     
     if (weapon.weapon_type === "Slashing" || weapon.weapon_type === "Blunt") {
       // Strength-based weapons: +1 damage per 4 strength points
-      baseDamage += Math.floor(getTotalStrength(character, activeEffects) / 4);
+      baseDamage += Math.floor(getTotalStrength(character, activeEffects) / 2);
     } else if (weapon.weapon_type === "Piercing") {
       // Agility-based weapons: +1 damage per 4 agility points
-      baseDamage += Math.floor(getTotalAgility(character, activeEffects) / 4);
+      baseDamage += Math.floor(getTotalAgility(character, activeEffects) / 2);
     } else if (weapon.weapon_type === "Magic") {
       if (character.class === 'Cleric') {
         // Wisdom-based weapons for Clerics: +1 damage per 4 wisdom points
-        baseDamage += Math.floor(getTotalWisdom(character, activeEffects) / 4);
+        baseDamage += Math.floor(getTotalWisdom(character, activeEffects) / 2);
       } else {
         // Intelligence-based weapons: +1 damage per 4 intelligence points
-        baseDamage += Math.floor(getTotalIntelligence(character, activeEffects) / 4);
+        baseDamage += Math.floor(getTotalIntelligence(character, activeEffects) / 2);
       }
-    }
-    
-    // Add small class-based bonuses
-    switch (character.class) {
-      case 'Warrior':
-        if (weapon.weapon_type === "Slashing" || weapon.weapon_type === "Blunt") {
-          baseDamage += 1; // Warriors get +1 with strength weapons
-        }
-        break;
-      case 'Wizard':
-        if (weapon.weapon_type === "Magic") {
-          baseDamage += 1; // Wizards get +1 with magic weapons
-        }
-        break;
-      case 'Thief':
-        if (weapon.weapon_type === "Piercing") {
-          baseDamage += 1; // Thieves get +1 with piercing weapons
-        }
-        break;
-      case 'Ranger':
-        if (weapon.weapon_type === "Piercing") {
-          baseDamage += 1; // Rangers get +1 with piercing weapons
-        }
-        break;
-      case 'Cleric':
-        if (weapon.weapon_type === "Blunt" || weapon.weapon_type === "Magic") {
-          baseDamage += 1; // Clerics get +1 with blunt or magic weapons
-          // Clerics also get wisdom bonus for Blunt weapons
-          if (weapon.weapon_type === "Blunt") {
-            baseDamage += Math.floor(getTotalWisdom(character, activeEffects) / 4);
-          }
-        }
-        break;
     }
     
     // Add elemental damage if any (reduced impact)
@@ -396,6 +362,8 @@ export function calculateTotalDamage(character: Character, activeEffects?: Recor
         baseDamage += Math.ceil(effects.elemental.damage / 2);
       }
     }
+
+    console.log('Base damage after weapon and stats:', baseDamage);
   }
   
   // Apply active effects that directly modify damage
@@ -417,8 +385,8 @@ export function calculateTotalDamage(character: Character, activeEffects?: Recor
       }
       
       // Special effect: Elemental damage boost
-      if (effect.elemental_boost && character.equipment?.weapon?.effects) {
-        const weaponEffects = character.equipment.weapon.effects as any;
+      if (effect.elemental_boost && weapon?.effects) {
+        const weaponEffects = weapon.effects as any;
         if (weaponEffects.elemental && effect.elemental_boost.type === weaponEffects.elemental.type) {
           baseDamage += effect.elemental_boost.value;
         }
@@ -674,8 +642,8 @@ export function calculateMissChance(attacker: any, defender: any, attackerEffect
  */
 export function calculateCriticalHit(character: Character, weapon?: Item | null, activeEffects?: Record<string, any>[]): { isCritical: boolean; multiplier: number } {
   // Base critical chance from luck
-  let critChance = getTotalLuck(character, activeEffects) * 0.5; // 0.5% per luck point
-  let critMultiplier = 1.5; // Default multiplier
+  let critChance = getTotalLuck(character, activeEffects); // 1% per luck point
+  let critMultiplier = 2; // Default multiplier
   
   // Add weapon critical hit bonuses
   if (weapon?.effects) {
@@ -699,12 +667,11 @@ export function calculateCriticalHit(character: Character, weapon?: Item | null,
     });
   }
   
-  // Cap critical chance between 1% and 50%
-  critChance = Math.min(50, Math.max(1, critChance));
-  
   // Determine if critical hit occurs
   const roll = Math.random() * 100;
   const isCritical = roll <= critChance;
+
+  console.log(`Critical Hit Roll: ${roll} (Chance: ${critChance}%)`);
   
   return {
     isCritical,

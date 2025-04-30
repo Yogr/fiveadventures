@@ -32,14 +32,6 @@ Todo
 - Leaderboards
   - Daily Cron Job to calculate all character gear scores
 
-- Implement 'Dungeons' - Advanced adventures requiring a key
-  - Each elite enemy defeated grants 1/2 a key
-  - First dungeon will use a key called 'Dungeon Key', but eventually, we may have other dungeons that require their own special keys. Lets just do a unique column in user table that signifies the amount of keys they have.
-  - Dungeons have 3 adventures
-  - Only 1 active dungeon per dungeon per character at a time, if we eventually have more key types and dungeon types then characters can have a single unique row for each dungeon ID and character ID.
-  - Eventually we will have more dungeons, so make sure architecture supports dungeon descriptions and metadata as well as dungeon IDs with their own enemies and rewards etc
-  - Charac
-
 
 ------- Soft Launch Game -------------
 

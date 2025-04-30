@@ -112,6 +112,7 @@ export const ROUTES = {
   INVENTORY: '/inventory',
   SHOP: '/shop',
   WORLD_BOSS: '/worldboss',
+  DUNGEON: '/dungeon',
   REWARDS: '/rewards',
   LOGIN: '/login',
   SIGNUP: '/signup'

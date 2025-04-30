@@ -10,7 +10,7 @@ export default function AdventureTracker({
   completedAdventures
 }: AdventureTrackerProps) {
   return (
-    <div className="adventure-tracker mb-6">
+    <div className="adventure-tracker">
       {Array.from({ length: totalAdventures }).map((_, index) => (
         <div key={index} className="flex items-center">
           {index > 0 && <div className="adventure-connector"></div>}

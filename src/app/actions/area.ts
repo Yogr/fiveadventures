@@ -2,24 +2,71 @@
 
 import { unstable_cache } from 'next/cache';
 import type { Area } from '@/lib/types';
-import areasData from '../../../data/areas.json';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentGameDay } from '@/lib/utils';
 import { updateAdventureState } from './adventure-state';
 
-// Get all areas
+// Get all areas from database
 export async function getAreas() {
   try {
-    // Return areas from the JSON file
+    const supabase = await createClient();
+    
+    // Fetch all areas from the database
+    const { data: areas, error } = await supabase
+      .from('areas')
+      .select('*')
+      .eq('is_dungeon', false) // Disclude dungeons
+      .order('id');
+    
+    if (error) {
+      console.error('Error fetching areas from database:', error);
+      return {
+        success: false,
+        error: 'Failed to get areas from database'
+      };
+    }
+    
     return {
       success: true,
-      data: areasData as Area[]
+      data: areas as Area[]
     };
   } catch (error) {
     console.error('Error getting areas:', error);
     return {
       success: false,
       error: 'Failed to get areas'
+    };
+  }
+}
+
+export async function getDungeons() {
+  try {
+    const supabase = await createClient();
+    
+    // Fetch all dungeons from the database
+    const { data: dungeons, error } = await supabase
+      .from('areas')
+      .select('*')
+      .eq('is_dungeon', true) // Include only dungeons
+      .order('id');
+    
+    if (error) {
+      console.error('Error fetching dungeons from database:', error);
+      return {
+        success: false,
+        error: 'Failed to get dungeons from database'
+      };
+    }
+    
+    return {
+      success: true,
+      data: dungeons as Area[]
+    };
+  } catch (error) {
+    console.error('Error getting dungeons:', error);
+    return {
+      success: false,
+      error: 'Failed to get dungeons'
     };
   }
 }
@@ -31,6 +78,15 @@ export const getCachedAreas = unstable_cache(
     return result;
   },
   ['areas'],
+  { revalidate: 86400 } // Cache for 24 hours
+);
+
+export const getCachedDungeons = unstable_cache(
+  async () => {
+    const result = await getDungeons();
+    return result;
+  },
+  ['dungeons'],
   { revalidate: 86400 } // Cache for 24 hours
 );
 

@@ -60,6 +60,8 @@ export interface Database {
           daily_adventure_count: number
           last_played_day: number
           status: string
+          dungeon_keys: number
+          dungeon_key_parts: number
           created_at: string
           updated_at: string
         }
@@ -83,6 +85,8 @@ export interface Database {
           daily_adventure_count?: number
           last_played_day?: number
           status?: string
+          dungeon_keys?: number
+          dungeon_key_parts?: number
           current_adventure_state?: string
           created_at?: string
           updated_at?: string
@@ -107,6 +111,8 @@ export interface Database {
           daily_adventure_count?: number
           last_played_day?: number
           status?: string
+          dungeon_keys?: number
+          dungeon_key_parts?: number
           current_adventure_state?: string
           created_at?: string
           updated_at?: string
@@ -499,6 +505,8 @@ export interface Database {
           description: string
           image: string
           level_requirement: number
+          is_dungeon: boolean
+          dungeon_keys_required: number
           created_at: string
         }
         Insert: {
@@ -507,6 +515,8 @@ export interface Database {
           description: string
           image: string
           level_requirement?: number
+          is_dungeon?: boolean
+          dungeon_keys_required?: number
           created_at?: string
         }
         Update: {
@@ -515,6 +525,8 @@ export interface Database {
           description?: string
           image?: string
           level_requirement?: number
+          is_dungeon?: boolean
+          dungeon_keys_required?: number
           created_at?: string
         }
         Relationships: []
@@ -768,6 +780,73 @@ export interface Database {
             foreignKeyName: "character_adventures_item_gained_id_fkey"
             columns: ["item_gained_id"]
             referencedRelation: "items"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      character_dungeons: {
+        Row: {
+          id: string
+          character_id: string
+          area_id: number
+          current_state: string
+          current_adventure_id: number | null
+          decision_id: number | null
+          outcome_id: number | null
+          combat_id: string | null
+          current_adventure_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          character_id: string
+          area_id: number
+          current_state?: string
+          current_adventure_id?: number | null
+          decision_id?: number | null
+          outcome_id?: number | null
+          combat_id?: string | null
+          current_adventure_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          character_id?: string
+          area_id?: number
+          current_state?: string
+          current_adventure_id?: number | null
+          decision_id?: number | null
+          outcome_id?: number | null
+          combat_id?: string | null
+          current_adventure_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_dungeons_character_id_fkey"
+            columns: ["character_id"]
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_dungeons_area_id_fkey"
+            columns: ["area_id"]
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_dungeons_current_adventure_id_fkey"
+            columns: ["current_adventure_id"]
+            referencedRelation: "adventures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_dungeons_combat_id_fkey"
+            columns: ["combat_id"]
+            referencedRelation: "combat"
             referencedColumns: ["id"]
           }
         ]

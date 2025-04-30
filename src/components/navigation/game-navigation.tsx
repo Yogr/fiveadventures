@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { GiSwordman } from 'react-icons/gi';
+import { GiSwordman, GiDragonHead, GiDungeonGate } from 'react-icons/gi';
 import { HiShoppingBag, HiExclamation } from 'react-icons/hi';
-import { GiDragonHead } from 'react-icons/gi';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
@@ -15,7 +14,7 @@ import { getCharacterById } from '@/app/actions/character';
 import { signOut } from '@/app/actions/auth';
 
 interface GameNavigationProps {
-  activeTab: 'adventure' | 'shop' | 'worldboss';
+  activeTab: 'adventure' | 'shop' | 'worldboss' | 'dungeon';
   currentDay: number;
   character: Character;
   user?: {
@@ -175,6 +174,20 @@ export default function GameNavigation({
               </div>
             )}
           </div>
+          
+          {/* Only show dungeon button if character has dungeon keys */}
+          {character.dungeon_keys > 0 && (
+            <Link 
+              href={ROUTES.DUNGEON}
+              className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium flex items-center gap-1.5 ${
+                activeTab === 'dungeon' 
+                  ? 'bg-gradient-to-b from-amber-600 to-amber-800 border border-amber-500 shadow-md' 
+                  : 'bg-gradient-to-b from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 border border-amber-400 shadow-sm hover:shadow-md'
+              }`}
+            >
+              <GiDungeonGate className="text-xs" /> Dungeon
+            </Link>
+          )}
         </div>
         
         {/* Login/Logout button - right section */}

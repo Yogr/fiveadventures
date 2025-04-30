@@ -12,20 +12,20 @@ import { COOKIE_NAMES } from '@/lib/constants';
 import { ensureUserRecordExists } from '@/app/actions/auth';
 
 // Helper function to get default weapon based on character class
-function getDefaultWeapon(characterClass: CharacterClass): string {
+function getDefaultWeapon(characterClass: CharacterClass): number {
   switch (characterClass) {
     case 'Warrior':
-      return 'Iron Sword';
+      return 1;
     case 'Thief':
-      return 'Dagger';
+      return 2;
     case 'Cleric':
-      return 'Iron Mace';
+      return 5;
     case 'Ranger':
-      return 'Short Bow';
+      return 3;
     case 'Wizard':
-      return 'Apprentice Wand';
+      return 7;
     default:
-      return 'Iron Sword'; // Default fallback
+      return 1; // Default fallback
   }
 }
 
@@ -121,38 +121,17 @@ export async function createCharacter({
     // Get default equipment based on character class
     // All characters get Leather Armor, plus a class-specific weapon
     const defaultEquipment = {
-      armor: "Leather Armor",
+      armor: 11,
       weapon: getDefaultWeapon(characterClass)
     };
-
-    // Get item IDs from the database
-    const { data: armorData, error: armorError } = await supabase
-      .from('items')
-      .select('id')
-      .eq('name', defaultEquipment.armor)
-      .single();
-    
-    if (armorError) {
-      console.error('Error fetching armor data:', armorError);
-    }
-
-    const { data: weaponData, error: weaponError } = await supabase
-      .from('items')
-      .select('id')
-      .eq('name', defaultEquipment.weapon)
-      .single();
-    
-    if (weaponError) {
-      console.error('Error fetching weapon data:', weaponError);
-    }
 
     // Create equipment record for the character with default items
     const { error: equipmentError } = await supabase
       .from('character_equipment')
       .insert({
         character_id: characterId,
-        weapon_id: weaponData?.id || null,
-        armor_id: armorData?.id || null,
+        weapon_id: defaultEquipment.weapon,
+        armor_id: defaultEquipment.armor,
         updated_at: new Date().toISOString()
       });
     
@@ -180,27 +159,23 @@ export async function createCharacter({
 // Get character by ID
 export async function getCharacterById(characterId: string): Promise<ApiResponse<Character>> {
   try {
-    const supabase = await createClient();
-
-    // Get character data
-    const { data: character, error } = await supabase
-      .from('characters')
-      .select('*')
-      .eq('id', characterId)
-      .single();
+    // Use the getFullCharacterById function from character-service
+    // which includes populated equipment and inventory with cached item data
+    const { data: { user } } = await (await createClient()).auth.getUser();
     
-    if (error || !character) {
+    // Get character with full equipment data
+    const { success, data: character, error } = await import('@/lib/character-service')
+      .then(module => module.getFullCharacterById(characterId));
+    
+    if (!success || !character) {
       return {
         success: false,
-        error: 'Character not found'
+        error: error || 'Character not found'
       };
     }
     
     // If character has a linked user_id, check if the current user is authorized to access it
     if (character.user_id) {
-      // Get the current authenticated user
-      const { data: { user } } = await supabase.auth.getUser();
-      
       // If no authenticated user or user ID doesn't match, deny access
       if (!user?.id || user.id !== character.user_id) {
         return {
@@ -210,97 +185,9 @@ export async function getCharacterById(characterId: string): Promise<ApiResponse
       }
     }
     
-    // Get character equipment
-    const { data: equipment, error: equipmentError } = await supabase
-      .from('character_equipment')
-      .select(`
-        *,
-        weapon:items!character_equipment_weapon_id_fkey(*),
-        helmet:items!character_equipment_helmet_id_fkey(*),
-        armor:items!character_equipment_armor_id_fkey(*),
-        trinket:items!character_equipment_trinket_id_fkey(*)
-      `)
-      .eq('character_id', characterId)
-      .single();
-    
-    // Get character inventory
-    const { data: inventory, error: inventoryError } = await supabase
-      .from('character_inventory')
-      .select(`
-        *,
-        item:item_id(*)
-      `)
-      .eq('character_id', characterId);
-    
-    // Check if we need to reset daily adventure count
-    const currentDay = getCurrentGameDay();
-    if (character.last_played_day < currentDay) {
-      // Reset daily values
-      const { error: updateError } = await supabase
-        .from('characters')
-        .update({
-          daily_adventure_count: 0,
-          current_hitpoints: character.max_hitpoints,
-          current_energy: character.max_energy,
-          last_played_day: currentDay,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', characterId);
-      
-      if (updateError) {
-        console.error('Error resetting daily values:', updateError);
-        // Continue anyway, not critical
-      }
-      
-      // Update local character object
-      character.daily_adventure_count = 0;
-      character.current_hitpoints = character.max_hitpoints;
-      character.current_energy = character.max_energy;
-      character.last_played_day = currentDay;
-    }
-
-    // Handle equipment data
-    let characterEquipment: CharacterEquipment;
-    
-    if (equipment) {
-      // Use the equipment data from the database
-      characterEquipment = {
-        id: equipment.id,
-        character_id: equipment.character_id,
-        weapon_id: equipment.weapon_id,
-        helmet_id: equipment.helmet_id,
-        armor_id: equipment.armor_id,
-        trinket_id: equipment.trinket_id,
-        weapon: equipment.weapon || null,
-        helmet: equipment.helmet || null,
-        armor: equipment.armor || null,
-        trinket: equipment.trinket || null,
-        updated_at: equipment.updated_at
-      };
-    } else {
-      // Create a default equipment object if none was found
-      characterEquipment = {
-        id: generateId(),
-        character_id: characterId,
-        weapon_id: null,
-        helmet_id: null,
-        armor_id: null,
-        trinket_id: null,
-        weapon: null,
-        helmet: null,
-        armor: null,
-        trinket: null,
-        updated_at: new Date().toISOString()
-      };
-    }
-    
     return {
       success: true,
-      data: {
-        ...character,
-        equipment: characterEquipment,
-        inventory: inventory || []
-      }
+      data: character
     };
   } catch (err) {
     console.error('Unexpected error getting character:', err);
@@ -593,7 +480,7 @@ export async function getCharacterForUser(): Promise<ApiResponse<Character>> {
     
     
     console.log('getCharacterForUser: User ID:', userId);
-    if (userId) {
+    if (userId && userId != 'Cookie') {
       // User is authenticated
       // Try to get character by user ID
       const userCharacterResponse = await getCharacterByUserId(userId);

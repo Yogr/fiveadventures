@@ -109,12 +109,9 @@ export type RewardItem = Database['public']['Tables']['reward_items']['Row'] & {
 };
 
 // Area Types
-export type Area = {
-  id: number;
-  name: string;
-  description: string;
-  image?: string;
-  level_requirement: number;
+export type Area = Database['public']['Tables']['areas']['Row'] & {
+  is_dungeon: boolean;
+  dungeon_keys_required: number;
 };
 
 // Adventure Types
@@ -138,6 +135,24 @@ export type CharacterAdventure = Database['public']['Tables']['character_adventu
   decision?: AdventureDecision | null;
   outcome?: AdventureOutcome | null;
   item_gained?: Item | null;
+};
+
+// Dungeon Types
+export type CharacterDungeon = Database['public']['Tables']['character_dungeons']['Row'] & {
+  area: Area;
+  adventure?: Adventure | null;
+  decision?: AdventureDecision | null;
+  outcome?: AdventureOutcome | null;
+  combat?: Combat | null;
+};
+
+export type DungeonState = {
+  currentArea: Area | null;
+  currentAdventure: Adventure | null;
+  selectedDecision: AdventureDecision | null;
+  outcome: AdventureOutcome | null;
+  adventureCount: number;
+  currentCombat: Combat | null;
 };
 
 // World Boss Types

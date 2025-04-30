@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import type { Character } from '@/lib/types';
+import DungeonKeyDisplay from './dungeon-key-display';
 import { getRequiredExperience, getLevelFromExperience } from '@/lib/utils';
 import { formatNumber } from '@/lib/utils';
 import { getTotalMaxHitpoints, getTotalMaxEnergy } from '@/lib/character-utils';
@@ -34,17 +35,16 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
   const energyPercentage = (character.current_energy / totalMaxEnergy) * 100;
   
   return (
-    <div className="bg-gradient-to-b from-yellow-950 to-black p-2 md:p-3 rounded-lg relative border-2 border-amber-900 border-t-amber-700 border-l-amber-700">
+    <div className="bg-gradient-to-b from-yellow-950 to-black px-2 pt-2 pb-1 md:px-3 md:pt-3 md:pb-1 rounded-lg relative border-2 border-amber-900 border-t-amber-700 border-l-amber-700">
       <div className="flex justify-around items-start">
         {/* Left side with avatar and name */}
         <div className="flex flex-col items-center mr-2">
           {/* Character name */}
           <h3 className="text-base md:text-lg font-medium text-amber-200 mb-1 self-start">{character.name}</h3>
           
-
           <button 
             onClick={() => { playInventoryOpenSound(); setShowDetailsModal(true) }}
-            className="h-12  w-12 flex items-center justify-center self-center"
+            className="h-12 w-12 flex items-center justify-center self-center"
             aria-label="Character"
           >
             {/* Character avatar */}
@@ -101,7 +101,7 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
           </div>
           
           {/* XP Bar - combined label and bar */}
-          <div>
+          <div className="mb-1">
             <div className="flex items-center h-3.5 md:h-4 relative">
               <span className="absolute left-1 z-10 text-white font-medium">XP</span>
               <span className="absolute right-1 z-10 text-white font-medium">
@@ -115,11 +115,20 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
               </div>
             </div>
           </div>
+          
+          {/* Adventure Tracker - placed right after XP bar */}
+          <div className="flex justify-center scale-75 -mb-4">
+            <AdventureTracker 
+              totalAdventures={MAX_ADVENTURES_PER_DAY} 
+              completedAdventures={character.daily_adventure_count} 
+            />
+          </div>
         </div>
         
         {/* Right side with gold and inventory */}
-        <div className="flex flex-col justify-center ml-1">
-          <div className="bg-amber-900 px-1.5 py-1 rounded-md flex items-center mb-1">
+        <div className="flex flex-col justify-start ml-1">
+          {/* Gold display */}
+          <div className="bg-amber-900 px-1.5 py-0.5 rounded-md flex items-center mb-1">
             {/* Gold coin placeholder - will be replaced with actual image */}
             <div className="w-4 h-4 mr-1 flex items-center justify-center">
               <Image
@@ -133,10 +142,15 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
             <span className="text-yellow-400 font-light">{formatNumber(character.gold)}</span>
           </div>
           
+          {/* Dungeon keys display - always show */}
+          <div className="bg-amber-900 px-1.5 py-0.5 rounded-md flex items-center mb-1">
+            <DungeonKeyDisplay character={character} />
+          </div>
+          
           {/* Inventory button */}
           <button 
             onClick={() => { playInventoryOpenSound(); setShowDetailsModal(true) }}
-            className="h-12  w-12 flex items-center justify-center self-center"
+            className="h-10 w-10 flex items-center justify-center self-center mt-1"
             aria-label="Inventory"
           >
             <Image
@@ -148,14 +162,6 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
             />
           </button>
         </div>
-      </div>
-      
-      {/* Adventure Tracker */}
-      <div className="flex justify-center scale-75 origin-top -mb-6">
-        <AdventureTracker 
-          totalAdventures={MAX_ADVENTURES_PER_DAY} 
-          completedAdventures={character.daily_adventure_count} 
-        />
       </div>
       
       {/* Character Details Modal */}

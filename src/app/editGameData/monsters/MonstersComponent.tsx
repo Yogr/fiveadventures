@@ -330,7 +330,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
                   <label className="block text-sm font-medium mb-1">Reward Table ID</label>
                   <input
                     type="number"
-                    value={selectedMonster.reward_table_id || ''}
+                    value={selectedMonster.reward_table_id !== null && selectedMonster.reward_table_id !== undefined ? selectedMonster.reward_table_id : ''}
                     onChange={(e) => setSelectedMonster({
                       ...selectedMonster,
                       reward_table_id: e.target.value ? parseInt(e.target.value) : null

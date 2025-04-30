@@ -5,6 +5,7 @@ import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
 import { getAreas, saveArea, deleteArea } from '@/app/actions/data-editor';
 import Image from 'next/image';
+import next from 'next';
 
 // Define the Area type based on database schema
 type Area = {
@@ -13,6 +14,8 @@ type Area = {
   description: string;
   image: string;
   level_requirement: number;
+  is_dungeon: boolean;
+  dungeon_keys_required: number;
 };
 
 export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
@@ -79,13 +82,17 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
   };
   
   const handleAdd = () => {
+    const nextHighestId = areas.reduce((max, area) => Math.max(max, area.id), 0) + 1;
+
     // Add new area
     const newArea: Area = {
-      id: Date.now(), // Temporary ID
+      id: nextHighestId,
       name: 'New Area',
       description: 'Description of new area',
       image: '',
-      level_requirement: 1
+      level_requirement: 1,
+      is_dungeon: false,
+      dungeon_keys_required: 0
     };
     
     setAreas([...areas, newArea]);
@@ -214,6 +221,43 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
                         target.src = 'https://via.placeholder.com/240x120?text=No+Image';
                       }}
                     />
+                  </div>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Dungeon Settings</label>
+                <div className="flex items-center mb-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedArea.is_dungeon}
+                    onChange={(e) => setSelectedArea({
+                      ...selectedArea,
+                      is_dungeon: e.target.checked
+                    })}
+                    className="admin-checkbox mr-2"
+                    disabled={!isAdmin}
+                  />
+                  <span>Is Dungeon</span>
+                </div>
+                
+                {selectedArea.is_dungeon && (
+                  <div className="ml-6 mt-2">
+                    <label className="block text-sm font-medium mb-1">Dungeon Keys Required</label>
+                    <input
+                      type="number"
+                      value={selectedArea.dungeon_keys_required}
+                      onChange={(e) => setSelectedArea({
+                        ...selectedArea,
+                        dungeon_keys_required: parseInt(e.target.value) || 0
+                      })}
+                      className="admin-input w-20"
+                      min="0"
+                      disabled={!isAdmin}
+                    />
+                    <div className="text-xs text-amber-400 mt-1">
+                      Number of dungeon keys required to enter this dungeon
+                    </div>
                   </div>
                 )}
               </div>

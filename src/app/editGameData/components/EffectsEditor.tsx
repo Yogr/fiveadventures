@@ -49,6 +49,31 @@ function objectToEffectsArray(effectsObj: any): Effect[] {
   }));
 }
 
+// Add any unknown effect types to the EFFECT_TYPES array
+function addCustomEffectTypes(effects: Effect[]) {
+  effects.forEach(effect => {
+    const existingEffectType = EFFECT_TYPES.find(et => et.value === effect.type);
+    if (!existingEffectType) {
+      // Create a capitalized label from the effect type
+      const label = effect.type
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, char => char.toUpperCase());
+      
+      // Determine the type based on the value
+      const valueType = typeof effect.value === 'number' ? 'number' : 
+                       typeof effect.value === 'boolean' ? 'checkbox' : 'text';
+      
+      // Add the custom effect type
+      EFFECT_TYPES.push({
+        value: effect.type,
+        label,
+        type: valueType,
+        description: `Custom effect: ${label}`
+      });
+    }
+  });
+}
+
 // Convert an array of effects back to an object
 function effectsArrayToObject(effects: Effect[]): any {
   return effects.reduce((obj, effect) => {
@@ -68,13 +93,18 @@ export default function EffectsEditor({ effects, onChange, disabled = false }: E
   
   // Initialize effects array from effects object
   useEffect(() => {
-    setEffectsArray(objectToEffectsArray(effects));
+    const effectsArr = objectToEffectsArray(effects);
+    
+    // Add any custom effect types that might not be in our predefined list
+    addCustomEffectTypes(effectsArr);
+    
+    setEffectsArray(effectsArr);
   }, [effects]);
   
   // Add a new empty effect
   const handleAddEffect = () => {
     // Default to first effect type if available
-    const defaultType = EFFECT_TYPES && EFFECT_TYPES.length > 0 ? EFFECT_TYPES[0].value : '';
+    const defaultType = EFFECT_TYPES && EFFECT_TYPES[0] ? EFFECT_TYPES[0].value : '';
     const defaultValue = 0;
     
     setEffectsArray([...effectsArray, { type: defaultType, value: defaultValue }]);
@@ -182,20 +212,35 @@ export default function EffectsEditor({ effects, onChange, disabled = false }: E
                   
                   <div>
                     <label className="block text-xs font-medium mb-1 text-amber-300">Value</label>
-                    <input
-                      type={effectTypeInfo?.type || 'number'}
-                      value={typeof effect.value === 'boolean' ? (effect.value ? 'true' : 'false') : effect.value}
-                      onChange={(e) => {
-                        // Convert to number if it's a number type
-                        const value = effectTypeInfo?.type === 'number' 
-                          ? (parseFloat(e.target.value) || 0) 
-                          : e.target.value;
-                        
-                        handleUpdateEffect(index, 'value', value);
-                      }}
-                      className="admin-input w-full text-sm"
-                      disabled={disabled}
-                    />
+                    {effectTypeInfo?.type === 'checkbox' ? (
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(effect.value)}
+                          onChange={(e) => handleUpdateEffect(index, 'value', e.target.checked)}
+                          className="h-4 w-4 border-amber-300 rounded bg-gray-700 mr-2"
+                          disabled={disabled}
+                        />
+                        <span className="text-sm text-amber-200">
+                          {Boolean(effect.value) ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                    ) : (
+                      <input
+                        type={effectTypeInfo?.type || 'number'}
+                        value={String(effect.value)}
+                        onChange={(e) => {
+                          // Convert to number if it's a number type
+                          const value = effectTypeInfo?.type === 'number' 
+                            ? (parseFloat(e.target.value) || 0) 
+                            : e.target.value;
+                          
+                          handleUpdateEffect(index, 'value', value);
+                        }}
+                        className="admin-input w-full text-sm"
+                        disabled={disabled}
+                      />
+                    )}
                   </div>
                   
                   {effectTypeInfo && (

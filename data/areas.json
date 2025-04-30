@@ -4,55 +4,80 @@
     "name": "Enchanted Forest",
     "description": "A mystical forest filled with ancient trees, magical creatures, and hidden treasures.",
     "level_requirement": 1,
-    "image": "enchanted-forest"
+    "image": "enchanted-forest",
+    "is_dungeon": false,
+    "dungeon_keys_required": 0
   },
   {
     "id": 2,
     "name": "Caverns",
     "description": "A vast network of underground passages with glowing crystals, mysterious echoes, and creatures that have adapted to life without sunlight.",
     "level_requirement": 5,
-    "image": "caverns"
+    "image": "caverns",
+    "is_dungeon": false,
+    "dungeon_keys_required": 0
   },
   {
     "id": 3,
     "name": "Catacombs",
     "description": "Ancient burial chambers that wind deep beneath the earth, filled with forgotten history, restless spirits, and treasures left with the dead.",
     "level_requirement": 10,
-    "image": "catacombs"
+    "image": "catacombs",
+    "is_dungeon": false,
+    "dungeon_keys_required": 0
   },
   {
     "id": 4,
     "name": "Volcanic Wastes",
     "description": "A hellish landscape of lava flows and ash clouds. Extremely dangerous but rewarding for brave adventurers.",
     "level_requirement": 15,
-    "image": "volcanic-wastes"
+    "image": "volcanic-wastes",
+    "is_dungeon": false,
+    "dungeon_keys_required": 0
   },
   {
     "id": 5,
     "name": "Drakkesh Fort",
     "description": "A massive fortress built into the side of a mountain, once home to a mighty military force. Now overrun with bandits and mercenaries guarding stolen treasures.",
     "level_requirement": 20,
-    "image": "drakkesh-fort"
+    "image": "drakkesh-fort",
+    "is_dungeon": false,
+    "dungeon_keys_required": 0
   },
   {
     "id": 6,
     "name": "Oomshru Kingdom",
     "description": "The hidden realm of the Oomshru, an ancient race with advanced magic and technology. Their cities are marvels of crystal and light, but they don't welcome outsiders.",
     "level_requirement": 25,
-    "image": "oomshru-kingdom"
+    "image": "oomshru-kingdom",
+    "is_dungeon": false,
+    "dungeon_keys_required": 0
   },
   {
     "id": 7,
     "name": "Ancient Ruins",
     "description": "The remains of a once-great civilization, now overrun with traps and guardians protecting forgotten treasures.",
     "level_requirement": 30,
-    "image": "ancient-ruins"
+    "image": "ancient-ruins",
+    "is_dungeon": false,
+    "dungeon_keys_required": 0
   },
   {
     "id": 8,
     "name": "Abyssal Realm",
     "description": "A twisted dimension where reality itself is warped. Strange creatures of immense power roam freely, and the laws of nature don't apply. Only the most powerful adventurers dare enter.",
     "level_requirement": 40,
-    "image": "abyssal-realm"
+    "image": "abyssal-realm",
+    "is_dungeon": false,
+    "dungeon_keys_required": 0
+  },
+  {
+    "id": 9,
+    "name": "Ancient Crypt",
+    "description": "A forgotten burial site of ancient kings. The air is thick with magic and danger lurks around every corner. Monsters within scale to match your power.",
+    "level_requirement": 1,
+    "image": "ancient-crypt",
+    "is_dungeon": true,
+    "dungeon_keys_required": 1
   }
 ]

@@ -12,6 +12,13 @@ import type {
 import { getCharacterById } from './character';
 import { getPrimaryStat, generateId } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/server';
+import { 
+  getCachedItemById, 
+  getCachedMonsterById,
+  getCachedSkillById,
+  getCachedSkills
+} from '@/lib/game-data-service';
+import { processDungeonKeyParts } from './dungeon';
 import { updateCombatEffects, incrementCombatTurn, applySkillEffect, applyMonsterAbilityEffect } from './effect-helpers';
 import { executeSkill, processActiveEffects } from './skill-utils';
 import {
@@ -34,11 +41,11 @@ export async function getCombat(
     console.log('Combat: Getting combat data for ID:', combatId);
     const supabase = await createClient();
     
+    // First get basic combat data without joined monster (which we'll fetch with cache)
     const { data, error } = await supabase
       .from('combat')
       .select(`
         *,
-        monster:monster_id(*),
         player_effects,
         enemy_effects
       `)
@@ -53,12 +60,30 @@ export async function getCombat(
       };
     }
     
+    // Now fetch the monster data from cache
+    if (data.monster_id) {
+      const { success: monsterSuccess, data: monsterData } = await getCachedMonsterById(data.monster_id);
+      if (monsterSuccess && monsterData) {
+        // Add the monster data to the combat object
+        data.monster = monsterData;
+      }
+    }
+    
     console.log('Combat: Retrieved combat data:', {
       id: data.id,
       is_completed: data.is_completed,
       is_victory: data.is_victory,
       current_turn: data.current_turn || 1
     });
+    
+    // Now fetch the monster data from cache
+    if (data.monster_id) {
+      const { success: monsterSuccess, data: monsterData } = await getCachedMonsterById(data.monster_id);
+      if (monsterSuccess && monsterData) {
+        // Add the monster data to the combat object
+        data.monster = monsterData;
+      }
+    }
     
     return {
       success: true,
@@ -279,12 +304,9 @@ export async function startCombatTurn(
     // Calculate character damage based on action
     if (action === 'attack') {
       // Basic attack
-      // Get character's weapon
-      const { data: weaponEquipment, error: equipmentError } = await supabase
-        .from('character_equipment')
-        .select('*, weapon:weapon_id(*)')
-        .eq('character_id', character.id)
-        .single();
+      // The character object already has fully populated equipment data from the enhanced character service
+      // No need to fetch equipment again - it's already cached and included in the character object
+      const weaponEquipment = character.equipment;
       
       // Check if monster is a boss
       const isBoss = monster.is_elite === true || monster.is_boss === true;
@@ -293,15 +315,20 @@ export async function startCombatTurn(
       const itemEffects = await processItemEffects(character, monster, isBoss);
       
       // Calculate total damage using the same function as in the character display
-      let baseDamage = calculateTotalDamage(character);
+      let baseDamage = calculateTotalDamage(character, weaponEquipment?.weapon || undefined);
+
+      console.log('Combat: Base damage calculated:', baseDamage);
       
       // Add randomness (±20%)
       const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
       characterDamageDealt = Math.floor(baseDamage * randomFactor);
+
+      console.log(`Combat: Character basic attack - Base damage: ${baseDamage}, Random factor: ${randomFactor}, Damage dealt: ${characterDamageDealt}`);
       
       // Apply monster defense (reduced impact) unless we have ignore defense effect
       if (!itemEffects.ignoreDefense) {
         characterDamageDealt = Math.max(1, characterDamageDealt - Math.floor(monster.defense / 3));
+        console.log(`Combat: Monster defense applied - Damage reduced to: ${characterDamageDealt}, monster defense: ${monster.defense}`);
       } else {
         combatLog.push(`${character.name}'s attack ignores armor!`);
       }
@@ -309,13 +336,20 @@ export async function startCombatTurn(
       // Check for critical hit using character's weapon
       const criticalHit = calculateCriticalHit(
         character, 
-        weaponEquipment?.weapon || null
+        weaponEquipment?.weapon || undefined
       );
       
       // Apply critical hit if it occurs
       if (criticalHit.isCritical) {
         characterDamageDealt = Math.floor(characterDamageDealt * criticalHit.multiplier);
         combatLog.push(`Critical hit! Damage increased to ${characterDamageDealt}.`);
+      }
+
+      // Add elemental damage if applicable
+      if (itemEffects.elementalDamage > 0) {
+        const elementalDamage = itemEffects.elementalDamage;
+        characterDamageDealt += elementalDamage;
+        combatLog.push(`${itemEffects.elementalType || 'Elemental'} damage adds ${elementalDamage} additional damage.`);
       }
       
       // Check for triple strike from HeroicStrike effect
@@ -325,20 +359,6 @@ export async function startCombatTurn(
           characterDamageDealt = Math.floor(characterDamageDealt * 3);
           combatLog.push(`Heroic Strike activated! Triple damage: ${characterDamageDealt}.`);
         }
-      }
-      
-      // Apply boss damage multiplier if applicable
-      if (isBoss && itemEffects.damageMultiplier > 1.0) {
-        const oldDamage = characterDamageDealt;
-        characterDamageDealt = Math.floor(characterDamageDealt * itemEffects.damageMultiplier);
-        combatLog.push(`Boss damage bonus applied! Damage increased from ${oldDamage} to ${characterDamageDealt}.`);
-      }
-      
-      // Add elemental damage if applicable
-      if (itemEffects.elementalDamage > 0) {
-        const elementalDamage = itemEffects.elementalDamage;
-        characterDamageDealt += elementalDamage;
-        combatLog.push(`${itemEffects.elementalType || 'Elemental'} damage adds ${elementalDamage} additional damage.`);
       }
       
       console.log(`Combat: Character basic attack - Base damage: ${baseDamage}, Final damage: ${characterDamageDealt}`);
@@ -540,6 +560,15 @@ export async function startCombatTurn(
       
       // Add to combat log
       combatLog.push(`${monster.name} was defeated!`);
+      
+      // Check if monster is elite and process dungeon key parts
+      if (monster.is_elite) {
+        console.log('Combat: Elite monster defeated, processing dungeon key parts');
+        const dungeonKeyResult = await processDungeonKeyParts(character.id, true, combatLog);
+        if (!dungeonKeyResult.success) {
+          console.error('Error processing dungeon key parts:', dungeonKeyResult.error);
+        }
+      }
       
       console.log('Combat: Monster defeated - processing complete victory flow');
       await supabase
@@ -853,7 +882,6 @@ export async function getActiveCharacterCombat(
       .from('combat')
       .select(`
         *,
-        monster:monster_id(*),
         player_effects,
         enemy_effects
       `)
@@ -925,34 +953,42 @@ export async function getCharacterSkills(
       level_required_lte: character.level
     });
     
-    const { data: classSkills, error: skillsError } = await supabase
-      .from('skills')
-      .select('*')
-      .eq('class', character.class)
-      .lte('level_required', character.level);
+    // Use cached skills from the game data service
+    const { success: skillsSuccess, data: allSkills } = await getCachedSkills();
     
-    if (skillsError) {
-      console.error('getCharacterSkills: Error getting skills:', skillsError);
+    if (!skillsSuccess || !allSkills) {
       return {
         success: false,
-        error: 'Failed to get skills'
+        error: 'Failed to get skills from cache'
       };
     }
     
+    // Filter skills by class and level requirement
+    const classSkills = allSkills.filter(
+      (skill: any) => skill.class === character.class && (skill.level_required || 1) <= character.level
+    );
+    
     console.log('getCharacterSkills: Found class skills:', {
       count: classSkills?.length || 0,
-      skills: classSkills?.map(s => `${s.name} (level ${s.level_required})`) || []
+      skills: classSkills?.map((s: any) => `${s.name} (level ${s.level_required || 1})`) || []
     });
     
     
     console.log('getCharacterSkills: Returning combined skills data:', {
       totalSkills: classSkills.length,
-      skillNames: classSkills.map(s => s.name)
+      skillNames: classSkills.map((s: Skill) => s.name)
     });
+    
+    // Add learned and level properties to match the expected return type
+    const skillsWithLearned = classSkills.map((skill: Skill) => ({
+      ...skill,
+      learned: true,
+      level: 1
+    })) as Array<Skill & { learned: boolean; level: number }>;
     
     return {
       success: true,
-      data: classSkills
+      data: skillsWithLearned
     };
   } catch (err) {
     console.error('Unexpected error getting character skills:', err);
