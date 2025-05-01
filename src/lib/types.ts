@@ -57,6 +57,7 @@ export type SkillEffect = {
 // Monster Types
 export type Monster = Database['public']['Tables']['monsters']['Row'] & {
   is_elite?: boolean;
+  level?: number; // Monster level for calculating combat stats
 };
 
 export type MonsterAbility = {

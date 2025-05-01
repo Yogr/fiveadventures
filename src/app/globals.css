@@ -265,11 +265,22 @@ body {
   animation: hit-enemy 0.5s ease-in-out;
 }
 
+@keyframes floatUp {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-30px); opacity: 0; }
+}
+
+@keyframes pulsate {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
 .damage-number {
   position: absolute;
   font-weight: bold;
   font-size: 1.25rem;
-  color: #ff4d4d;
+  color: #ff4d4d; /* Red */
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
@@ -284,7 +295,7 @@ body {
   position: absolute;
   font-weight: bold;
   font-size: 1.25rem;
-  color: #4dff4d;
+  color: #4dff4d; /* Bright Green */
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
@@ -294,7 +305,47 @@ body {
   position: absolute;
   font-weight: bold;
   font-size: 1.25rem;
-  color: #ffff4d;
+  color: #ffff4d; /* Yellow */
+  animation: floatUp 1s ease-out forwards;
+  z-index: 10;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.dodge-text {
+  position: absolute;
+  font-weight: bold;
+  font-size: 1.5rem; /* Slightly larger */
+  color: #ffff4d; /* Yellow */
+  animation: floatUp 1s ease-out forwards, pulsate 0.3s ease-in-out 2;
+  z-index: 10;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.crit-text {
+  position: absolute;
+  font-weight: bold;
+  font-size: 1.5rem; /* Larger */
+  color: #ff8c00; /* Orange */
+  animation: floatUp 1s ease-out forwards, pulsate 0.3s ease-in-out 2;
+  z-index: 10;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.poison-text {
+  position: absolute;
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: #00b300; /* Dark Green */
+  animation: floatUp 1s ease-out forwards;
+  z-index: 10;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.burn-text {
+  position: absolute;
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: #ff6600; /* Orange-Red */
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);

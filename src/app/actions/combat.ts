@@ -30,7 +30,8 @@ import {
   calculateTotalDamage,
   calculateTotalDefense,
   getTotalMaxHitpoints,
-  calculateCriticalHit
+  calculateCriticalHit,
+  calculateDodgeChance
 } from '@/lib/character-utils';
 
 // Get combat data
@@ -503,7 +504,7 @@ export async function startCombatTurn(
       // Apply critical hit if it occurs
       if (criticalHit.isCritical) {
         characterDamageDealt = Math.floor(characterDamageDealt * criticalHit.multiplier);
-        combatLog.push(`Critical hit! Damage increased to ${characterDamageDealt}.`);
+        combatLog.push(`${character.name} lands a CRITICAL hit on ${monster.name}!`);
       }
 
       // Add elemental damage if applicable
@@ -525,7 +526,7 @@ export async function startCombatTurn(
       console.log(`Combat: Character basic attack - Base damage: ${baseDamage}, Final damage: ${characterDamageDealt}`);
       
       // Add to combat log
-      combatLog.push(`${character.name} attacks for ${characterDamageDealt} damage total.`);
+      combatLog.push(`${character.name} attacks ${monster.name} for ${characterDamageDealt} damage.`);
     } else if (action === 'skill' && skill) {
       
       // Process item effects to check for ManaEfficiency
@@ -558,10 +559,6 @@ export async function startCombatTurn(
         const reduction = 0.15;
         const oldCost = energyCost;
         energyCost = Math.floor(energyCost * (1 - reduction));
-        
-        if (oldCost !== energyCost) {
-          combatLog.push(`Mana Efficiency reduces ${skill.name} energy cost from ${oldCost} to ${energyCost}.`);
-        }
       }
       
       // Skip energy check if free cast
@@ -577,6 +574,8 @@ export async function startCombatTurn(
       
       // For monsters, we need to calculate current HP based on damage dealt
       const monsterCurrentHP = Math.max(0, monster.hitpoints - combat.character_damage_dealt);
+      
+      // Create the fighter object
       const monsterAsFighter = {
         // Start with a fresh object to avoid type errors
         id: monster.id.toString(), // Convert to string as Fighter requires string id
@@ -591,32 +590,45 @@ export async function startCombatTurn(
         agility: 0,
         luck: 0,
         wisdom: 0,
+        level: monster.level || 1,
         // Add abilities and any other Monster properties we might need
         abilities: monster.abilities
       } as Fighter;
       
-      // Execute the skill directly with casted objects
-      const skillResult = await executeSkill(skill, characterAsFighter, monsterAsFighter, combat);
+      // Calculate chance to dodge the skill
+      const dodgeChance = calculateDodgeChance(monsterAsFighter as any, characterAsFighter as any);
+      const dodgeRoll = Math.random() * 100;
+      const dodged = dodgeRoll <= dodgeChance;
       
-      // Apply the results
-      characterDamageDealt += skillResult.damageDealt;
-      characterHealingDone += skillResult.healingDone;
-      
-      // Add messages to combat log
-      combatLog.push(...skillResult.messages);
-      
-      // Apply any effects if the skill created them
-      if (skillResult.effectApplied) {
-        await applySkillEffect(combatId, skill, 'character');
+      // If monster dodges, no damage is dealt and we add a message
+      if (dodged) {
+        characterDamageDealt = 0;
+        combatLog.push(`${monster.name} dodges ${character.name}'s ${skill.name}!`);
+      } else {
+        // Execute the skill directly with casted objects
+        const skillResult = await executeSkill(skill, characterAsFighter, monsterAsFighter, combat);
+        
+        // Apply the results
+        characterDamageDealt += skillResult.damageDealt;
+        characterHealingDone += skillResult.healingDone;
+        
+        // Add messages to combat log
+        combatLog.push(...skillResult.messages);
+        
+        // Apply any effects if the skill created them
+        if (skillResult.effectApplied) {
+          await applySkillEffect(combatId, skill, 'character');
+        }
+        
+        // Log debug information
+        console.log(`Combat: Skill ${skill.name} executed with result:`, {
+          damageDealt: characterDamageDealt,
+          healingDone: characterHealingDone,
+          effectApplied: skillResult.effectApplied,
+          messages: skillResult.messages.length
+        });
       }
       
-      // Log debug information
-      console.log(`Combat: Skill ${skill.name} executed with result:`, {
-        damageDealt: characterDamageDealt,
-        healingDone: characterHealingDone,
-        effectApplied: skillResult.effectApplied,
-        messages: skillResult.messages.length
-      });
       
       // Update character energy (only if not a free cast)
       if (!freeSpellCast) {
@@ -887,21 +899,43 @@ export async function startCombatTurn(
       const useAbility = hasAbilities && Math.random() < 0.5; // 50% chance to use ability if available
       
       if (!useAbility || !hasAbilities) {
-        // Monster performs a basic attack
-        // Base damage with randomness (±20%)
-        const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
-        monsterDamageDealt = Math.floor(monster.attack * randomFactor);
+        // Calculate chance for character to dodge monster's attack
+        const dodgeChance = calculateDodgeChance(character, monster);
+        const dodgeRoll = Math.random() * 100;
+        const dodged = dodgeRoll <= dodgeChance;
         
-        // Calculate total defense using the same function as in the character display
-        const totalDefense = calculateTotalDefense(character);
-        
-        // Reduced impact of defense
-        monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(totalDefense / 3));
-        
-        console.log(`Combat: Monster basic attack - Damage: ${monsterDamageDealt}, Character defense: ${totalDefense}`);
-        
-        // Add to combat log
-        combatLog.push(`${monster.name} attacks for ${monsterDamageDealt} damage.`);
+        if (dodged) {
+          // Character dodges the attack
+          monsterDamageDealt = 0;
+          combatLog.push(`${character.name} dodges ${monster.name}'s attack!`);
+        } else {
+          // Monster performs a basic attack
+          // Base damage with randomness (±20%)
+          const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
+          monsterDamageDealt = Math.floor(monster.attack * randomFactor);
+          
+          // Calculate total defense using the same function as in the character display
+          const totalDefense = calculateTotalDefense(character);
+          
+          // Reduced impact of defense
+          monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(totalDefense / 3));
+          
+          console.log(`Combat: Monster basic attack - Damage: ${monsterDamageDealt}, Character defense: ${totalDefense}`);
+          
+          // Check for critical hit (monsters have a base 5% chance plus 1% per level)
+          const monsterCritChance = 5 + (monster.level || 1);
+          const critRoll = Math.random() * 100;
+          const monsterCrit = critRoll <= monsterCritChance;
+          
+          if (monsterCrit) {
+            // Critical hit multiplies damage by 1.5
+            monsterDamageDealt = Math.floor(monsterDamageDealt * 1.5);
+            combatLog.push(`${monster.name} lands a CRITICAL hit on ${character.name}!`);
+          }
+          
+          // Add to combat log
+          combatLog.push(`${monster.name} attacks ${character.name} for ${monsterDamageDealt} damage.`);
+        }
       } else {
         // Monster uses an ability
         const abilities = monster.abilities as Record<string, any> || {};
@@ -914,8 +948,8 @@ export async function startCombatTurn(
         
         console.log(`Combat: Monster using ability: ${chosenAbilityName}`);
         
-        // Add to combat log
-        combatLog.push(`${monster.name} uses ${chosenAbilityName}!`);
+        // Add to combat log with highlighted formatting to make skill usage more prominent
+        combatLog.push(`${monster.name} uses [${chosenAbilityName}]!`);
         
         // Process the selected ability
         if (chosenAbility.damage) {
@@ -926,12 +960,34 @@ export async function startCombatTurn(
           const baseAttack = Math.floor(monster.attack * 0.6); // 60% of base attack
           monsterDamageDealt += baseAttack;
           
-          // Apply defense
-          const totalDefense = calculateTotalDefense(character);
-          monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(totalDefense / 3));
+          // Calculate chance for character to dodge monster's attack
+          const dodgeChance = calculateDodgeChance(character, monster);
+          const dodgeRoll = Math.random() * 100;
+          const dodged = dodgeRoll <= dodgeChance;
           
-          // Add to combat log
-          combatLog.push(`${chosenAbilityName} deals ${monsterDamageDealt} damage to ${character.name}.`);
+          if (dodged) {
+            // Character dodges the skill attack
+            monsterDamageDealt = 0;
+            combatLog.push(`${character.name} dodges ${monster.name}'s [${chosenAbilityName}]!`);
+          } else {
+            // Apply defense
+            const totalDefense = calculateTotalDefense(character);
+            monsterDamageDealt = Math.max(1, monsterDamageDealt - Math.floor(totalDefense / 3));
+            
+            // Check for critical hit (monsters have a base 5% chance plus 1% per level)
+            const monsterCritChance = 5 + (monster.level || 1);
+            const critRoll = Math.random() * 100;
+            const monsterCrit = critRoll <= monsterCritChance;
+            
+            if (monsterCrit) {
+              // Critical hit multiplies damage by 1.5
+              monsterDamageDealt = Math.floor(monsterDamageDealt * 1.5);
+              combatLog.push(`${monster.name}'s [${chosenAbilityName}] CRITICALLY hits ${character.name}!`);
+            }
+            
+            // Add to combat log
+            combatLog.push(`[${chosenAbilityName}] deals ${monsterDamageDealt} damage to ${character.name}.`);
+          }
         }
         
         // Handle status effects
@@ -942,19 +998,14 @@ export async function startCombatTurn(
             await applyMonsterAbilityEffect(combatId, String(chosenAbilityName), chosenAbility);
             
             // Add to combat log
-            combatLog.push(`${chosenAbilityName} effect applied to ${character.name}.`);
+            combatLog.push(`[${chosenAbilityName}] effect applied to ${character.name}`);
           }
         }
         
-        // If no damage was dealt but this is a pure status effect ability
+        // If no damage was dealt but this is a pure status effect ability, make it impactful without attacking
         if (monsterDamageDealt === 0 && !chosenAbility.damage && !chosenAbility.damage_over_time) {
-          // Monster still does a weak basic attack
-          const minorAttack = Math.floor(monster.attack * 0.4); // 40% of normal attack
-          const totalDefense = calculateTotalDefense(character);
-          monsterDamageDealt = Math.max(1, minorAttack - Math.floor(totalDefense / 3));
-          
-          // Add to combat log
-          combatLog.push(`${monster.name} also strikes for ${monsterDamageDealt} damage.`);
+          // Instead of doing an additional attack, just make the ability more impactful in the log
+          combatLog.push(`${character.name} feels the effects of [${chosenAbilityName}]!`);
         }
       }
       

@@ -5,7 +5,17 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Bugs
 ----------
-Enemies appear to use skills, and sometimes debuffs appear, but enemies seem to also attack? And it doesn't say when they use a skill in the text box
+- Enemies appear to use skills, and sometimes debuffs appear, but enemies seem to also attack? And it doesn't say when they use a skill in the text box
+- Whisperwind is facing wrong direction
+- Dodge calculation seems wrong or off or not working? Same with critical hits.
+- We need to display 'Dodge!' floating combat text and 'CRIT!' floating combat text when they happen
+- Level up should fully restore HP and MP
+- Pickpocket does nothing currently. It should have a high chance of stealing a fair amount of gold. Very low chance of stealing something else (TBD)
+- Giant spider is floating
+- Looks like combat dmg of some sort is still getting applied, it may have been a bleeder. If so, we need to add more floating combat text like 'Bleed 3' or 'Poison 6'
+- Floating combat text needs to be bigger
+- Damage calculation for World Boss needs to be unique, factor in gear score, class + stats, and attack damage.
+- Add some black outline border to font or a shadow at least
 
 
 Todo

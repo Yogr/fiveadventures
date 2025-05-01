@@ -145,15 +145,57 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   }, [combat, character.id, combatId, onCombatEnd]);
 
   // Create a floating damage number
-  const createFloatingNumber = (target: 'character' | 'monster', value: number, type: 'damage' | 'heal' | 'effect' = 'damage', text?: string) => {
+  const createFloatingNumber = (
+    target: 'character' | 'monster', 
+    value: number, 
+    type: 'damage' | 'heal' | 'effect' | 'dodge' | 'crit' | 'poison' | 'burn' = 'damage', 
+    text?: string
+  ) => {
     // Get the target element
     const targetElement = document.querySelector(target === 'character' ? '.character-avatar' : '.monster-avatar');
     if (!targetElement) return;
     
     // Create the floating number element
     const floatingNumber = document.createElement('div');
-    floatingNumber.className = type === 'damage' ? 'damage-number' : type === 'heal' ? 'heal-number' : 'effect-text';
-    floatingNumber.textContent = text || `${value}`;
+    
+    // Set class based on type
+    switch (type) {
+      case 'damage':
+        floatingNumber.className = 'damage-number';
+        break;
+      case 'heal':
+        floatingNumber.className = 'heal-number';
+        break;
+      case 'dodge':
+        floatingNumber.className = 'dodge-text';
+        break;
+      case 'crit':
+        floatingNumber.className = 'crit-text';
+        break;
+      case 'poison':
+        floatingNumber.className = 'poison-text';
+        break;
+      case 'burn':
+        floatingNumber.className = 'burn-text';
+        break;
+      default:
+        floatingNumber.className = 'effect-text';
+    }
+    
+    // Set text content with emoji based on type
+    if (text) {
+      floatingNumber.textContent = text;
+    } else if (type === 'dodge') {
+      floatingNumber.textContent = 'Dodge!';
+    } else if (type === 'crit') {
+      floatingNumber.textContent = 'CRIT!';
+    } else if (type === 'poison') {
+      floatingNumber.textContent = `${value} 🧪`; // Poison flask emoji
+    } else if (type === 'burn') {
+      floatingNumber.textContent = `${value} 🔥`; // Fire emoji
+    } else {
+      floatingNumber.textContent = `${value}`;
+    }
     
     // Position it over the target
     const rect = targetElement.getBoundingClientRect();
@@ -165,8 +207,12 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     // Adjust position based on target (move character effects right, monster effects left)
     const horizontalOffset = target === 'character' ? 20 : -20; // 20px offset
     
-    floatingNumber.style.left = `${rect.left - containerRect.left + rect.width / 2 + horizontalOffset}px`;
-    floatingNumber.style.top = `${rect.top - containerRect.top}px`;
+    // Add slight randomness to position for multiple numbers
+    const randomX = Math.floor(Math.random() * 20) - 10; // -10 to +10 pixels
+    const randomY = Math.floor(Math.random() * 10) - 5;  // -5 to +5 pixels
+    
+    floatingNumber.style.left = `${rect.left - containerRect.left + rect.width / 2 + horizontalOffset + randomX}px`;
+    floatingNumber.style.top = `${rect.top - containerRect.top + randomY}px`;
     
     // Add it to the DOM
     damageContainer.appendChild(floatingNumber);
@@ -202,36 +248,103 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     });
   };
 
-  // Handle monster attack (extracted to reduce code duplication)
-  const handleMonsterAttack = (result: any, currentCombat: Combat) => {
-    if (!result.data || result.data.monster_damage_dealt <= currentCombat.monster_damage_dealt) return;
+  // Handle monster action (extracted to reduce code duplication)
+  const handleMonsterAction = (result: any, currentCombat: Combat) => {
+    if (!result.data) return;
     
-    // Short delay before monster attacks
-    setTimeout(() => {
-      const monsterDamage = result.data.monster_damage_dealt - currentCombat.monster_damage_dealt;
+    // Check if monster dealt damage
+    const monsterDealtDamage = result.data.monster_damage_dealt > currentCombat.monster_damage_dealt;
+    
+    // Variables to track combat event types
+    let usedSkill = false;
+    let skillName = '';
+    let monsterCrit = false;
+    let characterDodged = false;
+    
+    // Analyze combat log to find important events
+    if (result.data.combat_log && Array.isArray(result.data.combat_log)) {
+      const newCombatLog = result.data.combat_log;
       
+      // Look through combat log messages for important events
+      for (const message of newCombatLog) {
+        // Make sure message is a string
+        if (typeof message === 'string') {
+          // Check for skill usage
+          if (message.includes('uses [')) {
+            usedSkill = true;
+            // Extract skill name from the message
+            const skillMatch = message.match(/uses \[(.*?)\]!/);
+            if (skillMatch && skillMatch[1]) {
+              skillName = skillMatch[1];
+            }
+          }
+          
+          // Check for critical hits
+          if (message.includes('CRITICALLY hits') || message.includes('CRITICAL hit')) {
+            monsterCrit = true;
+          }
+          
+          // Check for dodge
+          if (message.includes(`${character.name} dodges`)) {
+            characterDodged = true;
+          }
+        }
+      }
+    }
+    
+    // Short delay before monster acts
+    setTimeout(() => {
       // Animate monster attacking
       animateElement('.monster-avatar', 'attacking');
       
-      // Short delay for attack animation
-      setTimeout(() => {
-        // Animate character being hit
-        animateElement('.character-avatar', 'hit');
+      // If monster used a skill, show it with an effect floating text
+      if (usedSkill) {
+        createFloatingNumber('monster', 0, 'effect', skillName);
+      }
+      
+      // If character dodged the attack
+      if (characterDodged) {
+        setTimeout(() => {
+          createFloatingNumber('character', 0, 'dodge', 'Dodge!');
+        }, 250);
+      } 
+      // If damage was dealt
+      else if (monsterDealtDamage) {
+        const monsterDamage = result.data.monster_damage_dealt - currentCombat.monster_damage_dealt;
         
-        // Show floating damage number on character
-        createFloatingNumber('character', monsterDamage, 'damage');
-      }, 250);
-      
-      addToCombatLog(`The ${currentCombat.monster.name} attacked you for ${monsterDamage} damage!`);
-      
-      // Update character HP locally instead of fetching from server
-      const newHP = Math.max(0, character.current_hitpoints - monsterDamage);
-      
-      // Update character state locally
-      setCharacter(prevChar => ({
-        ...prevChar,
-        current_hitpoints: newHP
-      }));
+        // Short delay for attack animation
+        setTimeout(() => {
+          // Animate character being hit
+          animateElement('.character-avatar', 'hit');
+          
+          // Show critical hit text if it was a crit
+          if (monsterCrit) {
+            createFloatingNumber('character', 0, 'crit', 'CRIT!');
+            setTimeout(() => {
+              // Show damage number after crit text
+              createFloatingNumber('character', monsterDamage, 'damage');
+            }, 100);
+          } else {
+            // Normal damage number
+            createFloatingNumber('character', monsterDamage, 'damage');
+          }
+        }, 250);
+        
+        // Update character HP locally instead of fetching from server
+        const newHP = Math.max(0, character.current_hitpoints - monsterDamage);
+        
+        // Update character state locally
+        setCharacter(prevChar => ({
+          ...prevChar,
+          current_hitpoints: newHP
+        }));
+      } else if (usedSkill) {
+        // If no damage was dealt but a skill was used, it's a status effect
+        setTimeout(() => {
+          // Create a visual effect to show the skill impact
+          createFloatingNumber('character', 0, 'effect', 'Affected!');
+        }, 250);
+      }
     }, 500);
   };
 
@@ -273,20 +386,62 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         return;
       }
       
+      // Variables to track combat event types
+      let monsterDodged = false;
+      let criticalHit = false;
+      
+      // Analyze combat log to find important events
+      if (result.data.combat_log && Array.isArray(result.data.combat_log)) {
+        const newCombatLog = result.data.combat_log;
+        
+        // Look through combat log messages for important events
+        for (const message of newCombatLog) {
+          // Ensure the message is a string before using string methods
+          if (typeof message === 'string') {
+            // Check for dodge
+            if (message.includes(`${combat.monster.name} dodges`)) {
+              monsterDodged = true;
+            }
+            
+            // Check for critical hits
+            if (message.includes('CRITICAL hit') || message.includes('lands a CRITICAL hit')) {
+              criticalHit = true;
+            }
+          }
+        }
+      }
+      
       // Calculate damage dealt
       const damageDealt = result.data.character_damage_dealt - combat.character_damage_dealt;
       
-      // Show floating damage number on monster
-      createFloatingNumber('monster', damageDealt, 'damage');
-      
-      // Animate monster being hit
-      animateElement('.monster-avatar', 'hit');
+      // Show appropriate combat effects
+      if (monsterDodged) {
+        // Show dodge text on monster
+        createFloatingNumber('monster', 0, 'dodge', 'Dodge!');
+      } else {
+        // Show critical hit text if it was a crit
+        if (criticalHit) {
+          createFloatingNumber('monster', 0, 'crit', 'CRIT!');
+          setTimeout(() => {
+            // Show damage number after crit text
+            createFloatingNumber('monster', damageDealt, 'damage');
+          }, 100);
+          
+          // Animate monster being hit (with stronger effect for crits)
+          animateElement('.monster-avatar', 'hit');
+        } else if (damageDealt > 0) {
+          // Regular damage
+          createFloatingNumber('monster', damageDealt, 'damage');
+          
+          // Animate monster being hit
+          animateElement('.monster-avatar', 'hit');
+        }
+      }
       
       setCombat(result.data);
-      addToCombatLog(`You attacked the ${combat.monster.name} for ${damageDealt} damage!`);
       
-      // Handle monster counter-attack
-      handleMonsterAttack(result, combat);
+      // Handle monster counter-action
+      handleMonsterAction(result, combat);
       
       // Handle combat completion
       handleCombatCompletion(result, true);
@@ -337,8 +492,8 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         addToCombatLog(`You dealt ${damageDealt} damage to the ${combat.monster.name}!`);
       }
       
-      // Handle monster counter-attack
-      handleMonsterAttack(result, combat);
+      // Handle monster counter-action
+      handleMonsterAction(result, combat);
       
       // Handle combat completion
       handleCombatCompletion(result, false);
@@ -379,8 +534,8 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         addToCombatLog('You failed to run away!');
         createFloatingNumber('character', 0, 'effect', 'Failed!');
         
-        // Handle monster counter-attack after failed run
-        handleMonsterAttack(result, combat);
+        // Handle monster counter-action after failed run
+        handleMonsterAction(result, combat);
       }
       
       setActionInProgress(false);
@@ -633,32 +788,4 @@ export default function CombatInterface({ combatId, character: initialCharacter,
                           <div><span className="font-bold">Experience:</span> {combat.monster.experience_reward}</div>
                           <div><span className="font-bold">Gold:</span> {combat.monster.gold_reward}</div>
                           {combat.monster.defense && (
-                            <div><span className="font-bold">Defense:</span> {combat.monster.defense}</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-3 md:mt-4">
-                      <h4 className="font-semibold mb-1 md:mb-2">Description</h4>
-                      <p className="text-xs md:text-sm">{combat.monster.description}</p>
-                    </div>
-                    
-                    <div className="mt-4 md:mt-6 flex justify-end">
-                      <button
-                        onClick={() => setShowMonsterInfo(false)}
-                        className="pixel-button px-4 py-1 text-sm"
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </DialogPanel>
-                </TransitionChild>
-              </div>
-            </div>
-          </Dialog>
-        </Transition>
-      )}
-    </>
-  );
-}
+                            <div><span className="font-bold">Defense
