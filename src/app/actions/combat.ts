@@ -19,20 +19,16 @@ import {
   getCachedSkills
 } from '@/lib/game-data-service';
 import { processDungeonKeyParts } from './dungeon';
-import { updateCombatEffects, incrementCombatTurn, applySkillEffect, applyMonsterAbilityEffect } from './effect-helpers';
+import { updateCombatEffects, applySkillEffect, applyMonsterAbilityEffect } from './effect-helpers';
 import { executeSkill, processActiveEffects } from './skill-utils';
 import {
-  getTotalStrength,
-  getTotalIntelligence,
-  getTotalAgility,
-  getTotalLuck,
-  getTotalWisdom,
   calculateTotalDamage,
   calculateTotalDefense,
   getTotalMaxHitpoints,
   calculateCriticalHit,
   calculateDodgeChance
 } from '@/lib/character-utils';
+import { getLevelFromExperience, CLASS_STAT_GROWTH } from '@/lib/utils';
 
 // Get combat data
 export async function getCombat(
@@ -707,10 +703,12 @@ export async function startCombatTurn(
     
     // Apply healing if any
     if (characterHealingDone > 0) {
+      character.current_hitpoints = Math.min(getTotalMaxHitpoints(character), character.current_hitpoints + characterHealingDone);
+
       await supabase
         .from('characters')
         .update({
-          current_hitpoints: Math.min(getTotalMaxHitpoints(character), character.current_hitpoints + characterHealingDone)
+          current_hitpoints: character.current_hitpoints
         })
         .eq('id', character.id);
     }
@@ -756,13 +754,13 @@ export async function startCombatTurn(
         })
         .eq('id', combatId);
       
+      
       // Add rewards to character in a single transaction
       const { error: updateExpGoldError } = await supabase
         .from('characters')
         .update({
           experience: character.experience + monster.experience_reward,
           gold: character.gold + monster.gold_reward,
-          updated_at: new Date().toISOString() // Force update timestamp
         })
         .eq('id', character.id);
         
@@ -773,13 +771,6 @@ export async function startCombatTurn(
           error: 'Failed to update character with rewards'
         };
       }
-      
-      console.log('Combat: Added rewards to character:', {
-        experienceAdded: monster.experience_reward,
-        goldAdded: monster.gold_reward,
-        newExperience: character.experience + monster.experience_reward,
-        newGold: character.gold + monster.gold_reward
-      });
       
       // Increment adventure count in a separate transaction to ensure it's updated correctly
       const { error: updateAdventureCountError } = await supabase
@@ -815,56 +806,6 @@ export async function startCombatTurn(
       if (updateAdventureStateError) {
         console.error('Combat: Error updating adventure state:', updateAdventureStateError);
         // Continue anyway, this isn't critical
-      }
-      
-      // Verify all updates by fetching the character data
-      const { data: verifiedCharacter, error: verifyError } = await supabase
-        .from('characters')
-        .select('*')
-        .eq('id', character.id)
-        .single();
-        
-      if (verifyError || !verifiedCharacter) {
-        console.error('Error verifying character update:', verifyError);
-      } else {
-        console.log('CRITICAL: Verified character update:', {
-          characterId: verifiedCharacter.id,
-          experience: verifiedCharacter.experience,
-          expectedExperience: character.experience + monster.experience_reward,
-          gold: verifiedCharacter.gold,
-          expectedGold: character.gold + monster.gold_reward,
-          daily_adventure_count: verifiedCharacter.daily_adventure_count
-        });
-        
-        // Double-check if the update was successful
-        if (verifiedCharacter.experience !== character.experience + monster.experience_reward ||
-            verifiedCharacter.gold !== character.gold + monster.gold_reward) {
-          console.error('EMERGENCY ERROR: Character update verification failed!');
-          
-          // One last desperate attempt with a different approach
-          console.log('EMERGENCY: Making one final attempt to update rewards');
-          
-          // Try a different approach - use raw SQL via RPC if available
-          try {
-            // Direct SQL-like update as a last resort
-            const { error: finalUpdateError } = await supabase
-              .from('characters')
-              .update({
-                experience: verifiedCharacter.experience + monster.experience_reward,
-                gold: verifiedCharacter.gold + monster.gold_reward,
-                updated_at: new Date().toISOString() // Force update timestamp
-              })
-              .eq('id', character.id);
-              
-            if (finalUpdateError) {
-              console.error('EMERGENCY ERROR: Final update attempt failed:', finalUpdateError);
-            } else {
-              console.log('EMERGENCY: Final update attempt completed');
-            }
-          } catch (finalError) {
-            console.error('EMERGENCY ERROR: Exception in final update attempt:', finalError);
-          }
-        }
       }
       
       // Get updated combat with effects
@@ -923,13 +864,13 @@ export async function startCombatTurn(
           console.log(`Combat: Monster basic attack - Damage: ${monsterDamageDealt}, Character defense: ${totalDefense}`);
           
           // Check for critical hit (monsters have a base 5% chance plus 1% per level)
-          const monsterCritChance = 5 + (monster.level || 1);
+          const monsterCritChance = Math.min(20, 5 + (monster.level || 1));
           const critRoll = Math.random() * 100;
           const monsterCrit = critRoll <= monsterCritChance;
           
           if (monsterCrit) {
             // Critical hit multiplies damage by 1.5
-            monsterDamageDealt = Math.floor(monsterDamageDealt * 1.5);
+            monsterDamageDealt = Math.floor(monsterDamageDealt * 2);
             combatLog.push(`${monster.name} lands a CRITICAL hit on ${character.name}!`);
           }
           

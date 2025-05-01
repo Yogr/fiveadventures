@@ -701,7 +701,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
           )}
         </div>
       </div>
-      
+
       {/* Monster Info Dialog */}
       {combat && (
         <Transition appear show={showMonsterInfo} as={Fragment}>
@@ -784,8 +784,53 @@ export default function CombatInterface({ combatId, character: initialCharacter,
                           />
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-1 md:gap-2 text-xs md:text-sm">
-                          <div><span className="font-bold">Experience:</span> {combat.monster.experience_reward}</div>
-                          <div><span className="font-bold">Gold:</span> {combat.monster.gold_reward}</div>
+                        <div className="grid grid-cols-2 gap-1 md:gap-2">
                           {combat.monster.defense && (
-                            <div><span className="font-bold">Defense
+                            <>
+                              <div><span>Attack:</span> {combat.monster.attack}</div>
+                              <div><span>Defense:</span> {combat.monster.defense}</div>
+                              <div><span>Level:</span> {combat.monster.level || 1}</div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Monster abilities section */}
+                    {combat.monster.abilities && Object.keys(combat.monster.abilities).length > 0 && (
+                      <div className="mt-4 border-t border-gray-700 pt-2">
+                        <h4 className="mb-2 text-yellow-400">Abilities:</h4>
+                        <div className="grid grid-cols-1 gap-2">
+                          {Object.entries(combat.monster.abilities).map(([name, ability]: [string, any]) => (
+                            <div key={name} className="bg-gray-800 p-2 rounded">
+                              <div className="text-red-300">{name}</div>
+                              <div className="text-gray-300">
+                                {ability.damage ? `Damage: ${ability.damage}` : ''}
+                                {ability.damage_over_time ? ` DoT: ${ability.damage_over_time}` : ''}
+                                {ability.duration ? ` (${ability.duration} turns)` : ''}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="mt-4 text-center">
+                      <button
+                        type="button"
+                        className="pixel-button"
+                        onClick={() => setShowMonsterInfo(false)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </DialogPanel>
+                </TransitionChild>
+              </div>
+            </div>
+          </Dialog>
+        </Transition>
+      )}
+    </>
+  );
+}
