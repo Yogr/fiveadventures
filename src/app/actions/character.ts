@@ -161,12 +161,14 @@ export async function getCharacterById(characterId: string): Promise<ApiResponse
   try {
     // Use the getFullCharacterById function from character-service
     // which includes populated equipment and inventory with cached item data
-    const { data: { user } } = await (await createClient()).auth.getUser();
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     
     // Get character with full equipment data
     const { success, data: character, error } = await import('@/lib/character-service')
-      .then(module => module.getFullCharacterById(characterId));
+      .then(module => module.getFullCharacterById(characterId, supabase));
     
+    console.log('getCharacterById:', { success, character, error });
     if (!success || !character) {
       return {
         success: false,
@@ -480,7 +482,7 @@ export async function getCharacterForUser(): Promise<ApiResponse<Character>> {
     
     
     console.log('getCharacterForUser: User ID:', userId);
-    if (userId && userId != 'Cookie') {
+    if (userId) {
       // User is authenticated
       // Try to get character by user ID
       const userCharacterResponse = await getCharacterByUserId(userId);
@@ -506,25 +508,25 @@ export async function getCharacterForUser(): Promise<ApiResponse<Character>> {
         if (characterResponse.success && characterResponse.data) {
           const character = characterResponse.data;
           
-      console.log('status for character:', character.status);
-      // If character is unlinked, ensure user record exists and link it to the user
-      if (character.status === 'unlinked') {
-        console.log(`Linking unlinked character ${characterId} to user ${userId}`);
-        
-        // Ensure user record exists first with auth provider
-        const authProvider = user?.app_metadata?.provider || 'email';
-        await ensureUserRecordExists(userId, user?.email || '', authProvider);
-        
-        // Link the character to the user
-        const linkResponse = await linkCharacterToUser(characterId, userId);
-        
-        if (linkResponse.success) {
-          // Get the updated character
-          return getCharacterById(characterId);
-        } else {
-          console.error('Failed to link character:', linkResponse.error);
-        }
-      }
+          console.log('status for character:', character.status);
+          // If character is unlinked, ensure user record exists and link it to the user
+          if (character.status === 'unlinked') {
+              console.log(`Linking unlinked character ${characterId} to user ${userId}`);
+              
+              // Ensure user record exists first with auth provider
+              const authProvider = user?.app_metadata?.provider || 'email';
+              await ensureUserRecordExists(userId, user?.email || '', authProvider);
+              
+              // Link the character to the user
+              const linkResponse = await linkCharacterToUser(characterId, userId);
+              
+              if (linkResponse.success) {
+                // Get the updated character
+                return getCharacterById(characterId);
+              } else {
+                console.error('Failed to link character:', linkResponse.error);
+              }
+          }
           
           // Return the character even if it couldn't be linked
           return characterResponse;

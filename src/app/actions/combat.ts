@@ -62,10 +62,27 @@ export async function getCombat(
     
     // Now fetch the monster data from cache
     if (data.monster_id) {
-      const { success: monsterSuccess, data: monsterData } = await getCachedMonsterById(data.monster_id);
+      console.log('Combat: Fetching monster data for combat from cache, ID:', data.monster_id);
+      const { success: monsterSuccess, data: monsterData } = await getCachedMonsterById(data.monster_id, supabase);
       if (monsterSuccess && monsterData) {
         // Add the monster data to the combat object
         data.monster = monsterData;
+        console.log('Combat: Successfully fetched monster data:', monsterData.name);
+      } else {
+        console.error('Combat: Failed to fetch monster data from cache, falling back to direct query');
+        // Fall back to direct database query if cache fails
+        const supabaseMonster = await supabase
+          .from('monsters')
+          .select('*')
+          .eq('id', data.monster_id)
+          .single();
+          
+        if (!supabaseMonster.error) {
+          data.monster = supabaseMonster.data as Monster;
+          console.log('Combat: Successfully fetched monster data from database:', data.monster.name);
+        } else {
+          console.error('Combat: Failed to fetch monster data from database:', supabaseMonster.error);
+        }
       }
     }
     
@@ -73,15 +90,33 @@ export async function getCombat(
       id: data.id,
       is_completed: data.is_completed,
       is_victory: data.is_victory,
-      current_turn: data.current_turn || 1
+      current_turn: data.current_turn || 1,
+      has_monster: !!data.monster
     });
     
     // Now fetch the monster data from cache
-    if (data.monster_id) {
-      const { success: monsterSuccess, data: monsterData } = await getCachedMonsterById(data.monster_id);
+    if (data && data.monster_id) {
+      console.log('ActiveCombat: Fetching monster data for combat from cache, ID:', data.monster_id);
+      const { success: monsterSuccess, data: monsterData } = await getCachedMonsterById(data.monster_id, supabase);
       if (monsterSuccess && monsterData) {
         // Add the monster data to the combat object
         data.monster = monsterData;
+        console.log('ActiveCombat: Successfully fetched monster data:', monsterData.name);
+      } else {
+        console.error('ActiveCombat: Failed to fetch monster data from cache, falling back to direct query');
+        // Fall back to direct database query if cache fails
+        const supabaseMonster = await supabase
+          .from('monsters')
+          .select('*')
+          .eq('id', data.monster_id)
+          .single();
+          
+        if (!supabaseMonster.error) {
+          data.monster = supabaseMonster.data as Monster;
+          console.log('ActiveCombat: Successfully fetched monster data from database:', data.monster.name);
+        } else {
+          console.error('ActiveCombat: Failed to fetch monster data from database:', supabaseMonster.error);
+        }
       }
     }
     
@@ -213,10 +248,10 @@ export async function startCombatTurn(
   try {
     const supabase = await createClient();
 
-    // Get the combat data
+    // Get the combat data without joined monster (which we'll fetch with cache)
     const { data: combat, error: combatError } = await supabase
       .from('combat')
-      .select('*, monster:monster_id(*), character:character_id(*), player_effects, enemy_effects')
+      .select('*, character:character_id(*), player_effects, enemy_effects')
       .eq('id', combatId)
       .single();
     
@@ -235,6 +270,133 @@ export async function startCombatTurn(
       };
     }
     
+    // Fetch monster data from cache
+    if (combat.monster_id) {
+      console.log('Fetching monster data for ID:', combat.monster_id);
+      const { success: monsterSuccess, data: monsterData } = await getCachedMonsterById(combat.monster_id, supabase);
+      if (monsterSuccess && monsterData) {
+        // Add the monster data to the combat object
+        combat.monster = monsterData;
+      } else {
+        console.error('Error fetching monster data from cache for ID:', combat.monster_id);
+        return {
+          success: false,
+          error: 'Failed to get monster data'
+        };
+      }
+    } else {
+      console.error('Combat missing monster_id');
+      return {
+        success: false,
+        error: 'Invalid combat data'
+      };
+    }
+    
+    // Verify monster data is valid before proceeding
+    const monsterData = combat.monster as Monster;
+    if (!monsterData || !monsterData.hitpoints) {
+      console.error('Monster data is invalid or incomplete:', monsterData);
+      return {
+        success: false,
+        error: 'Invalid monster data'
+      };
+    }
+    
+    // Get character and ensure it has populated equipment data
+    const character = combat.character as Character;
+    
+    // Get character equipment IDs if not already populated
+    if (!character.equipment || !character.equipment.weapon) {
+      // Get character equipment
+      const { data: equipment, error: equipmentError } = await supabase
+        .from('character_equipment')
+        .select('*')
+        .eq('character_id', character.id)
+        .single();
+        
+      if (equipmentError && equipmentError.code !== 'PGRST116') {
+        console.error('Error getting character equipment:', equipmentError);
+      }
+      
+      // Create equipment object
+      const characterEquipment = equipment || {
+        id: '', 
+        character_id: character.id,
+        weapon_id: null,
+        helmet_id: null,
+        armor_id: null,
+        trinket_id: null,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Fetch all equipment items using cached functions
+      // Use parallel fetching for better performance
+      const equipmentPromises = [];
+      let weaponItem = null;
+      let helmetItem = null;
+      let armorItem = null;
+      let trinketItem = null;
+      
+      if (characterEquipment.weapon_id) {
+        equipmentPromises.push(
+          getCachedItemById(characterEquipment.weapon_id, supabase)
+            .then(result => {
+              if (result.success) {
+                weaponItem = result.data;
+              }
+            })
+        );
+      }
+      
+      if (characterEquipment.helmet_id) {
+        equipmentPromises.push(
+          getCachedItemById(characterEquipment.helmet_id, supabase)
+            .then(result => {
+              if (result.success) {
+                helmetItem = result.data;
+              }
+            })
+        );
+      }
+      
+      if (characterEquipment.armor_id) {
+        equipmentPromises.push(
+          getCachedItemById(characterEquipment.armor_id, supabase)
+            .then(result => {
+              if (result.success) {
+                armorItem = result.data;
+              }
+            })
+        );
+      }
+      
+      if (characterEquipment.trinket_id) {
+        equipmentPromises.push(
+          getCachedItemById(characterEquipment.trinket_id, supabase)
+            .then(result => {
+              if (result.success) {
+                trinketItem = result.data;
+              }
+            })
+        );
+      }
+      
+      // Wait for all equipment items to be fetched
+      await Promise.all(equipmentPromises);
+      
+      // Attach equipment data to character
+      character.equipment = {
+        ...characterEquipment,
+        weapon: weaponItem,
+        helmet: helmetItem,
+        armor: armorItem,
+        trinket: trinketItem
+      };
+      
+      // Update the character in the combat object
+      combat.character = character;
+    }
+    
     // Get the current turn number
     const currentTurn = combat.current_turn || 1;
     
@@ -244,9 +406,8 @@ export async function startCombatTurn(
     // Process character action
     let characterDamageDealt = 0;
     let characterHealingDone = 0;
-    
-    const character = combat.character as Character;
-    const monster = combat.monster as Monster;
+    // We already have monster data from earlier verification
+    const monster = monsterData;
     
     // Filter active effects before the turn starts and process any DoT/HoT effects
     await updateCombatEffects(combatId);
@@ -954,9 +1115,10 @@ export async function getCharacterSkills(
     });
     
     // Use cached skills from the game data service
-    const { success: skillsSuccess, data: allSkills } = await getCachedSkills();
+    const { success: skillsSuccess, data: allSkills } = await getCachedSkills(supabase);
     
     if (!skillsSuccess || !allSkills) {
+      console.log(`skillsSuccess: ${skillsSuccess}, allSkills: ${allSkills}`);
       return {
         success: false,
         error: 'Failed to get skills from cache'

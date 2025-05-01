@@ -16,16 +16,20 @@ import type {
   RewardTable
 } from '@/lib/types';
 
+import { SupabaseClient } from '@supabase/supabase-js';
+
 // ========================
 // ITEMS
 // ========================
 
 /**
  * Get all items from the database (uncached)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getItems(): Promise<ApiResponse<Item[]>> {
+async function getItems(supabaseClient?: SupabaseClient): Promise<ApiResponse<Item[]>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('items')
@@ -46,10 +50,13 @@ async function getItems(): Promise<ApiResponse<Item[]>> {
 
 /**
  * Get a single item by ID (uncached)
+ * @param id Item ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getItemById(id: number): Promise<ApiResponse<Item>> {
+async function getItemById(id: number, supabaseClient?: SupabaseClient): Promise<ApiResponse<Item>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('items')
@@ -71,10 +78,11 @@ async function getItemById(id: number): Promise<ApiResponse<Item>> {
 
 /**
  * Get all items (cached for 24 hours)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedItems = unstable_cache(
-  async () => {
-    const result = await getItems();
+  async (supabaseClient?: SupabaseClient) => {
+    const result = await getItems(supabaseClient);
     return result;
   },
   ['items'],
@@ -83,10 +91,12 @@ export const getCachedItems = unstable_cache(
 
 /**
  * Get a single item by ID (cached for 24 hours)
+ * @param id Item ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedItemById = unstable_cache(
-  async (id: number) => {
-    const result = await getItemById(id);
+  async (id: number, supabaseClient?: SupabaseClient) => {
+    const result = await getItemById(id, supabaseClient);
     return result;
   },
   ['item'],
@@ -99,10 +109,12 @@ export const getCachedItemById = unstable_cache(
 
 /**
  * Get all monsters from the database (uncached)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getMonsters(): Promise<ApiResponse<Monster[]>> {
+async function getMonsters(supabaseClient?: SupabaseClient): Promise<ApiResponse<Monster[]>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('monsters')
@@ -123,10 +135,13 @@ async function getMonsters(): Promise<ApiResponse<Monster[]>> {
 
 /**
  * Get a single monster by ID (uncached)
+ * @param id Monster ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getMonsterById(id: number): Promise<ApiResponse<Monster>> {
+async function getMonsterById(id: number, supabaseClient?: SupabaseClient): Promise<ApiResponse<Monster>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('monsters')
@@ -148,10 +163,11 @@ async function getMonsterById(id: number): Promise<ApiResponse<Monster>> {
 
 /**
  * Get all monsters (cached for 24 hours)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedMonsters = unstable_cache(
-  async () => {
-    const result = await getMonsters();
+  async (supabaseClient?: SupabaseClient) => {
+    const result = await getMonsters(supabaseClient);
     return result;
   },
   ['monsters'],
@@ -160,10 +176,12 @@ export const getCachedMonsters = unstable_cache(
 
 /**
  * Get a single monster by ID (cached for 24 hours)
+ * @param id Monster ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedMonsterById = unstable_cache(
-  async (id: number) => {
-    const result = await getMonsterById(id);
+  async (id: number, supabaseClient?: SupabaseClient) => {
+    const result = await getMonsterById(id, supabaseClient);
     return result;
   },
   ['monster'],
@@ -176,10 +194,12 @@ export const getCachedMonsterById = unstable_cache(
 
 /**
  * Get all areas from the database (uncached)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getAreas(): Promise<ApiResponse<Area[]>> {
+async function getAreas(supabaseClient?: SupabaseClient): Promise<ApiResponse<Area[]>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('areas')
@@ -200,10 +220,13 @@ async function getAreas(): Promise<ApiResponse<Area[]>> {
 
 /**
  * Get a single area by ID (uncached)
+ * @param id Area ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getAreaById(id: number): Promise<ApiResponse<Area>> {
+async function getAreaById(id: number, supabaseClient?: SupabaseClient): Promise<ApiResponse<Area>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('areas')
@@ -225,10 +248,11 @@ async function getAreaById(id: number): Promise<ApiResponse<Area>> {
 
 /**
  * Get all areas (cached for 24 hours)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedAreas = unstable_cache(
-  async () => {
-    const result = await getAreas();
+  async (supabaseClient?: SupabaseClient) => {
+    const result = await getAreas(supabaseClient);
     return result;
   },
   ['areas'],
@@ -237,10 +261,12 @@ export const getCachedAreas = unstable_cache(
 
 /**
  * Get a single area by ID (cached for 24 hours)
+ * @param id Area ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedAreaById = unstable_cache(
-  async (id: number) => {
-    const result = await getAreaById(id);
+  async (id: number, supabaseClient?: SupabaseClient) => {
+    const result = await getAreaById(id, supabaseClient);
     return result;
   },
   ['area'],
@@ -253,10 +279,12 @@ export const getCachedAreaById = unstable_cache(
 
 /**
  * Get all adventures from the database (uncached)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getAdventures(): Promise<ApiResponse<Adventure[]>> {
+async function getAdventures(supabaseClient?: SupabaseClient): Promise<ApiResponse<Adventure[]>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('adventures')
@@ -277,10 +305,13 @@ async function getAdventures(): Promise<ApiResponse<Adventure[]>> {
 
 /**
  * Get a single adventure by ID (uncached)
+ * @param id Adventure ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getAdventureById(id: number): Promise<ApiResponse<Adventure>> {
+async function getAdventureById(id: number, supabaseClient?: SupabaseClient): Promise<ApiResponse<Adventure>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('adventures')
@@ -302,10 +333,11 @@ async function getAdventureById(id: number): Promise<ApiResponse<Adventure>> {
 
 /**
  * Get all adventures (cached for 24 hours)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedAdventures = unstable_cache(
-  async () => {
-    const result = await getAdventures();
+  async (supabaseClient?: SupabaseClient) => {
+    const result = await getAdventures(supabaseClient);
     return result;
   },
   ['adventures'],
@@ -314,10 +346,12 @@ export const getCachedAdventures = unstable_cache(
 
 /**
  * Get a single adventure by ID (cached for 24 hours)
+ * @param id Adventure ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedAdventureById = unstable_cache(
-  async (id: number) => {
-    const result = await getAdventureById(id);
+  async (id: number, supabaseClient?: SupabaseClient) => {
+    const result = await getAdventureById(id, supabaseClient);
     return result;
   },
   ['adventure'],
@@ -330,10 +364,12 @@ export const getCachedAdventureById = unstable_cache(
 
 /**
  * Get all adventure decisions from the database (uncached)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getAdventureDecisions(): Promise<ApiResponse<AdventureDecision[]>> {
+async function getAdventureDecisions(supabaseClient?: SupabaseClient): Promise<ApiResponse<AdventureDecision[]>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('adventure_decisions')
@@ -354,10 +390,13 @@ async function getAdventureDecisions(): Promise<ApiResponse<AdventureDecision[]>
 
 /**
  * Get a single adventure decision by ID (uncached)
+ * @param id Decision ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getAdventureDecisionById(id: number): Promise<ApiResponse<AdventureDecision>> {
+async function getAdventureDecisionById(id: number, supabaseClient?: SupabaseClient): Promise<ApiResponse<AdventureDecision>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('adventure_decisions')
@@ -379,10 +418,11 @@ async function getAdventureDecisionById(id: number): Promise<ApiResponse<Adventu
 
 /**
  * Get all adventure decisions (cached for 24 hours)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedAdventureDecisions = unstable_cache(
-  async () => {
-    const result = await getAdventureDecisions();
+  async (supabaseClient?: SupabaseClient) => {
+    const result = await getAdventureDecisions(supabaseClient);
     return result;
   },
   ['adventure_decisions'],
@@ -391,10 +431,12 @@ export const getCachedAdventureDecisions = unstable_cache(
 
 /**
  * Get a single adventure decision by ID (cached for 24 hours)
+ * @param id Decision ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedAdventureDecisionById = unstable_cache(
-  async (id: number) => {
-    const result = await getAdventureDecisionById(id);
+  async (id: number, supabaseClient?: SupabaseClient) => {
+    const result = await getAdventureDecisionById(id, supabaseClient);
     return result;
   },
   ['adventure_decision'],
@@ -407,10 +449,12 @@ export const getCachedAdventureDecisionById = unstable_cache(
 
 /**
  * Get all adventure outcomes from the database (uncached)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getAdventureOutcomes(): Promise<ApiResponse<AdventureOutcome[]>> {
+async function getAdventureOutcomes(supabaseClient?: SupabaseClient): Promise<ApiResponse<AdventureOutcome[]>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('adventure_outcomes')
@@ -431,10 +475,13 @@ async function getAdventureOutcomes(): Promise<ApiResponse<AdventureOutcome[]>> 
 
 /**
  * Get a single adventure outcome by ID (uncached)
+ * @param id Outcome ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getAdventureOutcomeById(id: number): Promise<ApiResponse<AdventureOutcome>> {
+async function getAdventureOutcomeById(id: number, supabaseClient?: SupabaseClient): Promise<ApiResponse<AdventureOutcome>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('adventure_outcomes')
@@ -456,10 +503,11 @@ async function getAdventureOutcomeById(id: number): Promise<ApiResponse<Adventur
 
 /**
  * Get all adventure outcomes (cached for 24 hours)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedAdventureOutcomes = unstable_cache(
-  async () => {
-    const result = await getAdventureOutcomes();
+  async (supabaseClient?: SupabaseClient) => {
+    const result = await getAdventureOutcomes(supabaseClient);
     return result;
   },
   ['adventure_outcomes'],
@@ -468,10 +516,12 @@ export const getCachedAdventureOutcomes = unstable_cache(
 
 /**
  * Get a single adventure outcome by ID (cached for 24 hours)
+ * @param id Outcome ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedAdventureOutcomeById = unstable_cache(
-  async (id: number) => {
-    const result = await getAdventureOutcomeById(id);
+  async (id: number, supabaseClient?: SupabaseClient) => {
+    const result = await getAdventureOutcomeById(id, supabaseClient);
     return result;
   },
   ['adventure_outcome'],
@@ -484,15 +534,19 @@ export const getCachedAdventureOutcomeById = unstable_cache(
 
 /**
  * Get all skills from the database (uncached)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getSkills(): Promise<ApiResponse<Skill[]>> {
+async function getSkills(supabaseClient?: SupabaseClient): Promise<ApiResponse<Skill[]>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('skills')
       .select('*')
       .order('id');
+    
+    console.log('Fetched skills:', data); // Debugging line
     
     if (error) {
       console.error('Error fetching skills:', error);
@@ -508,10 +562,13 @@ async function getSkills(): Promise<ApiResponse<Skill[]>> {
 
 /**
  * Get a single skill by ID (uncached)
+ * @param id Skill ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getSkillById(id: number): Promise<ApiResponse<Skill>> {
+async function getSkillById(id: number, supabaseClient?: SupabaseClient): Promise<ApiResponse<Skill>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('skills')
@@ -533,10 +590,12 @@ async function getSkillById(id: number): Promise<ApiResponse<Skill>> {
 
 /**
  * Get all skills (cached for 24 hours)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedSkills = unstable_cache(
-  async () => {
-    const result = await getSkills();
+  async (supabaseClient?: SupabaseClient) => {
+    const result = await getSkills(supabaseClient);
+    console.log('getSkills Cache function skills:', result); // Debugging line
     return result;
   },
   ['skills'],
@@ -545,10 +604,12 @@ export const getCachedSkills = unstable_cache(
 
 /**
  * Get a single skill by ID (cached for 24 hours)
+ * @param id Skill ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedSkillById = unstable_cache(
-  async (id: number) => {
-    const result = await getSkillById(id);
+  async (id: number, supabaseClient?: SupabaseClient) => {
+    const result = await getSkillById(id, supabaseClient);
     return result;
   },
   ['skill'],
@@ -561,10 +622,12 @@ export const getCachedSkillById = unstable_cache(
 
 /**
  * Get all world bosses from the database (uncached)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getWorldBosses(): Promise<ApiResponse<WorldBoss[]>> {
+async function getWorldBosses(supabaseClient?: SupabaseClient): Promise<ApiResponse<WorldBoss[]>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('world_boss')
@@ -585,10 +648,13 @@ async function getWorldBosses(): Promise<ApiResponse<WorldBoss[]>> {
 
 /**
  * Get a single world boss by ID (uncached)
+ * @param id World Boss ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getWorldBossById(id: number): Promise<ApiResponse<WorldBoss>> {
+async function getWorldBossById(id: number, supabaseClient?: SupabaseClient): Promise<ApiResponse<WorldBoss>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('world_boss')
@@ -610,10 +676,11 @@ async function getWorldBossById(id: number): Promise<ApiResponse<WorldBoss>> {
 
 /**
  * Get all world bosses (cached for 24 hours)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedWorldBosses = unstable_cache(
-  async () => {
-    const result = await getWorldBosses();
+  async (supabaseClient?: SupabaseClient) => {
+    const result = await getWorldBosses(supabaseClient);
     return result;
   },
   ['world_bosses'],
@@ -622,10 +689,12 @@ export const getCachedWorldBosses = unstable_cache(
 
 /**
  * Get a single world boss by ID (cached for 24 hours)
+ * @param id World Boss ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedWorldBossById = unstable_cache(
-  async (id: number) => {
-    const result = await getWorldBossById(id);
+  async (id: number, supabaseClient?: SupabaseClient) => {
+    const result = await getWorldBossById(id, supabaseClient);
     return result;
   },
   ['world_boss'],
@@ -638,10 +707,12 @@ export const getCachedWorldBossById = unstable_cache(
 
 /**
  * Get all shop items from the database (uncached)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getShopItems(): Promise<ApiResponse<ShopItem[]>> {
+async function getShopItems(supabaseClient?: SupabaseClient): Promise<ApiResponse<ShopItem[]>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('shop_items')
@@ -665,10 +736,13 @@ async function getShopItems(): Promise<ApiResponse<ShopItem[]>> {
 
 /**
  * Get a single shop item by ID (uncached)
+ * @param id Shop Item ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getShopItemById(id: number): Promise<ApiResponse<ShopItem>> {
+async function getShopItemById(id: number, supabaseClient?: SupabaseClient): Promise<ApiResponse<ShopItem>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('shop_items')
@@ -693,10 +767,11 @@ async function getShopItemById(id: number): Promise<ApiResponse<ShopItem>> {
 
 /**
  * Get all shop items (cached for 24 hours)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedShopItems = unstable_cache(
-  async () => {
-    const result = await getShopItems();
+  async (supabaseClient?: SupabaseClient) => {
+    const result = await getShopItems(supabaseClient);
     return result;
   },
   ['shop_items'],
@@ -705,10 +780,12 @@ export const getCachedShopItems = unstable_cache(
 
 /**
  * Get a single shop item by ID (cached for 24 hours)
+ * @param id Shop Item ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedShopItemById = unstable_cache(
-  async (id: number) => {
-    const result = await getShopItemById(id);
+  async (id: number, supabaseClient?: SupabaseClient) => {
+    const result = await getShopItemById(id, supabaseClient);
     return result;
   },
   ['shop_item'],
@@ -721,10 +798,12 @@ export const getCachedShopItemById = unstable_cache(
 
 /**
  * Get all reward tables from the database (uncached)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getRewardTables(): Promise<ApiResponse<RewardTable[]>> {
+async function getRewardTables(supabaseClient?: SupabaseClient): Promise<ApiResponse<RewardTable[]>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('reward_tables')
@@ -753,10 +832,13 @@ async function getRewardTables(): Promise<ApiResponse<RewardTable[]>> {
 
 /**
  * Get a single reward table by ID (uncached)
+ * @param id Reward Table ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
-async function getRewardTableById(id: number): Promise<ApiResponse<RewardTable>> {
+async function getRewardTableById(id: number, supabaseClient?: SupabaseClient): Promise<ApiResponse<RewardTable>> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     const { data, error } = await supabase
       .from('reward_tables')
@@ -786,10 +868,11 @@ async function getRewardTableById(id: number): Promise<ApiResponse<RewardTable>>
 
 /**
  * Get all reward tables (cached for 24 hours)
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedRewardTables = unstable_cache(
-  async () => {
-    const result = await getRewardTables();
+  async (supabaseClient?: SupabaseClient) => {
+    const result = await getRewardTables(supabaseClient);
     return result;
   },
   ['reward_tables'],
@@ -798,10 +881,12 @@ export const getCachedRewardTables = unstable_cache(
 
 /**
  * Get a single reward table by ID (cached for 24 hours)
+ * @param id Reward Table ID to fetch
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export const getCachedRewardTableById = unstable_cache(
-  async (id: number) => {
-    const result = await getRewardTableById(id);
+  async (id: number, supabaseClient?: SupabaseClient) => {
+    const result = await getRewardTableById(id, supabaseClient);
     return result;
   },
   ['reward_table'],

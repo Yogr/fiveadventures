@@ -425,8 +425,9 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     );
   }
 
-  // Calculate current monster HP
-  const monsterCurrentHp = Math.max(0, combat.monster.hitpoints - combat.character_damage_dealt);
+  // Calculate current monster HP (safely handle undefined monster)
+  const monsterCurrentHp = combat.monster && combat.monster.hitpoints ? 
+    Math.max(0, combat.monster.hitpoints - combat.character_damage_dealt) : 0;
   
   return (
     <>

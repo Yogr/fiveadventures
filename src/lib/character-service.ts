@@ -6,14 +6,17 @@ import {
 } from '@/lib/game-data-service';
 import type { ApiResponse, Character, CharacterEquipment } from '@/lib/types';
 import { getCurrentGameDay } from '@/lib/utils';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Gets a character by ID with fully populated equipment data
  * This uses the cached item functions to efficiently load equipment
  */
-export async function getFullCharacterById(characterId: string): Promise<ApiResponse<Character>> {
+export async function getFullCharacterById(characterId: string, supabase?: SupabaseClient): Promise<ApiResponse<Character>> {
   try {
-    const supabase = await createClient();
+    if (!supabase) {
+      supabase = await createClient();
+    }
 
     // Get character data
     const { data: character, error } = await supabase
@@ -39,22 +42,36 @@ export async function getFullCharacterById(characterId: string): Promise<ApiResp
     if (equipmentError && equipmentError.code !== 'PGRST116') {
       console.error('Error getting character equipment:', equipmentError);
     }
+
+    console.log('Character equipment:', equipment);
     
     // Get character inventory
-    const { data: inventory, error: inventoryError } = await supabase
-      .from('character_inventory')
-      .select(`
-        id,
-        character_id,
-        item_id,
-        quantity,
-        created_at,
-        updated_at
-      `)
-      .eq('character_id', characterId);
-    
-    if (inventoryError) {
-      console.error('Error getting character inventory:', inventoryError);
+    let inventory: Array<{
+      id: string;
+      character_id: string;
+      item_id: number;
+      quantity: number;
+    }> = [];
+    try {
+      const { data: inventoryData, error: inventoryError } = await supabase
+        .from('character_inventory')
+        .select(`
+          id,
+          character_id,
+          item_id,
+          quantity
+        `)
+        .eq('character_id', characterId);
+      
+      if (inventoryError) {
+        console.error('Error getting character inventory:', inventoryError);
+      } else {
+        inventory = inventoryData || [];
+      }
+    } catch (inventoryErr) {
+      console.error('Exception getting character inventory:', inventoryErr);
+      // Continue without inventory if there's an error
+      inventory = [];
     }
     
     // Check if we need to reset daily adventure count
@@ -91,8 +108,7 @@ export async function getFullCharacterById(characterId: string): Promise<ApiResp
       weapon_id: null,
       helmet_id: null,
       armor_id: null,
-      trinket_id: null,
-      updated_at: new Date().toISOString()
+      trinket_id: null
     };
     
     // Initialize with null values
@@ -106,7 +122,7 @@ export async function getFullCharacterById(characterId: string): Promise<ApiResp
     
     if (equipmentData.weapon_id) {
       equipmentPromises.push(
-        getCachedItemById(equipmentData.weapon_id)
+        getCachedItemById(equipmentData.weapon_id, supabase)
           .then(result => {
             if (result.success) {
               weaponItem = result.data;
@@ -117,7 +133,7 @@ export async function getFullCharacterById(characterId: string): Promise<ApiResp
     
     if (equipmentData.helmet_id) {
       equipmentPromises.push(
-        getCachedItemById(equipmentData.helmet_id)
+        getCachedItemById(equipmentData.helmet_id, supabase)
           .then(result => {
             if (result.success) {
               helmetItem = result.data;
@@ -128,7 +144,7 @@ export async function getFullCharacterById(characterId: string): Promise<ApiResp
     
     if (equipmentData.armor_id) {
       equipmentPromises.push(
-        getCachedItemById(equipmentData.armor_id)
+        getCachedItemById(equipmentData.armor_id, supabase)
           .then(result => {
             if (result.success) {
               armorItem = result.data;
@@ -139,7 +155,7 @@ export async function getFullCharacterById(characterId: string): Promise<ApiResp
     
     if (equipmentData.trinket_id) {
       equipmentPromises.push(
-        getCachedItemById(equipmentData.trinket_id)
+        getCachedItemById(equipmentData.trinket_id, supabase)
           .then(result => {
             if (result.success) {
               trinketItem = result.data;
@@ -150,6 +166,13 @@ export async function getFullCharacterById(characterId: string): Promise<ApiResp
     
     // Wait for all equipment items to be fetched
     await Promise.all(equipmentPromises);
+
+    console.log('Fetched equipment items:', {
+      weaponItem,
+      helmetItem,
+      armorItem,
+      trinketItem
+    });
     
     // Create full equipment object
     const fullEquipment: CharacterEquipment = {
@@ -161,7 +184,13 @@ export async function getFullCharacterById(characterId: string): Promise<ApiResp
     };
     
     // Fetch item data for inventory items
-    const inventoryItems = [];
+    const inventoryItems: Array<{
+      id: string;
+      character_id: string;
+      item_id: number;
+      quantity: number;
+      item: any; // Using any for the item since its structure can vary
+    }> = [];
     
     if (inventory && inventory.length > 0) {
       const inventoryPromises = inventory.map(async (invItem) => {

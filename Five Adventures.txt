@@ -5,7 +5,7 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Bugs
 ----------
-
+Enemies appear to use skills, and sometimes debuffs appear, but enemies seem to also attack? And it doesn't say when they use a skill in the text box
 
 
 Todo
