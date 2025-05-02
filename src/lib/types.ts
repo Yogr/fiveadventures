@@ -72,6 +72,36 @@ export type MonsterAbility = {
 export type Combat = Database['public']['Tables']['combat']['Row'] & {
   monster: Monster;
   turns?: CombatTurn[] | number;
+  turnEvents?: TurnEvents;
+};
+
+export type TurnEvents = {
+  characterAction?: {
+    type: 'attack' | 'skill' | 'run';
+    criticalHit: boolean;
+    targetDodged: boolean;
+    damageDealt: number;
+    skillUsed?: string;
+    effectsApplied: string[];
+    dotEffects: {
+      bleed: { triggered: boolean; amount: number };
+      poison: { triggered: boolean; amount: number };
+      burn: { triggered: boolean; amount: number };
+    };
+  };
+  monsterAction?: {
+    type: 'attack' | 'skill' | 'none';
+    skillUsed: string | null;
+    criticalHit: boolean;
+    targetDodged: boolean;
+    damageDealt: number;
+    effectsApplied: string[];
+    dotEffects: {
+      bleed: { triggered: boolean; amount: number };
+      poison: { triggered: boolean; amount: number };
+      burn: { triggered: boolean; amount: number };
+    };
+  };
 };
 
 export type CombatTurn = Database['public']['Tables']['combat_turns']['Row'] & {

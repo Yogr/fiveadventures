@@ -5,6 +5,57 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 // Authentication functions
+export async function signInWithGoogle() {
+  const supabase = await createClient();
+  
+  // Get site URL with fallback to localhost for development
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${siteUrl}/auth/callback`,
+    },
+  });
+  
+  if (error) {
+    return { error: error.message };
+  }
+  
+  return { url: data.url };
+}
+
+// Handle OAuth callback
+export async function handleAuthCallback() {
+  const supabase = await createClient();
+  
+  try {
+    // Get user from session
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { success: false, error: 'No user found in session', user: null };
+    }
+    
+    // Ensure user record exists in the database
+    const result = await ensureUserRecordExists(
+      user.id, 
+      user.email || '', 
+      user.app_metadata?.provider || 'email'
+    );
+    
+    if (result.error) {
+      return { success: false, error: result.error, user };
+    }
+    
+    return { success: true, user };
+  } catch (e) {
+    const error = e instanceof Error ? e.message : 'Unknown error during authentication';
+    console.error('Error in handleAuthCallback:', error);
+    return { success: false, error, user: null };
+  }
+}
+
 export async function signUp(email: string, password: string) {
   const supabase = await createClient();
   

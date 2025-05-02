@@ -148,7 +148,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   const createFloatingNumber = (
     target: 'character' | 'monster', 
     value: number, 
-    type: 'damage' | 'heal' | 'effect' | 'dodge' | 'crit' | 'poison' | 'burn' = 'damage', 
+    type: 'damage' | 'heal' | 'effect' | 'dodge' | 'crit' | 'poison' | 'burn' | 'bleed' = 'damage', 
     text?: string
   ) => {
     // Get the target element
@@ -178,6 +178,9 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       case 'burn':
         floatingNumber.className = 'burn-text';
         break;
+      case 'bleed':
+        floatingNumber.className = 'bleed-text';
+        break;
       default:
         floatingNumber.className = 'effect-text';
     }
@@ -193,6 +196,8 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       floatingNumber.textContent = `${value} 🧪`; // Poison flask emoji
     } else if (type === 'burn') {
       floatingNumber.textContent = `${value} 🔥`; // Fire emoji
+    } else if (type === 'bleed') {
+      floatingNumber.textContent = `${value} 🩸`; // Blood drop emoji
     } else {
       floatingNumber.textContent = `${value}`;
     }
@@ -255,42 +260,31 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     // Check if monster dealt damage
     const monsterDealtDamage = result.data.monster_damage_dealt > currentCombat.monster_damage_dealt;
     
-    // Variables to track combat event types
-    let usedSkill = false;
-    let skillName = '';
-    let monsterCrit = false;
-    let characterDodged = false;
+    // Get structured data from turnEvents
+    const turnEvents = result.data.turnEvents;
+    const monsterAction = turnEvents?.monsterAction;
     
-    // Analyze combat log to find important events
-    if (result.data.combat_log && Array.isArray(result.data.combat_log)) {
-      const newCombatLog = result.data.combat_log;
-      
-      // Look through combat log messages for important events
-      for (const message of newCombatLog) {
-        // Make sure message is a string
-        if (typeof message === 'string') {
-          // Check for skill usage
-          if (message.includes('uses [')) {
-            usedSkill = true;
-            // Extract skill name from the message
-            const skillMatch = message.match(/uses \[(.*?)\]!/);
-            if (skillMatch && skillMatch[1]) {
-              skillName = skillMatch[1];
-            }
-          }
-          
-          // Check for critical hits
-          if (message.includes('CRITICALLY hits') || message.includes('CRITICAL hit')) {
-            monsterCrit = true;
-          }
-          
-          // Check for dodge
-          if (message.includes(`${character.name} dodges`)) {
-            characterDodged = true;
-          }
-        }
+    // Variables to track combat event types
+    let usedSkill = monsterAction?.type === 'skill';
+    let skillName = monsterAction?.skillUsed || '';
+    let monsterCrit = monsterAction?.criticalHit || false;
+    let characterDodged = monsterAction?.targetDodged || false;
+    
+    // Get DoT effects data directly from turnEvents
+    const dotEffects = {
+      bleed: { 
+        detected: monsterAction?.dotEffects?.bleed?.triggered || false, 
+        amount: monsterAction?.dotEffects?.bleed?.amount || 0 
+      },
+      poison: { 
+        detected: monsterAction?.dotEffects?.poison?.triggered || false, 
+        amount: monsterAction?.dotEffects?.poison?.amount || 0 
+      },
+      burn: { 
+        detected: monsterAction?.dotEffects?.burn?.triggered || false, 
+        amount: monsterAction?.dotEffects?.burn?.amount || 0 
       }
-    }
+    };
     
     // Short delay before monster acts
     setTimeout(() => {
@@ -345,6 +339,28 @@ export default function CombatInterface({ combatId, character: initialCharacter,
           createFloatingNumber('character', 0, 'effect', 'Affected!');
         }, 250);
       }
+      
+      // Display DoT effects after a slight delay
+      setTimeout(() => {
+        // Show bleeding effect if detected
+        if (dotEffects.bleed.detected) {
+          createFloatingNumber('character', dotEffects.bleed.amount, 'bleed');
+        }
+        
+        // Show poison effect if detected
+        if (dotEffects.poison.detected) {
+          setTimeout(() => {
+            createFloatingNumber('character', dotEffects.poison.amount, 'poison');
+          }, 150); // Small delay to not overlap with bleed
+        }
+        
+        // Show burn effect if detected
+        if (dotEffects.burn.detected) {
+          setTimeout(() => {
+            createFloatingNumber('character', dotEffects.burn.amount, 'burn');
+          }, 300); // Small delay to not overlap with poison
+        }
+      }, 700); // Display after the main attack animation
     }, 500);
   };
 
@@ -386,30 +402,29 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         return;
       }
       
-      // Variables to track combat event types
-      let monsterDodged = false;
-      let criticalHit = false;
+      // Get structured data from turnEvents
+      const turnEvents = result.data.turnEvents;
+      const characterAction = turnEvents?.characterAction;
       
-      // Analyze combat log to find important events
-      if (result.data.combat_log && Array.isArray(result.data.combat_log)) {
-        const newCombatLog = result.data.combat_log;
-        
-        // Look through combat log messages for important events
-        for (const message of newCombatLog) {
-          // Ensure the message is a string before using string methods
-          if (typeof message === 'string') {
-            // Check for dodge
-            if (message.includes(`${combat.monster.name} dodges`)) {
-              monsterDodged = true;
-            }
-            
-            // Check for critical hits
-            if (message.includes('CRITICAL hit') || message.includes('lands a CRITICAL hit')) {
-              criticalHit = true;
-            }
-          }
+      // Variables to track combat event types
+      let monsterDodged = characterAction?.targetDodged || false;
+      let criticalHit = characterAction?.criticalHit || false;
+      
+      // Get DoT effects data directly from turnEvents
+      const dotEffects = {
+        bleed: { 
+          detected: characterAction?.dotEffects?.bleed?.triggered || false, 
+          amount: characterAction?.dotEffects?.bleed?.amount || 0 
+        },
+        poison: { 
+          detected: characterAction?.dotEffects?.poison?.triggered || false, 
+          amount: characterAction?.dotEffects?.poison?.amount || 0 
+        },
+        burn: { 
+          detected: characterAction?.dotEffects?.burn?.triggered || false, 
+          amount: characterAction?.dotEffects?.burn?.amount || 0 
         }
-      }
+      };
       
       // Calculate damage dealt
       const damageDealt = result.data.character_damage_dealt - combat.character_damage_dealt;
@@ -437,6 +452,28 @@ export default function CombatInterface({ combatId, character: initialCharacter,
           animateElement('.monster-avatar', 'hit');
         }
       }
+      
+      // Display DoT effects after a slight delay
+      setTimeout(() => {
+        // Show bleeding effect if detected
+        if (dotEffects.bleed.detected) {
+          createFloatingNumber('monster', dotEffects.bleed.amount, 'bleed');
+        }
+        
+        // Show poison effect if detected
+        if (dotEffects.poison.detected) {
+          setTimeout(() => {
+            createFloatingNumber('monster', dotEffects.poison.amount, 'poison');
+          }, 150); // Small delay to not overlap with bleed
+        }
+        
+        // Show burn effect if detected
+        if (dotEffects.burn.detected) {
+          setTimeout(() => {
+            createFloatingNumber('monster', dotEffects.burn.amount, 'burn');
+          }, 300); // Small delay to not overlap with poison
+        }
+      }, 700); // Display after the main attack animation
       
       setCombat(result.data);
       
@@ -476,6 +513,26 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         return;
       }
       
+      // Get structured data from turnEvents
+      const turnEvents = result.data.turnEvents;
+      const characterAction = turnEvents?.characterAction;
+      
+      // Get DoT effects data directly from turnEvents
+      const dotEffects = {
+        bleed: { 
+          detected: characterAction?.dotEffects?.bleed?.triggered || false, 
+          amount: characterAction?.dotEffects?.bleed?.amount || 0 
+        },
+        poison: { 
+          detected: characterAction?.dotEffects?.poison?.triggered || false, 
+          amount: characterAction?.dotEffects?.poison?.amount || 0 
+        },
+        burn: { 
+          detected: characterAction?.dotEffects?.burn?.triggered || false, 
+          amount: characterAction?.dotEffects?.burn?.amount || 0 
+        }
+      };
+      
       setCombat(result.data);
       addToCombatLog(`You used ${skill.name}!`);
       
@@ -490,6 +547,28 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         animateElement('.monster-avatar', 'hit');
         
         addToCombatLog(`You dealt ${damageDealt} damage to the ${combat.monster.name}!`);
+        
+        // Display DoT effects after a slight delay
+        setTimeout(() => {
+          // Show bleeding effect if detected
+          if (dotEffects.bleed.detected) {
+            createFloatingNumber('monster', dotEffects.bleed.amount, 'bleed');
+          }
+          
+          // Show poison effect if detected
+          if (dotEffects.poison.detected) {
+            setTimeout(() => {
+              createFloatingNumber('monster', dotEffects.poison.amount, 'poison');
+            }, 150); // Small delay to not overlap with bleed
+          }
+          
+          // Show burn effect if detected
+          if (dotEffects.burn.detected) {
+            setTimeout(() => {
+              createFloatingNumber('monster', dotEffects.burn.amount, 'burn');
+            }, 300); // Small delay to not overlap with poison
+          }
+        }, 700); // Display after the main attack animation
       }
       
       // Handle monster counter-action

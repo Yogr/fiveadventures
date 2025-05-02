@@ -671,7 +671,7 @@ export function calculateCriticalHit(character: Character, weapon?: Item | null,
   const roll = Math.random() * 100;
   const isCritical = roll <= critChance;
 
-  console.log(`Critical Hit Roll: ${roll} (Chance: ${critChance}%)`);
+  console.log(`Critical Hit Roll: ${roll} (Chance: ${critChance}%) = isCritical? ${isCritical}`);
   
   return {
     isCritical,

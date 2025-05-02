@@ -7,7 +7,8 @@ import type {
   Monster,
   Item,
   Skill,
-  Fighter
+  Fighter,
+  TurnEvents
 } from '@/lib/types';
 import { getCharacterById } from './character';
 import { getPrimaryStat, generateId } from '@/lib/utils';
@@ -406,6 +407,36 @@ export async function startCombatTurn(
     // We already have monster data from earlier verification
     const monster = monsterData;
     
+    // Initialize turnEvents object to track structured combat data
+    let turnEvents: TurnEvents = {
+      characterAction: {
+        type: action as 'attack' | 'skill' | 'run',
+        criticalHit: false,
+        targetDodged: false,
+        damageDealt: 0,
+        skillUsed: action === 'skill' && skill ? skill.name : undefined,
+        effectsApplied: [],
+        dotEffects: {
+          bleed: { triggered: false, amount: 0 },
+          poison: { triggered: false, amount: 0 },
+          burn: { triggered: false, amount: 0 }
+        }
+      },
+      monsterAction: {
+        type: 'none',
+        skillUsed: null,
+        criticalHit: false,
+        targetDodged: false,
+        damageDealt: 0,
+        effectsApplied: [],
+        dotEffects: {
+          bleed: { triggered: false, amount: 0 },
+          poison: { triggered: false, amount: 0 },
+          burn: { triggered: false, amount: 0 }
+        }
+      }
+    };
+    
     // Filter active effects before the turn starts and process any DoT/HoT effects
     await updateCombatEffects(combatId);
     
@@ -499,8 +530,12 @@ export async function startCombatTurn(
       
       // Apply critical hit if it occurs
       if (criticalHit.isCritical) {
+        console.log(`Combat: Critical hit! Damage before multiplier: ${characterDamageDealt}`);
         characterDamageDealt = Math.floor(characterDamageDealt * criticalHit.multiplier);
         combatLog.push(`${character.name} lands a CRITICAL hit on ${monster.name}!`);
+        
+        // Update turnEvents with critical hit data
+        turnEvents.characterAction!.criticalHit = true;
       }
 
       // Add elemental damage if applicable
@@ -520,6 +555,9 @@ export async function startCombatTurn(
       }
       
       console.log(`Combat: Character basic attack - Base damage: ${baseDamage}, Final damage: ${characterDamageDealt}`);
+      
+      // Update turnEvents with damage data
+      turnEvents.characterAction!.damageDealt = characterDamageDealt;
       
       // Add to combat log
       combatLog.push(`${character.name} attacks ${monster.name} for ${characterDamageDealt} damage.`);
@@ -600,6 +638,9 @@ export async function startCombatTurn(
       if (dodged) {
         characterDamageDealt = 0;
         combatLog.push(`${monster.name} dodges ${character.name}'s ${skill.name}!`);
+        
+        // Update turnEvents with dodge data
+        turnEvents.characterAction!.targetDodged = true;
       } else {
         // Execute the skill directly with casted objects
         const skillResult = await executeSkill(skill, characterAsFighter, monsterAsFighter, combat);
@@ -623,6 +664,12 @@ export async function startCombatTurn(
           effectApplied: skillResult.effectApplied,
           messages: skillResult.messages.length
         });
+        
+        // Update turnEvents with skill result data
+        turnEvents.characterAction!.damageDealt = characterDamageDealt;
+        if (skillResult.effectApplied) {
+          turnEvents.characterAction!.effectsApplied.push(skill.name);
+        }
       }
       
       
@@ -845,11 +892,15 @@ export async function startCombatTurn(
         const dodgeRoll = Math.random() * 100;
         const dodged = dodgeRoll <= dodgeChance;
         
-        if (dodged) {
-          // Character dodges the attack
-          monsterDamageDealt = 0;
-          combatLog.push(`${character.name} dodges ${monster.name}'s attack!`);
-        } else {
+      if (dodged) {
+        // Character dodges the attack
+        monsterDamageDealt = 0;
+        combatLog.push(`${character.name} dodges ${monster.name}'s attack!`);
+        
+        // Update turnEvents with dodge data
+        turnEvents.monsterAction!.type = 'attack';
+        turnEvents.monsterAction!.targetDodged = true;
+      } else {
           // Monster performs a basic attack
           // Base damage with randomness (±20%)
           const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
@@ -872,7 +923,14 @@ export async function startCombatTurn(
             // Critical hit multiplies damage by 1.5
             monsterDamageDealt = Math.floor(monsterDamageDealt * 2);
             combatLog.push(`${monster.name} lands a CRITICAL hit on ${character.name}!`);
+            
+            // Update turnEvents with critical hit data
+            turnEvents.monsterAction!.criticalHit = true;
           }
+          
+          // Update turnEvents with monster action data
+          turnEvents.monsterAction!.type = 'attack';
+          turnEvents.monsterAction!.damageDealt = monsterDamageDealt;
           
           // Add to combat log
           combatLog.push(`${monster.name} attacks ${character.name} for ${monsterDamageDealt} damage.`);
@@ -910,6 +968,11 @@ export async function startCombatTurn(
             // Character dodges the skill attack
             monsterDamageDealt = 0;
             combatLog.push(`${character.name} dodges ${monster.name}'s [${chosenAbilityName}]!`);
+            
+            // Update turnEvents with dodge data
+            turnEvents.monsterAction!.type = 'skill';
+            turnEvents.monsterAction!.skillUsed = chosenAbilityName;
+            turnEvents.monsterAction!.targetDodged = true;
           } else {
             // Apply defense
             const totalDefense = calculateTotalDefense(character);
@@ -924,7 +987,15 @@ export async function startCombatTurn(
               // Critical hit multiplies damage by 1.5
               monsterDamageDealt = Math.floor(monsterDamageDealt * 1.5);
               combatLog.push(`${monster.name}'s [${chosenAbilityName}] CRITICALLY hits ${character.name}!`);
+              
+              // Update turnEvents with critical hit data
+              turnEvents.monsterAction!.criticalHit = true;
             }
+            
+            // Update turnEvents with monster action data
+            turnEvents.monsterAction!.type = 'skill';
+            turnEvents.monsterAction!.skillUsed = chosenAbilityName;
+            turnEvents.monsterAction!.damageDealt = monsterDamageDealt;
             
             // Add to combat log
             combatLog.push(`[${chosenAbilityName}] deals ${monsterDamageDealt} damage to ${character.name}.`);
@@ -940,6 +1011,9 @@ export async function startCombatTurn(
             
             // Add to combat log
             combatLog.push(`[${chosenAbilityName}] effect applied to ${character.name}`);
+            
+            // Update turnEvents with effect data
+            turnEvents.monsterAction!.effectsApplied.push(chosenAbilityName);
           }
         }
         
@@ -992,15 +1066,76 @@ export async function startCombatTurn(
       }
     }
     
-    // Update combat effects - filter out expired effects and update remaining durations
-    await updateCombatEffects(combatId);
-    
-    // Get updated combat
-    const { data: updatedCombat, error: updateError } = await supabase
-      .from('combat')
-      .select('*, monster:monster_id(*), player_effects, enemy_effects')
-      .eq('id', combatId)
-      .single();
+      // Track DoT effects that were triggered in this turn
+      if (effectResults.playerDamageFromEffects > 0) {
+        // Check which effects were triggered by examining the messages
+        for (const msg of effectResults.messages) {
+          if (typeof msg === 'string') {
+            if (msg.toLowerCase().includes('bleed') && msg.toLowerCase().includes('player')) {
+              const damageMatch = msg.match(/deals (\d+) damage/i);
+              if (damageMatch && damageMatch[1]) {
+                turnEvents.monsterAction!.dotEffects.bleed.triggered = true;
+                turnEvents.monsterAction!.dotEffects.bleed.amount = parseInt(damageMatch[1], 10);
+              }
+            } else if (msg.toLowerCase().includes('poison') && msg.toLowerCase().includes('player')) {
+              const damageMatch = msg.match(/deals (\d+) damage/i);
+              if (damageMatch && damageMatch[1]) {
+                turnEvents.monsterAction!.dotEffects.poison.triggered = true;
+                turnEvents.monsterAction!.dotEffects.poison.amount = parseInt(damageMatch[1], 10);
+              }
+            } else if (msg.toLowerCase().includes('burn') && msg.toLowerCase().includes('player')) {
+              const damageMatch = msg.match(/deals (\d+) damage/i);
+              if (damageMatch && damageMatch[1]) {
+                turnEvents.monsterAction!.dotEffects.burn.triggered = true;
+                turnEvents.monsterAction!.dotEffects.burn.amount = parseInt(damageMatch[1], 10);
+              }
+            }
+          }
+        }
+      }
+      
+      if (effectResults.monsterDamageFromEffects > 0) {
+        // Check which effects were triggered by examining the messages
+        for (const msg of effectResults.messages) {
+          if (typeof msg === 'string') {
+            if (msg.toLowerCase().includes('bleed') && msg.toLowerCase().includes('monster')) {
+              const damageMatch = msg.match(/deals (\d+) damage/i);
+              if (damageMatch && damageMatch[1]) {
+                turnEvents.characterAction!.dotEffects.bleed.triggered = true;
+                turnEvents.characterAction!.dotEffects.bleed.amount = parseInt(damageMatch[1], 10);
+              }
+            } else if (msg.toLowerCase().includes('poison') && msg.toLowerCase().includes('monster')) {
+              const damageMatch = msg.match(/deals (\d+) damage/i);
+              if (damageMatch && damageMatch[1]) {
+                turnEvents.characterAction!.dotEffects.poison.triggered = true;
+                turnEvents.characterAction!.dotEffects.poison.amount = parseInt(damageMatch[1], 10);
+              }
+            } else if (msg.toLowerCase().includes('burn') && msg.toLowerCase().includes('monster')) {
+              const damageMatch = msg.match(/deals (\d+) damage/i);
+              if (damageMatch && damageMatch[1]) {
+                turnEvents.characterAction!.dotEffects.burn.triggered = true;
+                turnEvents.characterAction!.dotEffects.burn.amount = parseInt(damageMatch[1], 10);
+              }
+            }
+          }
+        }
+      }
+      
+      // Update combat effects - filter out expired effects and update remaining durations
+      await updateCombatEffects(combatId);
+      
+      // Store the turnEvents in the combat record
+      await supabase
+        .from('combat')
+        .update({ turnEvents })
+        .eq('id', combatId);
+      
+      // Get updated combat
+      const { data: updatedCombat, error: updateError } = await supabase
+        .from('combat')
+        .select('*, monster:monster_id(*), player_effects, enemy_effects, turnEvents')
+        .eq('id', combatId)
+        .single();
     
     if (updateError) {
       console.error('Error getting updated combat:', updateError);

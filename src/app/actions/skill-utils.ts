@@ -334,10 +334,20 @@ export async function processActiveEffects(
       const isActive = turnsPassed < (effect.duration + 1);
       
       if (isActive) {
-        // Apply damage over time
+        // Apply damage over time with specific naming based on effect type
         if (effect.damage_over_time) {
           playerDamageFromEffects += effect.damage_over_time;
-          messages.push(`${effect.name} deals ${effect.damage_over_time} damage to the player.`);
+          
+          // Format the message based on effect type for better visual display
+          if (effect.name.toLowerCase().includes('bleed') || effect.source.toLowerCase().includes('bleed')) {
+            messages.push(`Bleeding deals ${effect.damage_over_time} damage to the player.`);
+          } else if (effect.name.toLowerCase().includes('poison') || effect.source.toLowerCase().includes('poison')) {
+            messages.push(`Poison deals ${effect.damage_over_time} damage to the player.`);
+          } else if (effect.name.toLowerCase().includes('burn') || effect.source.toLowerCase().includes('burn')) {
+            messages.push(`Burn deals ${effect.damage_over_time} damage to the player.`);
+          } else {
+            messages.push(`${effect.name} deals ${effect.damage_over_time} damage to the player.`);
+          }
         }
         
         // Apply healing over time
@@ -366,10 +376,20 @@ export async function processActiveEffects(
       const isActive = turnsPassed <= effect.duration;
       
       if (isActive) {
-        // Apply damage over time
+        // Apply damage over time with specific naming based on effect type
         if (effect.damage_over_time) {
           monsterDamageFromEffects += effect.damage_over_time;
-          messages.push(`${effect.name} deals ${effect.damage_over_time} damage to the monster.`);
+          
+          // Format the message based on effect type for better visual display
+          if (effect.name.toLowerCase().includes('bleed') || effect.source.toLowerCase().includes('bleed')) {
+            messages.push(`Bleeding deals ${effect.damage_over_time} damage to the monster.`);
+          } else if (effect.name.toLowerCase().includes('poison') || effect.source.toLowerCase().includes('poison')) {
+            messages.push(`Poison deals ${effect.damage_over_time} damage to the monster.`);
+          } else if (effect.name.toLowerCase().includes('burn') || effect.source.toLowerCase().includes('burn')) {
+            messages.push(`Burn deals ${effect.damage_over_time} damage to the monster.`);
+          } else {
+            messages.push(`${effect.name} deals ${effect.damage_over_time} damage to the monster.`);
+          }
         }
         
         // Apply healing over time

@@ -13,9 +13,15 @@ export const metadata: Metadata = {
   description: 'Sign in to Five Adventures to save your progress across devices',
 }
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   // Check if user is already logged in
   const user = await getUser();
+
+  const _searchParams = await searchParams;
   
   // Check if the character cookie exists
   const cookieStore = await cookies();
@@ -25,6 +31,11 @@ export default async function LoginPage() {
   if (user && characterIdCookie?.value) {
     redirect(ROUTES.ADVENTURE);
   }
+  
+  // Get error from query parameters if it exists
+  const errorMessage = _searchParams.error ? 
+    Array.isArray(_searchParams.error) ? _searchParams.error[0] : _searchParams.error 
+    : undefined;
   
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
@@ -75,8 +86,8 @@ export default async function LoginPage() {
           <p className="text-amber-100 text-xl">Sign in to save your progress across devices</p>
         </div>
 
-        {/* Auth Form */}
-        <AuthForm />
+        {/* Auth Form with error message if any */}
+        <AuthForm initialError={errorMessage} />
 
         <div className="mt-8 text-center">
           <Link 
