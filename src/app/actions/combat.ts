@@ -637,6 +637,80 @@ export async function startCombatTurn(
         // Add messages to combat log
         combatLog.push(...skillResult.messages);
         
+        // Check for pickpocket skill and process it
+        if (skill.name.toLowerCase() === 'pickpocket' && skill.effects) {
+          try {
+            // Extract pickpocket data
+            const pickpocketData = typeof skill.effects === 'string' 
+              ? JSON.parse(skill.effects) 
+              : skill.effects;
+            
+            if (pickpocketData.gold_chance && pickpocketData.item_chance && pickpocketData.reward_table) {
+              // Roll dice to determine if it's gold or item (1-100)
+              const roll = Math.floor(Math.random() * 100) + 1;
+              
+              if (roll <= pickpocketData.gold_chance) {
+                // Player gets gold
+                const goldAmount = Math.floor((monster.level || 1) * 5 + Math.random() * 20);
+                
+                // Update character gold
+                await supabase
+                  .from('characters')
+                  .update({
+                    gold: character.gold + goldAmount
+                  })
+                  .eq('id', character.id);
+                
+                // Add to combat log
+                combatLog.push(`${character.name} pickpockets ${goldAmount} gold from ${monster.name}!`);
+              } else {
+                // Player gets an item from reward table
+                const { success: rewardTableSuccess, data: rewardTable } = await getCachedItemById(
+                  pickpocketData.reward_table, 
+                  supabase
+                );
+                
+                if (rewardTableSuccess && rewardTable && rewardTable.effects) {
+                  // Get the reward items array from effects
+                  const rewardItems = typeof rewardTable.effects === 'string'
+                    ? JSON.parse(rewardTable.effects).reward_items || []
+                    : (rewardTable.effects as any).reward_items || [];
+                  
+                  if (Array.isArray(rewardItems) && rewardItems.length > 0) {
+                    // Roll dice to determine which item they get
+                    const itemRoll = Math.floor(Math.random() * rewardItems.length);
+                    const item = rewardItems[itemRoll];
+                    
+                    // Add item to character inventory
+                    if (item && item.id) {
+                      await supabase
+                        .from('character_inventory')
+                        .insert({
+                          character_id: character.id,
+                          item_id: item.id,
+                          quantity: 1
+                        });
+                      
+                      // Add to combat log
+                      combatLog.push(`${character.name} pickpockets ${item.name || 'a mysterious item'} from ${monster.name}!`);
+                    } else {
+                      // Fallback message if item data is incomplete
+                      combatLog.push(`${character.name} pickpockets something from ${monster.name}, but it slips away!`);
+                    }
+                  } else {
+                    combatLog.push(`${character.name} attempts to pickpocket ${monster.name}, but finds nothing of value.`);
+                  }
+                } else {
+                  combatLog.push(`${character.name} attempts to pickpocket ${monster.name}, but fumbles.`);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error processing pickpocket skill:', error);
+            combatLog.push(`${character.name}'s pickpocket attempt fails due to some confusion.`);
+          }
+        }
+        
         // Apply any effects if the skill created them
         if (skillResult.effectApplied) {
           await applySkillEffect(combatId, skill, 'character');

@@ -310,6 +310,8 @@ export interface Database {
           created_at: string
           attribute: string | null
           power: number | null
+          skill_type: string | null
+          target: string | null
         }
         Insert: {
           id?: number
@@ -323,6 +325,8 @@ export interface Database {
           created_at?: string
           attribute?: string | null
           power?: number | null
+          skill_type?: string | null
+          target?: string | null
         }
         Update: {
           id?: number
@@ -336,6 +340,8 @@ export interface Database {
           created_at?: string
           attribute?: string | null
           power?: number | null
+          skill_type?: string | null
+          target?: string | null
         }
         Relationships: []
       }
