@@ -1130,12 +1130,18 @@ export async function startCombatTurn(
         .update({ turnEvents })
         .eq('id', combatId);
       
-      // Get updated combat
+      // Get updated combat - Don't explicitly select 'turnEvents' as it might not be a column
       const { data: updatedCombat, error: updateError } = await supabase
         .from('combat')
-        .select('*, monster:monster_id(*), player_effects, enemy_effects, turnEvents')
+        .select('*, monster:monster_id(*), player_effects, enemy_effects')
         .eq('id', combatId)
         .single();
+        
+      // If we successfully retrieved the combat, but turnEvents isn't recognized as a column,
+      // the query would have succeeded but turnEvents might be lost. Add it back.
+      if (updatedCombat) {
+        updatedCombat.turnEvents = turnEvents;
+      }
     
     if (updateError) {
       console.error('Error getting updated combat:', updateError);
