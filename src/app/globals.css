@@ -279,7 +279,7 @@ body {
 .damage-number {
   position: absolute;
   font-weight: bold;
-  font-size: 1.25rem;
+  font-size: 1.75rem;
   color: #ff4d4d; /* Red */
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
@@ -294,7 +294,7 @@ body {
 .heal-number {
   position: absolute;
   font-weight: bold;
-  font-size: 1.25rem;
+  font-size: 1.75rem;
   color: #4dff4d; /* Bright Green */
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
@@ -304,7 +304,7 @@ body {
 .effect-text {
   position: absolute;
   font-weight: bold;
-  font-size: 1.25rem;
+  font-size: 1.75rem;
   color: #ffff4d; /* Yellow */
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
@@ -314,7 +314,7 @@ body {
 .dodge-text {
   position: absolute;
   font-weight: bold;
-  font-size: 1.5rem; /* Slightly larger */
+  font-size: 2rem; /* Slightly larger */
   color: #ffff4d; /* Yellow */
   animation: floatUp 1s ease-out forwards, pulsate 0.3s ease-in-out 2;
   z-index: 10;
@@ -324,7 +324,7 @@ body {
 .crit-text {
   position: absolute;
   font-weight: bold;
-  font-size: 1.5rem; /* Larger */
+  font-size: 2rem; /* Larger */
   color: #ff8c00; /* Orange */
   animation: floatUp 1s ease-out forwards, pulsate 0.3s ease-in-out 2;
   z-index: 10;
@@ -334,7 +334,7 @@ body {
 .poison-text {
   position: absolute;
   font-weight: bold;
-  font-size: 1.25rem;
+  font-size: 1.75rem;
   color: #00b300; /* Dark Green */
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
@@ -344,7 +344,7 @@ body {
 .burn-text {
   position: absolute;
   font-weight: bold;
-  font-size: 1.25rem;
+  font-size: 1.75rem;
   color: #ff6600; /* Orange-Red */
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
@@ -354,7 +354,7 @@ body {
 .bleed-text {
   position: absolute;
   font-weight: bold;
-  font-size: 1.25rem;
+  font-size: 1.75rem;
   color: #c70000; /* Deep Red */
   animation: floatUp 1s ease-out forwards;
   z-index: 10;
