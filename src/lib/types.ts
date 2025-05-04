@@ -41,10 +41,16 @@ export type ShopItem = Database['public']['Tables']['shop_items']['Row'] & {
   item: Item;
 };
 
+// Skill Type Enums
+export type SkillType = 'buff' | 'debuff' | 'damage' | 'heal' | 'action' | 'other';
+export type SkillTarget = 'all' | 'singleEnemy' | 'multiEnemy' | 'self' | 'team';
+
 // Skill Types
 export type Skill = Database['public']['Tables']['skills']['Row'] & {
   attribute?: string;  // The attribute this skill relies on (strength, intelligence, agility, luck)
   power?: number;      // The base power of the skill
+  skillType?: SkillType; // Type of skill: buff, debuff, damage, heal, action, other
+  target?: SkillTarget; // Target of the skill: all, singleEnemy, multiEnemy, self, team
 };
 
 export type SkillEffect = {

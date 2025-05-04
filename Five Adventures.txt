@@ -16,6 +16,8 @@ Bugs
 - Floating combat text needs to be bigger
 - Damage calculation for World Boss needs to be unique, factor in gear score, class + stats, and attack damage.
 - Add some black outline border to font or a shadow at least
+- Goblin Chief has no art
+- No one should be able to dodge a buff spell. Buffs should also not be cast on enemies at all.
 
 
 Todo

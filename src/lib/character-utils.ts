@@ -327,13 +327,15 @@ export function getItemStatBoosts(item: Item | null): Record<string, number> {
  * @param character The character object
  * @param activeEffects Optional active effects that may modify the character's damage
  */
-export function calculateTotalDamage(character: Character, weapon?:Item, activeEffects?: Record<string, any>[]): number {
+export function calculateTotalDamage(character: Character, activeEffects?: Record<string, any>[]): number {
   let baseDamage = 0;
 
-  console.log('Calculating total damage, weapon is ', weapon);
+  const weapon = character.equipment?.weapon;
   
-  // If unarmed, use base damage of 5
+  // Log more details about the weapon when it's undefined
   if (!weapon) {
+    console.warn('Weapon is undefined, using unarmed damage calculation.');    
+    // Use base damage of 5 when unarmed
     baseDamage = 5;
   } else {
     // Use weapon's base damage as the starting point

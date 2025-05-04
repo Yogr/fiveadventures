@@ -126,7 +126,12 @@ export async function getFullCharacterById(characterId: string, supabase?: Supab
           .then(result => {
             if (result.success) {
               weaponItem = result.data;
+            } else {
+              console.error('Failed to fetch weapon data:', result.error);
             }
+          })
+          .catch(err => {
+            console.error('Exception fetching weapon data:', err);
           })
       );
     }
@@ -194,7 +199,8 @@ export async function getFullCharacterById(characterId: string, supabase?: Supab
     
     if (inventory && inventory.length > 0) {
       const inventoryPromises = inventory.map(async (invItem) => {
-        const itemResult = await getCachedItemById(invItem.item_id);
+        // Important: Pass the supabase client to the cached function
+        const itemResult = await getCachedItemById(invItem.item_id, supabase);
         return {
           ...invItem,
           item: itemResult.success ? itemResult.data : null

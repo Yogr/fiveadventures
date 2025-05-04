@@ -85,7 +85,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     loadCombatData();
   }, [combatId, character.id]);
 
-  // Update active effects whenever combat data changes
+  // Update active effects and combat log whenever combat data changes
   useEffect(() => {
     if (!combat) return;
     
@@ -96,6 +96,16 @@ export default function CombatInterface({ combatId, character: initialCharacter,
 
     setCharacterEffects(playerEffects as CombatEffect[]);
     setMonsterEffects(enemyEffects as CombatEffect[]);
+    
+    // Update combat log from server data
+    if (combat.combat_log && Array.isArray(combat.combat_log)) {
+      console.log('CombatInterface: Updating combat log from server data, combat.combat_log:', combat.combat_log);
+      // Filter out any non-string values and convert to string[]
+      const stringLogs = combat.combat_log
+        .filter(entry => typeof entry === 'string')
+        .map(entry => String(entry));
+      setCombatLog(stringLogs);
+    }
   }, [combat]);
 
   // Check if combat is completed

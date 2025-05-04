@@ -92,31 +92,7 @@ export async function getCombat(
       has_monster: !!data.monster
     });
     
-    // Now fetch the monster data from cache
-    if (data && data.monster_id) {
-      console.log('ActiveCombat: Fetching monster data for combat from cache, ID:', data.monster_id);
-      const { success: monsterSuccess, data: monsterData } = await getCachedMonsterById(data.monster_id, supabase);
-      if (monsterSuccess && monsterData) {
-        // Add the monster data to the combat object
-        data.monster = monsterData;
-        console.log('ActiveCombat: Successfully fetched monster data:', monsterData.name);
-      } else {
-        console.error('ActiveCombat: Failed to fetch monster data from cache, falling back to direct query');
-        // Fall back to direct database query if cache fails
-        const supabaseMonster = await supabase
-          .from('monsters')
-          .select('*')
-          .eq('id', data.monster_id)
-          .single();
-          
-        if (!supabaseMonster.error) {
-          data.monster = supabaseMonster.data as Monster;
-          console.log('ActiveCombat: Successfully fetched monster data from database:', data.monster.name);
-        } else {
-          console.error('ActiveCombat: Failed to fetch monster data from database:', supabaseMonster.error);
-        }
-      }
-    }
+    // The monster data is already fetched above, no need to fetch it twice
     
     return {
       success: true,
@@ -493,9 +469,6 @@ export async function startCombatTurn(
     // Calculate character damage based on action
     if (action === 'attack') {
       // Basic attack
-      // The character object already has fully populated equipment data from the enhanced character service
-      // No need to fetch equipment again - it's already cached and included in the character object
-      const weaponEquipment = character.equipment;
       
       // Check if monster is a boss
       const isBoss = monster.is_elite === true || monster.is_boss === true;
@@ -503,8 +476,7 @@ export async function startCombatTurn(
       // Process item effects
       const itemEffects = await processItemEffects(character, monster, isBoss);
       
-      // Calculate total damage using the same function as in the character display
-      let baseDamage = calculateTotalDamage(character, weaponEquipment?.weapon || undefined);
+      let baseDamage = calculateTotalDamage(character);
 
       console.log('Combat: Base damage calculated:', baseDamage);
       
@@ -525,7 +497,7 @@ export async function startCombatTurn(
       // Check for critical hit using character's weapon
       const criticalHit = calculateCriticalHit(
         character, 
-        weaponEquipment?.weapon || undefined
+        character.equipment?.weapon || undefined
       );
       
       // Apply critical hit if it occurs
@@ -629,19 +601,32 @@ export async function startCombatTurn(
         abilities: monster.abilities
       } as Fighter;
       
-      // Calculate chance to dodge the skill
-      const dodgeChance = calculateDodgeChance(monsterAsFighter as any, characterAsFighter as any);
-      const dodgeRoll = Math.random() * 100;
-      const dodged = dodgeRoll <= dodgeChance;
+      // Determine skill type and target defaults if not specified
+      const skillType = skill.skillType || 'damage'; // Default to damage
+      const skillTarget = skill.target || 'singleEnemy'; // Default to singleEnemy
       
-      // If monster dodges, no damage is dealt and we add a message
-      if (dodged) {
-        characterDamageDealt = 0;
-        combatLog.push(`${monster.name} dodges ${character.name}'s ${skill.name}!`);
+      // Check if the skill can be dodged - only damage and debuff skills to enemies can be dodged
+      let dodged = false;
+      
+      if ((skillType === 'damage' || skillType === 'debuff') && 
+          (skillTarget === 'singleEnemy' || skillTarget === 'multiEnemy' || skillTarget === 'all')) {
+        // Calculate chance to dodge the skill
+        const dodgeChance = calculateDodgeChance(monsterAsFighter as any, characterAsFighter as any);
+        const dodgeRoll = Math.random() * 100;
+        dodged = dodgeRoll <= dodgeChance;
         
-        // Update turnEvents with dodge data
-        turnEvents.characterAction!.targetDodged = true;
-      } else {
+        // If monster dodges, no damage is dealt and we add a message
+        if (dodged) {
+          characterDamageDealt = 0;
+          combatLog.push(`${monster.name} dodges ${character.name}'s ${skill.name}!`);
+          
+          // Update turnEvents with dodge data
+          turnEvents.characterAction!.targetDodged = true;
+        }
+      }
+      
+      // Only execute skill if not dodged or if it's a buff/heal targeting self/team
+      if (!dodged) {
         // Execute the skill directly with casted objects
         const skillResult = await executeSkill(skill, characterAsFighter, monsterAsFighter, combat);
         

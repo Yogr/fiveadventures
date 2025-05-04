@@ -36,29 +36,31 @@ export async function applySkillEffect(
     const effect = await createEffectFromSkill(skill, currentTurn);
     if (!effect) return false;
     
-    // Determine which effects array to update
-    // Character buffs go to player_effects, debuffs go to enemy_effects
-    const effectType = effect.type;
+    // Determine which effects array to update based on skill type and target
+    // Get skill type and target, defaulting if not specified
+    const skillType = skill.skillType || (effect.type === 'buff' ? 'buff' : 'debuff');
+    const skillTarget = skill.target || (skillType === 'buff' ? 'self' : 'singleEnemy');
+    
     let targetField: 'player_effects' | 'enemy_effects';
     
     if (actor === 'character') {
       // For character skills
-      if (effectType === 'buff') {
-        targetField = 'player_effects'; // Buffs on self
+      if (skillType === 'buff' || skillTarget === 'self' || skillTarget === 'team') {
+        targetField = 'player_effects'; // Buffs always go to player
       } else {
-        targetField = 'enemy_effects';  // Debuffs on enemy
+        targetField = 'enemy_effects';  // Debuffs and damage go to enemy
       }
     } else {
       // For monster skills
-      if (effectType === 'buff') {
-        targetField = 'enemy_effects';  // Buffs on self (monster)
+      if (skillType === 'buff' || skillTarget === 'self' || skillTarget === 'team') {
+        targetField = 'enemy_effects';  // Buffs always go to monster
       } else {
-        targetField = 'player_effects'; // Debuffs on enemy (player)
+        targetField = 'player_effects'; // Debuffs and damage go to player
       }
     }
     
-    // Apply the effect to the combat using our utility function
-    return await applyEffectToCombat(combatId, effect, actor, targetField);
+    // Apply the effect to the combat using our utility function - pass supabase client
+    return await applyEffectToCombat(combatId, effect, actor, targetField, supabase);
   } catch (err) {
     console.error('Error applying skill effect:', err);
     return false;
@@ -88,50 +90,35 @@ export async function applyMonsterAbilityEffect(
       return false;
     }
     
-    // Monster abilities affect the player
-    const effectField = 'player_effects';
-    const currentEffects = combat[effectField] || [];
     const currentTurn = combat.current_turn || 1;
     
     // Create effect object from monster ability
     const effect = await createEffectFromMonsterAbility(abilityName, ability, currentTurn);
     if (!effect) return false;
     
-    // Create an array if it doesn't exist
-    const updatedEffects = Array.isArray(currentEffects) ? [...currentEffects] : [];
+    // Determine if this is a buff or debuff ability
+    // For monsters, buffs should go to enemy_effects (themselves)
+    // Debuffs should go to player_effects (the player)
     
-    // Check if this effect already exists (by name)
-    const existingEffectIndex = updatedEffects.findIndex(e => 
-      e.name === effect.name && e.source === effect.source
-    );
+    // Determine target based on effect type and properties
+    let abilityType = 'debuff'; // Default to debuff
     
-    if (existingEffectIndex >= 0) {
-      // Update existing effect's duration by resetting its turn_applied
-      updatedEffects[existingEffectIndex] = {
-        ...updatedEffects[existingEffectIndex],
-        turn_applied: effect.turn_applied,
-        // Preserve the original effect ID
-        id: updatedEffects[existingEffectIndex].id
-      };
-      console.log(`Updated existing monster effect: ${effect.name}`);
-    } else {
-      // Add as a new effect
-      updatedEffects.push(effect);
-      console.log(`Added new monster effect: ${effect.name}`);
+    // Check if this is likely a buff (self-targeting) ability
+    if (effect.defense_boost || 
+        effect.strength_boost || 
+        effect.agility_boost || 
+        effect.healing || 
+        effect.healing_over_time) {
+      abilityType = 'buff';
     }
     
-    // Update combat record
-    const { error: updateError } = await supabase
-      .from('combat')
-      .update({ [effectField]: updatedEffects })
-      .eq('id', combatId);
+    const effectField = abilityType === 'buff' ? 'enemy_effects' : 'player_effects';
     
-    if (updateError) {
-      console.error('Error updating combat effects:', updateError);
-      return false;
-    }
+    // Import the applyEffectToCombat function to avoid code duplication
+    const { applyEffectToCombat } = await import('./skill-utils');
     
-    return true;
+    // Apply the effect using our common utility function
+    return await applyEffectToCombat(combatId, effect, 'monster', effectField, supabase);
   } catch (err) {
     console.error('Error applying monster ability effect:', err);
     return false;

@@ -4,6 +4,7 @@ import type { Fighter, Skill, Combat } from '@/lib/types';
 import type { CombatEffect } from './server-effect-utils';
 import { createEffectFromSkill, createEffectFromMonsterAbility } from './server-effect-utils';
 import { createClient } from '@/lib/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   getTotalStrength,
   getTotalIntelligence,
@@ -57,6 +58,8 @@ export async function executeSkill(
   effectApplied: boolean,
   messages: string[]
 }> {
+  // Create a supabase client for use in this function
+  const supabase = await createClient();
   const messages: string[] = [];
   let damageDealt = 0;
   let healingDone = 0;
@@ -225,15 +228,18 @@ export async function executeSkill(
  * @param effect The effect to apply
  * @param sourceType 'character' or 'monster' indicating who created the effect
  * @param targetType 'player_effects' or 'enemy_effects' indicating which array to update
+ * @param supabaseClient Optional Supabase client to use instead of creating a new one
  */
 export async function applyEffectToCombat(
   combatId: string,
   effect: CombatEffect,
   sourceType: 'character' | 'monster',
-  targetType: 'player_effects' | 'enemy_effects'
+  targetType: 'player_effects' | 'enemy_effects',
+  supabaseClient?: SupabaseClient
 ): Promise<boolean> {
   try {
-    const supabase = await createClient();
+    // Use provided client or create a new one
+    const supabase = supabaseClient || await createClient();
     
     // Get current combat state
     const { data: combat, error } = await supabase
