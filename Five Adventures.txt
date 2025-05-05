@@ -6,22 +6,19 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 Bugs
 ----------
 
-- Whisperwind is facing wrong direction
 
-- Inventory is not loading, not loading total damage right either from equipped items
+- Front page not loading proper character level 
 
-- Pickpocket does nothing currently. It should have a high chance of stealing a fair amount of gold. Very low chance of stealing something else (TBD)
 - Giant spider is floating
 
-- Floating combat text needs to be bigger
 - Damage calculation for World Boss needs to be unique, factor in gear score, class + stats, and attack damage.
 - Add some black outline border to font or a shadow at least
-- Goblin Chief has no art
-- No one should be able to dodge a buff spell. Buffs should also not be cast on enemies at all.
+
 
 
 Todo
 -------------
+- Put RLS policies in place for all rows
 
 - Improve world boss
   - World boss data should be separate from 'world_boss_progress' data. 'world_boss_progress' table needs to be created to track global weekly progress against that world boss. Character boss progress table already exists for individual progress, but we need a tracker for global progress that aggregates all of the attack damage dealt to it, among other things. (Players that've attacked it, its total hitpoints, the week number its spawned, etc). These fields already exist in the world_boss able and should be removed from there and moved to the new table, and all code referencing it for that data should be split off, or a join should be made to fetch the world_boss_progress for that specific week combined with the base world_boss static data that will not change week to week.

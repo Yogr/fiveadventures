@@ -26,7 +26,7 @@ export default async function ShopLayout({
   const currentDay = getCurrentGameDay();
   
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pt-0 mt-0">
       {/* Navigation bar with character stats */}
       <GameNavigation 
         activeTab="shop" 

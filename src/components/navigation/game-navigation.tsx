@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { GiSwordman, GiDragonHead, GiDungeonGate } from 'react-icons/gi';
-import { HiShoppingBag, HiExclamation } from 'react-icons/hi';
+import { HiExclamation } from 'react-icons/hi';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
@@ -12,9 +11,10 @@ import type { Character } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
 import { getCharacterById } from '@/app/actions/character';
 import { signOut } from '@/app/actions/auth';
+import Image from 'next/image';
 
 interface GameNavigationProps {
-  activeTab: 'adventure' | 'shop' | 'worldboss' | 'dungeon';
+  activeTab: 'adventure' | 'shop' | 'worldboss' | 'dungeon' | 'leaderboard' | 'guild';
   currentDay: number;
   character: Character;
   user?: {
@@ -123,82 +123,132 @@ export default function GameNavigation({
       supabase.removeChannel(subscription);
     };
   }, [initialCharacter.id]); // Keep dependency on initialCharacter.id only
+  
   return (
     <div className="w-full flex flex-col">
       {/* Top navigation bar */}
-      <div className="w-full bg-gradient-to-b from-yellow-950 to-black border-b border-amber-900 flex items-center justify-between px-4 py-1">
+      <div className="w-full flex items-start justify-between px-1 pt-0 mt-0">
         {/* Day counter - left section */}
-        <div className="text-sm text-amber-300 flex-1">
+        <div className="text-xs text-amber-300 flex-none p-1">
           <span>Day: {currentDay}</span>
         </div>
         
-        {/* Navigation buttons - center section */}
-        <div className="flex items-center justify-center gap-2 flex-1">
-          <Link 
-            href={ROUTES.ADVENTURE}
-            className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium flex items-center gap-1.5 ${
-              activeTab === 'adventure' 
-                ? 'bg-gradient-to-b from-red-600 to-red-800 border border-red-500 shadow-md' 
-                : 'bg-gradient-to-b from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 border border-red-400 shadow-sm hover:shadow-md'
-            }`}
-          >
-            <GiSwordman className="text-xs" /> Adventure
-          </Link>
-          
-          <Link 
-            href={ROUTES.SHOP}
-            className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium flex items-center gap-1.5 ${
-              activeTab === 'shop' 
-                ? 'bg-gradient-to-b from-yellow-600 to-yellow-800 border border-yellow-500 shadow-md' 
-                : 'bg-gradient-to-b from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 border border-yellow-400 shadow-sm hover:shadow-md'
-            }`}
-          >
-            <HiShoppingBag className="text-xs" /> Shop
-          </Link>
-          
-          <div className="relative flex items-center">
-            <Link 
-              href={ROUTES.WORLD_BOSS}
-              className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium whitespace-nowrap flex items-center gap-1.5 ${
-                activeTab === 'worldboss' 
-                  ? 'bg-gradient-to-b from-purple-600 to-purple-800 border border-purple-500 shadow-md' 
-                  : 'bg-gradient-to-b from-purple-500 to-purple-700 hover:from-purple-400 hover:to-purple-600 border border-purple-400 shadow-sm hover:shadow-md'
-              }`}
-            >
-              <GiDragonHead className="text-xs" /> World Boss
-            </Link>
+        {/* Navigation buttons - center section with new design */}
+        <div className="flex-1 flex justify-around">
+          <div className="relative w-full max-w-[400px] flex">
+            {/* Background image */}
+            <div className="relative w-full aspect-[5/1]">
+              <Image 
+                src="/image/ui/navbar_bg.png" 
+                alt="Navigation background"
+                fill
+                priority
+                className="object-cover"
+              />
+            </div>
             
-            {showWorldBossCompanion && (
-              <div className="absolute left-[calc(100%-5px)]">
-                <WorldBossButtonCompanion />
+            {/* Buttons positioned over the background */}
+            <div className="absolute inset-0 flex justify-around items-start px-0.5">
+              {/* Shop Button */}
+              <Link 
+                href={ROUTES.SHOP}
+                className="group flex flex-col items-center justify-center opacity-90 hover:opacity-100"
+              >
+                <div className="relative w-9 h-9">
+                  <Image 
+                    src="/image/ui/shop.png" 
+                    alt="Shop" 
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <span className="text-lg text-white group-hover:text-amber-200 -mt-3 z-20">Shop</span>
+              </Link>
+              
+              {/* Leaderboard Button */}
+              <Link 
+                href={ROUTES.LEADERBOARD}
+                className="group flex flex-col items-center justify-center opacity-90 hover:opacity-100"
+              >
+                <div className="relative w-9 h-9">
+                  <Image 
+                    src="/image/ui/leaderboard.png" 
+                    alt="Leaderboard" 
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <span className="text-lg text-white group-hover:text-amber-200 -mt-3 z-20">Top</span>
+              </Link>
+              
+              {/* Adventure Button */}
+              <Link 
+                href={ROUTES.ADVENTURE}
+                className="group flex flex-col items-center justify-center opacity-90 hover:opacity-100"
+              >
+                <div className="relative w-9 h-9">
+                  <Image 
+                    src="/image/ui/adventure.png" 
+                    alt="Adventure" 
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <span className="text-lg text-white group-hover:text-amber-200 -mt-3 z-20">Adventure</span>
+              </Link>
+              
+              {/* Guild Button */}
+              <Link 
+                href={ROUTES.GUILD}
+                className="group flex flex-col items-center justify-center opacity-90 hover:opacity-100"
+              >
+                <div className="relative w-9 h-9">
+                  <Image 
+                    src="/image/ui/guild.png" 
+                    alt="Guild" 
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <span className="text-lg text-white group-hover:text-amber-200 -mt-3 z-20">Guild</span>
+              </Link>
+              
+              {/* World Boss Button */}
+              <div className="relative flex items-center">
+                <Link 
+                  href={ROUTES.WORLD_BOSS}
+                  className="group flex flex-col items-center justify-center opacity-90 hover:opacity-100"
+                >
+                  <div className="relative w-9 h-9">
+                    <Image 
+                      src="/image/ui/worldboss.png" 
+                      alt="World Boss" 
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  <span className="text-lg text-white group-hover:text-amber-200 -mt-3 z-20">Boss</span>
+                </Link>
+                
+                {showWorldBossCompanion && (
+                  <div className="absolute -right-1 -top-2 scale-75">
+                    <WorldBossButtonCompanion />
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
-          
-          {/* Only show dungeon button if character has dungeon keys */}
-          {character.dungeon_keys > 0 && (
-            <Link 
-              href={ROUTES.DUNGEON}
-              className={`rounded px-2 py-0.5 text-sm text-center text-white font-medium flex items-center gap-1.5 ${
-                activeTab === 'dungeon' 
-                  ? 'bg-gradient-to-b from-amber-600 to-amber-800 border border-amber-500 shadow-md' 
-                  : 'bg-gradient-to-b from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 border border-amber-400 shadow-sm hover:shadow-md'
-              }`}
-            >
-              <GiDungeonGate className="text-xs" /> Dungeon
-            </Link>
-          )}
         </div>
         
         {/* Login/Logout button - right section */}
-        <div className="flex items-center justify-end flex-1">
+        <div className="flex-none flex items-center justify-end p-1">
           {user ? (
             <button 
               onClick={async () => {
                 await signOut();
                 window.location.href = '/';
               }} 
-              className="rounded px-2 py-0.5 text-sm text-center text-white font-medium bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 border border-blue-400 shadow-sm hover:shadow-md"
+              className="rounded px-1.5 py-0.5 text-sm text-center text-white font-medium bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 border border-blue-400 shadow-sm hover:shadow-md"
             >
               Logout
             </button>
@@ -206,7 +256,7 @@ export default function GameNavigation({
             <div className="relative flex items-center">
               <Link 
                 href="/login"
-                className="rounded px-2 py-0.5 text-sm text-center text-white font-medium bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 border border-blue-400 shadow-sm hover:shadow-md"
+                className="rounded px-1.5 py-0.5 text-sm text-center text-white font-medium bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 border border-blue-400 shadow-sm hover:shadow-md"
               >
                 Login
               </Link>

@@ -5,7 +5,7 @@ import { ROUTES } from '@/lib/constants';
 import GameNavigation from '@/components/navigation/game-navigation';
 import { getCurrentGameDay } from '@/lib/utils';
 
-export default async function AdventureLayout({
+export default async function GuildLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -29,7 +29,7 @@ export default async function AdventureLayout({
     <div className="min-h-screen pt-0 mt-0">
       {/* Navigation bar with character stats */}
       <GameNavigation 
-        activeTab="adventure" 
+        activeTab="guild" 
         currentDay={currentDay}
         character={character}
         user={user ? { email: user.email || '' } : null}

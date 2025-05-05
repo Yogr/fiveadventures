@@ -115,7 +115,9 @@ export const ROUTES = {
   DUNGEON: '/dungeon',
   REWARDS: '/rewards',
   LOGIN: '/login',
-  SIGNUP: '/signup'
+  SIGNUP: '/signup',
+  LEADERBOARD: '/leaderboard',
+  GUILD: '/guild'
 };
 
 // API Routes
