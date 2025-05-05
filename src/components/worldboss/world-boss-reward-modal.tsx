@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import type { BossReward } from '@/lib/types';
+import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 
 interface WorldBossRewardModalProps {
   reward: BossReward;
@@ -66,10 +68,12 @@ export default function WorldBossRewardModal({
             <div className="flex items-center">
               <div className="bg-amber-800 rounded-md w-16 h-16 flex items-center justify-center mr-4 flex-shrink-0">
                 {reward.item?.image_url ? (
-                  <img 
-                    src={reward.item.image_url} 
+                  <Image 
+                    src={ImageSource.getItemImagePath(reward.item)} 
                     alt={reward.item.name} 
-                    className="w-12 h-12 object-contain"
+                    width={48}
+                    height={48}
+                    className="object-contain"
                   />
                 ) : (
                   <span className="text-2xl text-amber-200">{reward.item?.name.charAt(0)}</span>

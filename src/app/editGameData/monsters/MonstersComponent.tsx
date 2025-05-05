@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
 import { getMonsters, saveMonster, deleteMonster } from '@/app/actions/data-editor';
 import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 
-// Define the Monster type based on database schema
-type Monster = {
+// Local Monster type for the editor
+type EditorMonster = {
   id: number;
   name: string;
   description: string;
@@ -25,11 +26,12 @@ type Monster = {
   reward_table_id?: number | null;
   is_boss?: boolean;
   rare_item_chance?: number | null;
+  created_at?: string;
 };
 
 export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
-  const [monsters, setMonsters] = useState<Monster[]>([]);
-  const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
+  const [monsters, setMonsters] = useState<EditorMonster[]>([]);
+  const [selectedMonster, setSelectedMonster] = useState<EditorMonster | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -51,6 +53,39 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
     
     loadMonsters();
   }, []);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0 || !selectedMonster) {
+      return;
+    }
+    
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    try {
+      // If no image_url exists yet, create one based on the monster name
+      if (!selectedMonster.image_url) {
+        const newImageName = selectedMonster.name.toLowerCase().replace(/\s+/g, '_');
+        setSelectedMonster({
+          ...selectedMonster,
+          image_url: newImageName
+        });
+      }
+      
+      // Upload the image
+      const imageUrl = selectedMonster.image_url || '';
+      await ImageSource.uploadImageClient(file, 'enemy', imageUrl);
+      
+      // Force a re-render to show the new image
+      setSelectedMonster({...selectedMonster});
+      
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image. Please try again.');
+    }
+  };
   
   const handleSave = async () => {
     if (!selectedMonster) return;
@@ -100,7 +135,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
       }
     }
 
-    const newMonster: Monster = {
+    const newMonster: EditorMonster = {
       id: nextHighestId,
       name: 'New Monster',
       description: 'Description of new monster',
@@ -161,7 +196,7 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
     <div className="flex">
       <ListComponent
         items={monsterItems}
-        onSelect={(item) => setSelectedMonster(item.monster as Monster)}
+        onSelect={(item) => setSelectedMonster(item.monster as EditorMonster)}
         onAdd={isAdmin ? handleAdd : undefined}
         onDelete={isAdmin ? handleDelete : undefined}
         selectedId={selectedMonster?.id}
@@ -395,20 +430,38 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
               
               <div>
                 <label className="block text-sm font-medium mb-1">Image URL</label>
-                <input
-                  type="text"
-                  value={selectedMonster.image_url || ''}
-                  onChange={(e) => setSelectedMonster({
-                    ...selectedMonster,
-                    image_url: e.target.value || null
-                  })}
-                  className="admin-input"
-                  disabled={!isAdmin}
-                />
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={selectedMonster.image_url || ''}
+                    onChange={(e) => setSelectedMonster({
+                      ...selectedMonster,
+                      image_url: e.target.value || null
+                    })}
+                    className="admin-input flex-grow"
+                    disabled={!isAdmin}
+                  />
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1 bg-amber-700 text-amber-100 rounded hover:bg-amber-600 text-sm"
+                    >
+                      Upload
+                    </button>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </div>
                 {selectedMonster.image_url && (
                   <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
                     <Image 
-                      src={`/image/enemy/${selectedMonster.image_url}.png`}
+                      src={ImageSource.getMonsterImagePath(selectedMonster)}
                       alt={selectedMonster.name}
                       width={128 * selectedMonster.scale!}
                       height={128 * selectedMonster.scale!}

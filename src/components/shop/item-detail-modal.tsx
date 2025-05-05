@@ -3,6 +3,7 @@
 import { ITEM_RARITY_COLORS } from '@/lib/constants';
 import type { Item, ItemRarity } from '@/lib/types';
 import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 
 interface ItemDetailModalProps {
   item: Item;
@@ -34,7 +35,7 @@ export default function ItemDetailModal({ item, isOpen, onClose, actionButton }:
           <div className={`mr-4 w-16 h-16 rounded-md flex items-center justify-center bg-gray-900 border-2 ${rarityColor.replace('text-', 'border-')}`}>
             {item.image_url ? (
               <Image
-                src={`/image/${item.type.toLowerCase()}/${item.image_url}.png`}
+                src={ImageSource.getItemImagePath(item)}
                 alt={item.name}
                 width={48}
                 height={48}

@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 
 interface AdventureDisplayProps {
   title: string;
@@ -15,7 +16,9 @@ const AdventureDisplay = ({ title, description, imageUrl }: AdventureDisplayProp
       {/* Background image */}
       <div className="absolute inset-0">
         <Image
-          src={`/image/adventure/${imageUrl}.png`}
+          src={imageUrl === 'default' 
+            ? '/image/ui/default_adventure.png' 
+            : ImageSource.getAdventureImagePath({ image_url: imageUrl })}
           alt={title}
           fill
           className="object-cover rounded-md"

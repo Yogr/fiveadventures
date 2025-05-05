@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Item } from '@/lib/types';
+import { ImageSource } from '@/lib/image-source';
 
 interface ItemRewardViewProps {
   item: Item;
@@ -151,7 +152,7 @@ export default function ItemRewardView({ item, onComplete }: ItemRewardViewProps
                 <div className="relative z-10">
                   <div className="w-16 h-16 rounded-md flex items-center justify-center">
                     <Image
-                      src={`/image/${item.type.toLowerCase()}/${item.image_url}.png`}
+                      src={ImageSource.getItemImagePath(item)}
                       alt={item.name}
                       width={64}
                       height={64}

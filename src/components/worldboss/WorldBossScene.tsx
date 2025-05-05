@@ -6,6 +6,8 @@ import CombatMessagePanel from '../combat/CombatMessagePanel';
 import StatusBar from '../combat/status-bar';
 import type { Character, WorldBoss } from '@/lib/types';
 import { getTotalMaxHitpoints } from '@/lib/character-utils';
+import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 
 interface WorldBossSceneProps {
   character: Character;
@@ -45,10 +47,12 @@ export default function WorldBossScene({
     <div className="relative rounded-lg overflow-hidden h-[40vh] md:h-[300px]">
       {/* Main background that covers the full area */}
       <div className="absolute inset-0 z-0">
-        <img
-          src={`/image/area/${backgroundImage}.png`}
+        <Image
+          src={ImageSource.getAreaImagePath({ image: backgroundImage })}
           alt="Combat background"
-          className="w-full h-full object-cover object-top"
+          fill
+          className="object-cover object-top"
+          priority
         />
         
         {/* Semi-transparent overlay for better readability */}
@@ -80,7 +84,7 @@ export default function WorldBossScene({
         <div className="self-end">
           <FighterDisplay 
             name={character.name}
-            image={`/image/characters/${character.class.toLowerCase()}.png`}
+            image={ImageSource.getCharacterImagePath(character.class)}
             imageAlt={character.name}
             currentHp={character.current_hitpoints}
             maxHp={getTotalMaxHitpoints(character)}
@@ -94,7 +98,7 @@ export default function WorldBossScene({
         <div className="self-end">
           <FighterDisplay 
             name={boss.name}
-            image={`/image/boss/${boss.image_url}.png`}
+            image={ImageSource.getBossImagePath(boss)}
             imageAlt={boss.name}
             currentHp={boss.current_hitpoints}
             maxHp={boss.total_hitpoints}

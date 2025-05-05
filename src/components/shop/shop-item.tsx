@@ -7,6 +7,7 @@ import { buyItem } from '@/app/actions/shop';
 import Image from 'next/image';
 import ItemDetailModal from './item-detail-modal';
 import { useAudio } from '@/lib/audio-utils';
+import { ImageSource } from '@/lib/image-source';
 
 interface ShopItemProps {
   id: string;
@@ -64,7 +65,7 @@ export default function ShopItem({ id, item, price, onPurchase, playerGold }: Sh
       <div className={`aspect-square rounded flex items-center justify-center bg-gray-700 border ${rarityColor.replace('text-', 'border-')}`}>
         {item.image_url ? (
           <Image
-            src={`/image/${item.type.toLowerCase()}/${item.image_url}.png`}
+            src={ImageSource.getItemImagePath(item)}
             alt={item.name}
             width={48}
             height={48}

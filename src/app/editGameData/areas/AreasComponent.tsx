@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
 import { getAreas, saveArea, deleteArea } from '@/app/actions/data-editor';
 import Image from 'next/image';
-import next from 'next';
+import { ImageSource } from '@/lib/image-source';
 
-// Define the Area type based on database schema
-type Area = {
+// Define the Area type for the editor
+type EditorArea = {
   id: number;
   name: string;
   description: string;
@@ -19,8 +19,40 @@ type Area = {
 };
 
 export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
-  const [areas, setAreas] = useState<Area[]>([]);
-  const [selectedArea, setSelectedArea] = useState<Area | null>(null);
+  const [areas, setAreas] = useState<EditorArea[]>([]);
+  const [selectedArea, setSelectedArea] = useState<EditorArea | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0 || !selectedArea) {
+      return;
+    }
+    
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    try {
+      // If no image name exists yet, create one based on the area name
+      if (!selectedArea.image) {
+        const newImageName = selectedArea.name.toLowerCase().replace(/\s+/g, '-');
+        setSelectedArea({
+          ...selectedArea,
+          image: newImageName
+        });
+      }
+      
+      // Upload the image
+      const imageName = selectedArea.image || '';
+      await ImageSource.uploadImageClient(file, 'area', imageName);
+      
+      // Force a re-render to show the new image
+      setSelectedArea({...selectedArea});
+      
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image. Please try again.');
+    }
+  };
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -85,7 +117,7 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
     const nextHighestId = areas.reduce((max, area) => Math.max(max, area.id), 0) + 1;
 
     // Add new area
-    const newArea: Area = {
+    const newArea: EditorArea = {
       id: nextHighestId,
       name: 'New Area',
       description: 'Description of new area',
@@ -138,7 +170,7 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
     <div className="flex">
       <ListComponent
         items={areaItems}
-        onSelect={(item) => setSelectedArea(item.area as Area)}
+        onSelect={(item) => setSelectedArea(item.area as EditorArea)}
         onAdd={isAdmin ? handleAdd : undefined}
         onDelete={isAdmin ? handleDelete : undefined}
         selectedId={selectedArea?.id}
@@ -194,24 +226,42 @@ export default function AreasComponent({ isAdmin }: { isAdmin: boolean }) {
               
               <div>
                 <label className="block text-sm font-medium mb-1">Image Name</label>
-                <input
-                  type="text"
-                  value={selectedArea.image}
-                  onChange={(e) => setSelectedArea({
-                    ...selectedArea,
-                    image: e.target.value
-                  })}
-                  className="admin-input"
-                  disabled={!isAdmin}
-                />
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={selectedArea.image}
+                    onChange={(e) => setSelectedArea({
+                      ...selectedArea,
+                      image: e.target.value
+                    })}
+                    className="admin-input flex-grow"
+                    disabled={!isAdmin}
+                  />
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1 bg-amber-700 text-amber-100 rounded hover:bg-amber-600 text-sm"
+                    >
+                      Upload
+                    </button>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </div>
                 <div className="text-xs text-amber-400 mt-1">
-                  Image files should be placed in public/image/area/ (enter just the name without extension)
+                  Enter just the image name without extension
                 </div>
                 
                 {selectedArea.image && (
                   <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
                     <Image 
-                      src={`/image/area/${selectedArea.image}.png`} 
+                      src={ImageSource.getAreaImagePath(selectedArea)} 
                       alt={selectedArea.name}
                       width={240}
                       height={120}

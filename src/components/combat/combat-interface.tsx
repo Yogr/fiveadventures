@@ -11,6 +11,7 @@ import { useAdventureState } from '@/components/adventure/AdventureStateContext'
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
 import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 import ActionButton from './action-button';
 import CombatScene from './CombatScene';
 import StatusBar from './status-bar';
@@ -850,7 +851,7 @@ export default function CombatInterface({ combatId, character: initialCharacter,
                             }}
                           >
                             <Image
-                              src={`/image/enemy/${combat.monster.image_url}.png`}
+                              src={ImageSource.getMonsterImagePath(combat.monster)}
                               alt={combat.monster.name}
                               width={80 * (combat.monster.scale || 1.0)}
                               height={80 * (combat.monster.scale || 1.0)}

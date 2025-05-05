@@ -5,6 +5,7 @@ import { sellItem } from '@/app/actions/shop';
 import Image from 'next/image';
 import type { Item } from '@/lib/types';
 import ItemDetailModal from './item-detail-modal';
+import { ImageSource } from '@/lib/image-source';
 
 interface SellBarProps {
   inventoryItems: any[];
@@ -121,7 +122,7 @@ export default function SellBar({
                 <div className="w-full h-full bg-gray-600 rounded flex items-center justify-center">
                   {invItem.item.image_url ? (
                     <Image
-                      src={`/image/${invItem.item.type.toLowerCase()}/${invItem.item.image_url}.png`}
+                      src={ImageSource.getItemImagePath(invItem.item)}
                       alt={invItem.item.name}
                       width={32}
                       height={32}

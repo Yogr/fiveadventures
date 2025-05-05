@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { determineEffectType } from '@/lib/effect-utils';
 import type { CombatEffect } from '@/lib/effect-utils';
+import { ImageSource } from '@/lib/image-source';
 
 interface BuffBarProps {
   effects: CombatEffect[];
@@ -42,20 +43,26 @@ export default function BuffBar({ effects, size = 'md', maxBuffs = 4 }: BuffBarP
           'border-gray-500';
         
         // Determine image URL for the effect
-        let imageUrl = '/image/ui/attack.png'; // Default icon
+        let imageUrl; // No default first, will fallback to UI elements if needed
         
         // Try to infer the image URL from the effect properties
         if (effect.image_url) {
-          imageUrl = `/image/skill/${effect.image_url}.png`;
-        } else if (effect.source === 'monster_ability') {
-          // For monster abilities, use a generic icon
-          imageUrl = '/image/ui/attack.png';
+          // Use ImageSource for skill images
+          imageUrl = ImageSource.getSkillImagePath({ image_url: effect.image_url });
         } else if (effect.strength_boost) {
-          imageUrl = '/image/skill/rage.png';
+          imageUrl = ImageSource.getSkillImagePath({ image_url: 'rage' });
         } else if (effect.slow) {
-          imageUrl = '/image/skill/ice_spike.png';
+          imageUrl = ImageSource.getSkillImagePath({ image_url: 'ice_spike' });
         } else if (effect.stun) {
-          imageUrl = '/image/skill/shield_bash.png';
+          imageUrl = ImageSource.getSkillImagePath({ image_url: 'shield_bash' });
+        } else {
+          // For UI elements we keep the direct paths (per requirements)
+          if (effect.source === 'monster_ability') {
+            imageUrl = '/image/ui/attack.png';
+          } else {
+            // Default icon for UI elements
+            imageUrl = '/image/ui/attack.png';
+          }
         }
         
         return (

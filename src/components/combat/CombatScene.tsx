@@ -7,6 +7,7 @@ import Image from 'next/image';
 import type { Character, Combat } from '@/lib/types';
 import { getTotalMaxHitpoints } from '@/lib/character-utils';
 import type { CombatEffect } from '@/lib/effect-utils';
+import { ImageSource } from '@/lib/image-source';
 
 interface CombatSceneProps {
   character: Character;
@@ -35,11 +36,13 @@ export default function CombatScene({
     <div className="relative rounded-lg overflow-hidden h-[40vh] md:h-[300px]">
       {/* Main background that covers the full area */}
       <div className="absolute inset-0 z-0">
-        <img
-          src={`/image/area/${areaImage}.png`}
+        <Image
+          src={ImageSource.getAreaImagePath({ image: areaImage })}
           alt="Combat background"
-          className="w-full h-full object-cover object-top"
+          fill
+          className="object-cover object-top"
           style={{ filter: 'blur(1px)' }}
+          priority
         />
         
         {/* Semi-transparent overlay for better readability */}
@@ -55,7 +58,7 @@ export default function CombatScene({
         <div className="self-end">
           <FighterDisplay 
             name={character.name}
-            image={`/image/characters/${character.class.toLowerCase()}.png`}
+            image={ImageSource.getCharacterImagePath(character.class)}
             imageAlt={character.name}
             currentHp={character.current_hitpoints}
             maxHp={getTotalMaxHitpoints(character)}
@@ -68,7 +71,7 @@ export default function CombatScene({
         <div className="self-end">
           <FighterDisplay 
             name={combat.monster.name}
-            image={`/image/enemy/${combat.monster.image_url}.png`}
+            image={ImageSource.getMonsterImagePath(combat.monster)}
             imageAlt={combat.monster.name}
             currentHp={monsterCurrentHp}
             maxHp={combat.monster.hitpoints}

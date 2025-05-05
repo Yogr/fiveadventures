@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
 import EffectsEditor from '../components/EffectsEditor';
 import { getItems, saveItem, deleteItem } from '@/app/actions/data-editor';
 import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 
-// Define the Item type based on database schema
-type Item = {
+// Define the Item type for the editor
+type EditorItem = {
   id: number;
   name: string;
   type: string;
@@ -22,8 +23,40 @@ type Item = {
 };
 
 export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
-  const [items, setItems] = useState<Item[]>([]);
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [items, setItems] = useState<EditorItem[]>([]);
+  const [selectedItem, setSelectedItem] = useState<EditorItem | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0 || !selectedItem) {
+      return;
+    }
+    
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    try {
+      // If no image_url exists yet, create one based on the item name
+      if (!selectedItem.image_url) {
+        const newImageName = selectedItem.name.toLowerCase().replace(/\s+/g, '_');
+        setSelectedItem({
+          ...selectedItem,
+          image_url: newImageName
+        });
+      }
+      
+      // Upload the image
+      const imageUrl = selectedItem.image_url || '';
+      await ImageSource.uploadImageClient(file, selectedItem.type.toLowerCase(), imageUrl);
+      
+      // Force a re-render to show the new image
+      setSelectedItem({...selectedItem});
+      
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image. Please try again.');
+    }
+  };
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -81,7 +114,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
       }
     }
 
-    const newItem: Item = {
+    const newItem: EditorItem = {
       id: nextHighestId,
       name: 'New Item',
       type: 'Weapon',
@@ -137,7 +170,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
     <div className="flex">
       <ListComponent
         items={itemsList}
-        onSelect={(item) => setSelectedItem(item.item as Item)}
+        onSelect={(item) => setSelectedItem(item.item as EditorItem)}
         onAdd={handleAdd}
         onDelete={handleDelete}
         selectedId={selectedItem?.id}
@@ -288,20 +321,38 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
               
               <div>
                 <label className="block text-sm font-medium mb-1">Image URL</label>
-                <input
-                  type="text"
-                  value={selectedItem.image_url || ''}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem,
-                    image_url: e.target.value || null
-                  })}
-                  className="admin-input w-full"
-                  disabled={!isAdmin}
-                />
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={selectedItem.image_url || ''}
+                    onChange={(e) => setSelectedItem({
+                      ...selectedItem,
+                      image_url: e.target.value || null
+                    })}
+                    className="admin-input flex-grow"
+                    disabled={!isAdmin}
+                  />
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1 bg-amber-700 text-amber-100 rounded hover:bg-amber-600 text-sm"
+                    >
+                      Upload
+                    </button>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </div>
                 {selectedItem.image_url && (
                   <div className="mt-2 border p-2 inline-block">
                     <Image
-                      src={`/image/${selectedItem.type.toLowerCase()}/${selectedItem.image_url}.png`}
+                      src={ImageSource.getItemImagePath(selectedItem)}
                       alt={selectedItem.name}
                       width={128}
                       height={128}

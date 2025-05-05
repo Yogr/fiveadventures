@@ -4,6 +4,8 @@ import { useState } from 'react';
 import type { BossReward } from '@/lib/types';
 import { claimBossReward } from '@/app/actions/worldboss';
 import WorldBossRewardModal from './world-boss-reward-modal';
+import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 
 interface WorldBossRewardsPanelProps {
   pendingRewards: BossReward[];
@@ -62,10 +64,12 @@ export default function WorldBossRewardsPanel({
             <div className="flex items-center">
               <div className="bg-amber-800 rounded-md w-10 h-10 flex items-center justify-center mr-3 flex-shrink-0">
                 {reward.item?.image_url ? (
-                  <img 
-                    src={reward.item.image_url} 
+                  <Image 
+                    src={ImageSource.getItemImagePath(reward.item)} 
                     alt={reward.item.name} 
-                    className="w-8 h-8 object-contain"
+                    width={32}
+                    height={32}
+                    className="object-contain"
                   />
                 ) : (
                   <span className="text-lg text-amber-200">{reward.item?.name?.charAt(0) || '?'}</span>
