@@ -661,8 +661,8 @@ export async function startCombatTurn(
                   })
                   .eq('id', character.id);
                 
-                // Add to combat log
-                combatLog.push(`${character.name} pickpockets ${goldAmount} gold from ${monster.name}!`);
+                // Add to combat log with special formatting to make it stand out
+                combatLog.push(`[REWARD] ${character.name} pickpockets ${goldAmount} gold from ${monster.name}!`);
               } else {
                 // Player gets an item from reward table
                 const { success: rewardTableSuccess, data: rewardTable } = await getCachedItemById(
@@ -691,8 +691,8 @@ export async function startCombatTurn(
                           quantity: 1
                         });
                       
-                      // Add to combat log
-                      combatLog.push(`${character.name} pickpockets ${item.name || 'a mysterious item'} from ${monster.name}!`);
+                      // Add to combat log with special formatting to make it stand out
+                      combatLog.push(`[REWARD] ${character.name} pickpockets ${item.name || 'a mysterious item'} from ${monster.name}!`);
                     } else {
                       // Fallback message if item data is incomplete
                       combatLog.push(`${character.name} pickpockets something from ${monster.name}, but it slips away!`);

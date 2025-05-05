@@ -16,13 +16,18 @@ export default function CombatMessagePanel({ messages }: CombatMessagePanelProps
     }
   }, [messages]);
   
-  // Only show last 3 messages maximum to prevent overflow
-  const displayMessages = messages.length > 3 ? messages.slice(-3) : messages;
+  // Show last 5 messages to ensure rewards stay visible longer
+  const displayMessages = messages.length > 5 ? messages.slice(-5) : messages;
   
-  // Function to highlight skill names in messages
+  // Function to highlight skill names and rewards in messages
   const formatMessage = (message: string) => {
-    // Check if message contains a skill reference in square brackets
-    if (message.includes('[') && message.includes(']')) {
+    // First check if it's a reward message
+    if (message.startsWith('[REWARD]')) {
+      // Replace the [REWARD] tag and format the entire message as a reward
+      return `<span class="text-yellow-200 font-extrabold text-lg">💰 ${message.replace('[REWARD] ', '')}</span>`;
+    }
+    // If not a reward, check for skill names in brackets
+    else if (message.includes('[') && message.includes(']')) {
       // Use regex to find skill names in square brackets and wrap them in span with special styling
       return message.replace(/\[(.*?)\]/g, (_, skillName) => (
         `<span class="text-cyan-300 font-extrabold">${skillName}</span>`
