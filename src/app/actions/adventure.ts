@@ -9,7 +9,8 @@ import {
   getCurrentGameDay,
   CLASS_STAT_GROWTH
 } from '@/lib/utils';
-import { getTotalMaxHitpoints, getTotalMaxEnergy } from '@/lib/character-utils';
+import { getTotalMaxHitpoints, getTotalMaxEnergy, calculatePowerLevel } from '@/lib/character-utils';
+import { incrementAdventuresCompleted, updateCharacterPowerLevel } from '@/app/actions/leaderboard';
 import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 import type {
   ApiResponse,
@@ -436,6 +437,7 @@ export async function completeAdventure({
     const { error: updateError } = await supabase
       .from('characters')
       .update({
+        level: newLevel, // Add level to be updated in the database
         experience: newExperience,
         gold: newGold,
         strength: newStrength,
@@ -457,6 +459,14 @@ export async function completeAdventure({
         success: false,
         error: 'Failed to update character'
       };
+    }
+    
+    // Update character stats for leaderboard
+    incrementAdventuresCompleted(character.id, supabase as any);
+    
+    // If the character leveled up, update power level
+    if (leveledUp) {
+      updateCharacterPowerLevel(character.id, supabase as any);
     }
     
     // Update the adventure state to outcome

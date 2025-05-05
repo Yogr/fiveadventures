@@ -703,6 +703,204 @@ export function luckAdjustedRoll(character: Character, min: number, max: number,
 }
 
 /**
+ * Calculate a character's power level based on their stats and equipment
+ * @param character The character to calculate power level for
+ * @returns Power level as a numeric value
+ */
+export function calculatePowerLevel(character: Character): number {
+  // Base power is weighted sum of all stats
+  let powerLevel = 0;
+  
+  // Level contribution - higher levels have more impact
+  powerLevel += character.level * 10;
+  
+  // Stat contribution with weights
+  powerLevel += character.strength * 2;
+  powerLevel += character.intelligence * 2;
+  powerLevel += character.agility * 2;
+  powerLevel += character.luck * 1.5;
+  powerLevel += character.wisdom * 2;
+  
+  // HP and Energy contribution
+  powerLevel += Math.floor(character.max_hitpoints / 5);
+  powerLevel += Math.floor(character.max_energy / 2);
+  
+  // Equipment contribution
+  if (character.equipment) {
+    // Get weapon contribution
+    if (character.equipment.weapon) {
+      const weapon = character.equipment.weapon;
+      // Base damage value
+      powerLevel += (weapon.base_damage || 0) * 3;
+      
+      // Rarity multiplier
+      const rarityMultiplier = getRarityMultiplier(weapon.rarity);
+      powerLevel += Math.floor(10 * rarityMultiplier);
+      
+      // Weapon effects
+      if (weapon.effects) {
+        powerLevel += calculateItemEffectsPower(weapon.effects);
+      }
+    }
+    
+    // Get armor contribution
+    if (character.equipment.armor) {
+      const armor = character.equipment.armor;
+      // Base defense value
+      powerLevel += (armor.base_defense || 0) * 3;
+      
+      // Rarity multiplier
+      const rarityMultiplier = getRarityMultiplier(armor.rarity);
+      powerLevel += Math.floor(8 * rarityMultiplier);
+      
+      // Armor effects
+      if (armor.effects) {
+        powerLevel += calculateItemEffectsPower(armor.effects);
+      }
+    }
+    
+    // Get helmet contribution
+    if (character.equipment.helmet) {
+      const helmet = character.equipment.helmet;
+      // Base defense value
+      powerLevel += (helmet.base_defense || 0) * 2;
+      
+      // Rarity multiplier
+      const rarityMultiplier = getRarityMultiplier(helmet.rarity);
+      powerLevel += Math.floor(6 * rarityMultiplier);
+      
+      // Helmet effects
+      if (helmet.effects) {
+        powerLevel += calculateItemEffectsPower(helmet.effects);
+      }
+    }
+    
+    // Get trinket contribution
+    if (character.equipment.trinket) {
+      const trinket = character.equipment.trinket;
+      
+      // Rarity multiplier
+      const rarityMultiplier = getRarityMultiplier(trinket.rarity);
+      powerLevel += Math.floor(8 * rarityMultiplier);
+      
+      // Trinket effects
+      if (trinket.effects) {
+        powerLevel += calculateItemEffectsPower(trinket.effects);
+      }
+    }
+  }
+  
+  return Math.max(1, Math.floor(powerLevel));
+}
+
+/**
+ * Calculate item effects contribution to power level
+ * @param effects Item effects object
+ * @returns Numeric power contribution from effects
+ */
+function calculateItemEffectsPower(effects: any): number {
+  let effectsPower = 0;
+  
+  // Stat boost effects
+  if (effects.stat_boosts) {
+    const statBoosts = effects.stat_boosts;
+    // Add each stat boost with appropriate weighting
+    if (statBoosts.strength) effectsPower += statBoosts.strength * 2;
+    if (statBoosts.intelligence) effectsPower += statBoosts.intelligence * 2;
+    if (statBoosts.agility) effectsPower += statBoosts.agility * 2;
+    if (statBoosts.luck) effectsPower += statBoosts.luck * 1.5;
+    if (statBoosts.wisdom) effectsPower += statBoosts.wisdom * 2;
+    if (statBoosts.hitpoints) effectsPower += Math.floor(statBoosts.hitpoints / 5);
+    if (statBoosts.energy) effectsPower += Math.floor(statBoosts.energy / 2);
+  }
+  
+  // Critical hit modifiers
+  if (effects.critical_hit) {
+    effectsPower += effects.critical_hit.chance * 1.5;
+    if (effects.critical_hit.multiplier) {
+      effectsPower += (effects.critical_hit.multiplier - 1) * 10;
+    }
+  }
+  
+  // Elemental damage
+  if (effects.elemental && effects.elemental.damage) {
+    effectsPower += effects.elemental.damage * 2;
+  }
+  
+  // Special effects often have high impact
+  if (effects.special) {
+    effectsPower += 15;
+  }
+  
+  return Math.floor(effectsPower);
+}
+
+/**
+ * Get rarity multiplier for power level calculations
+ * @param rarity Item rarity
+ * @returns Numeric multiplier based on rarity
+ */
+function getRarityMultiplier(rarity: string): number {
+  switch (rarity) {
+    case 'Common': return 1;
+    case 'Uncommon': return 1.5;
+    case 'Rare': return 2;
+    case 'Epic': return 3;
+    case 'Legendary': return 5;
+    default: return 1;
+  }
+}
+
+/**
+ * Calculate equipment rating based on all equipped items
+ * @param character The character to calculate equipment rating for
+ * @returns Equipment rating as a numeric value
+ */
+export function calculateEquipmentRating(character: Character): number {
+  if (!character.equipment) return 0;
+  
+  let rating = 0;
+  
+  // Add rating for each equipped item
+  const equipmentItems = [
+    character.equipment.weapon,
+    character.equipment.helmet,
+    character.equipment.armor,
+    character.equipment.trinket
+  ];
+  
+  equipmentItems.forEach(item => {
+    if (item) {
+      // Base rating for having an item equipped
+      let itemRating = 10;
+      
+      // Add rating based on item value
+      itemRating += Math.floor(item.value / 10);
+      
+      // Add rating based on item rarity
+      const rarityMultiplier = getRarityMultiplier(item.rarity);
+      itemRating *= rarityMultiplier;
+      
+      // Add weapon/armor specific bonuses
+      if (item.type === 'Weapon' && item.base_damage) {
+        itemRating += item.base_damage * 2;
+      } else if ((item.type === 'Armor' || item.type === 'Helmet') && item.base_defense) {
+        itemRating += item.base_defense * 2;
+      }
+      
+      // Add effects bonuses
+      if (item.effects) {
+        itemRating += calculateItemEffectsPower(item.effects);
+      }
+      
+      rating += Math.floor(itemRating);
+    }
+  });
+  
+  return rating;
+}
+
+/**
  * Process active effects at the start of a turn
  * @param character The character with active effects
  * @param activeEffects Array of active effects

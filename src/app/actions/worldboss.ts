@@ -5,6 +5,7 @@ import type { ApiResponse, Character, CharacterBossProgress, WorldBoss, BossRewa
 import { generateId, getCurrentGameDay, getCurrentGameWeek, calculateBossDamage } from '@/lib/utils';
 import { getCharacterById } from './character';
 import { addItemToInventory, getRewardForTable } from './rewards';
+import { updateHighestBossDamage, incrementBossesSlain } from './leaderboard';
 
 /**
  * Get the current world boss for the current week
@@ -374,8 +375,14 @@ export async function attackWorldBoss(
       };
     }
     
-    // If boss is defeated, set pending rewards for all participants
+    // Update character's highest boss damage if this is higher
+    updateHighestBossDamage(characterId, damage, supabase as any);
+    
+    // If boss is defeated, increment bosses slain count and set pending rewards for all participants
     if (bossDefeated) {
+      // Increment character's bosses slain count
+      incrementBossesSlain(characterId, supabase as any);
+      
       const { error: pendingRewardsError } = await supabase
         .from('character_boss_progress')
         .update({

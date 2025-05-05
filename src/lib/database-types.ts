@@ -9,6 +9,43 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      character_stats: {
+        Row: {
+          id: string
+          character_id: string
+          power_level: number
+          total_adventures_completed: number
+          bosses_slain: number
+          highest_boss_damage: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          character_id: string
+          power_level?: number
+          total_adventures_completed?: number
+          bosses_slain?: number
+          highest_boss_damage?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          character_id?: string
+          power_level?: number
+          total_adventures_completed?: number
+          bosses_slain?: number
+          highest_boss_damage?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_stats_character_id_fkey"
+            columns: ["character_id"]
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       users: {
         Row: {
           id: string

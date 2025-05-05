@@ -7,7 +7,10 @@ export type Character = Database['public']['Tables']['characters']['Row'] & {
   equipment?: CharacterEquipment;
   inventory?: CharacterInventoryItem[];
   skills?: CharacterSkill[];
+  stats?: CharacterStats;
 };
+
+export type CharacterStats = Database['public']['Tables']['character_stats']['Row'];
 
 export type CharacterEquipment = Database['public']['Tables']['character_equipment']['Row'] & {
   weapon?: Item | null;

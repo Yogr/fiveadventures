@@ -42,8 +42,6 @@ export async function getFullCharacterById(characterId: string, supabase?: Supab
     if (equipmentError && equipmentError.code !== 'PGRST116') {
       console.error('Error getting character equipment:', equipmentError);
     }
-
-    console.log('Character equipment:', equipment);
     
     // Get character inventory
     let inventory: Array<{
@@ -171,13 +169,6 @@ export async function getFullCharacterById(characterId: string, supabase?: Supab
     
     // Wait for all equipment items to be fetched
     await Promise.all(equipmentPromises);
-
-    console.log('Fetched equipment items:', {
-      weaponItem,
-      helmetItem,
-      armorItem,
-      trinketItem
-    });
     
     // Create full equipment object
     const fullEquipment: CharacterEquipment = {

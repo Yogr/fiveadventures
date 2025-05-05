@@ -168,7 +168,6 @@ export async function getCharacterById(characterId: string): Promise<ApiResponse
     const { success, data: character, error } = await import('@/lib/character-service')
       .then(module => module.getFullCharacterById(characterId, supabase));
     
-    console.log('getCharacterById:', { success, character, error });
     if (!success || !character) {
       return {
         success: false,
