@@ -3,6 +3,7 @@
 import React from 'react';
 import { CLASS_BASE_STATS } from '@/lib/utils';
 import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 
 interface CharacterClassCardProps {
   characterClass: string;
@@ -30,7 +31,7 @@ export default function CharacterClassCard({
         <div className="flex justify-center">
           <div className="relative">
             <Image
-              src={`/image/characters/${characterClass.toLowerCase()}.png`}
+              src={ImageSource.getCharacterImagePath(characterClass)}
               alt={characterClass}
               width={64}
               height={64}

@@ -6,6 +6,7 @@ import SaveButton from '../components/SaveButton';
 import EffectsEditor from '../components/EffectsEditor';
 import { getSkills, saveSkill, deleteSkill } from '@/app/actions/data-editor';
 import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 
 // Define the Skill type based on database schema
 type Skill = {
@@ -306,10 +307,11 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
                 {selectedSkill.image_url && (
                   <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
                     <Image
-                      src={`/image/skill/${selectedSkill.image_url}.png`} 
+                      src={ImageSource.getSkillImagePath({ image_url: selectedSkill.image_url })} 
                       alt={selectedSkill.name} 
                       width={128}
-                      height={128}                      className="h-16 w-16 object-contain"
+                      height={128}
+                      className="h-16 w-16 object-contain"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = 'https://via.placeholder.com/64?text=No+Image';

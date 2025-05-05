@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import type { Item } from '@/lib/types';
+import { ImageSource } from '@/lib/image-source';
 
 interface ItemViewProps {
   item?: Item | null;
@@ -85,9 +86,8 @@ export default function ItemView({ item, slotName, inventoryId, isEquipped = fal
         <>
           <div className="w-full h-full relative">
             {item.image_url ? (
-              
               <Image
-                src={`/image/${item.type.toLowerCase()}/${item.image_url}.png`}
+                src={ImageSource.getItemImagePath(item)}
                 alt={item.name}
                 fill
                 sizes="(max-width: 768px) 48px, 56px"

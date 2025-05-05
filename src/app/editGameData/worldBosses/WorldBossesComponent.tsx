@@ -5,6 +5,7 @@ import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
 import { getWorldBosses, getRewardTables, saveWorldBoss, deleteWorldBoss } from '@/app/actions/data-editor';
 import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 
 // Define the WorldBoss type based on database schema
 type WorldBoss = {
@@ -318,7 +319,7 @@ export default function WorldBossesComponent({ isAdmin }: { isAdmin: boolean }) 
                 {selectedBoss.image_url && (
                   <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
                     <Image 
-                      src={`/image/boss/${selectedBoss.image_url}.png`}
+                      src={ImageSource.getBossImagePath(selectedBoss)}
                       alt={selectedBoss.name}
                       width={128}
                       height={128}

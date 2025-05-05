@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import type { Character } from '@/lib/types';
 import DungeonKeyDisplay from './dungeon-key-display';
+import { ImageSource } from '@/lib/image-source';
 import { getRequiredExperience, getLevelFromExperience } from '@/lib/utils';
 import { formatNumber } from '@/lib/utils';
 import { getTotalMaxHitpoints, getTotalMaxEnergy } from '@/lib/character-utils';
@@ -50,7 +51,7 @@ export default function CharacterStats({ character }: CharacterStatsProps) {
             {/* Character avatar */}
             <div className="w-12 h-12 md:w-14 md:h-14 rounded-full flex-shrink-0 border border-amber-700 bg-stone-800 overflow-hidden relative">
               <Image
-                src={`/image/characters/${character.class.toLowerCase()}.png`}
+                src={ImageSource.getCharacterImagePath(character.class)}
                 alt={`${character.class} character portrait`}
                 fill
                 sizes="(max-width: 768px) 48px, 56px"

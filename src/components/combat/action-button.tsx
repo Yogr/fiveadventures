@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { useAudio } from '@/lib/audio-utils';
+import { ImageSource } from '@/lib/image-source';
 
 interface ActionButtonProps {
   icon: string;
@@ -67,7 +68,9 @@ export default function ActionButton({
         {/* Background icon image */}
         <div className="absolute inset-0 flex items-center justify-center opacity-80">
           <Image
-            src={`/image/${icon.includes('/') ? '' : 'ui/'}${icon}${icon.includes('.') ? '' : '.png'}`}
+            src={icon.startsWith('ui/') || !icon.includes('/') ? 
+              `/image/${icon.includes('/') ? '' : 'ui/'}${icon}${icon.includes('.') ? '' : '.png'}` : 
+              ImageSource.getSkillImagePath({ image_url: icon.replace('skill/', '') })}
             alt=""
             width={45}
             height={45}

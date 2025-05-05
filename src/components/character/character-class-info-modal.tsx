@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { CLASS_BASE_STATS } from '@/lib/utils';
 import { STAT_ICONS, STAT_COLORS } from '@/lib/stat-icons';
+import { ImageSource } from '@/lib/image-source';
 
 interface CharacterClassInfoModalProps {
   characterClass: string;
@@ -32,7 +33,7 @@ export default function CharacterClassInfoModal({
           <div className="flex-shrink-0 mr-3">
             <div className="w-24 h-24 md:w-32 md:h-32 relative rounded-lg overflow-hidden border-2 border-amber-700 bg-amber-900">
               <Image
-                src={`/image/characters/${characterClass.toLowerCase()}.png`}
+                src={ImageSource.getCharacterImagePath(characterClass)}
                 alt={characterClass}
                 fill
                 sizes="(max-width: 768px) 96px, 128px"

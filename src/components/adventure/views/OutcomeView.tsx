@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AdventureOutcome, Character, Item, RewardItem } from '@/lib/types';
 import { ROUTES, MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
+import { ImageSource } from '@/lib/image-source';
 import AdventureTracker from '@/components/adventure/adventure-tracker';
 import AnimatedText from '@/components/ui/animated-text';
 import LevelUpAnimation from '@/components/ui/level-up-animation';
@@ -253,7 +254,7 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
                         <>
                           <div className="w-16 h-16 rounded-md flex items-center justify-center mx-auto">
                             <Image
-                              src={`/image/${rewardItem.item.type.toLowerCase()}/${rewardItem.item.image_url}.png`}
+                              src={ImageSource.getItemImagePath(rewardItem.item)}
                               alt={rewardItem.item.name}
                               width={64}
                               height={64}

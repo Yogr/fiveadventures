@@ -5,6 +5,7 @@ import Image from 'next/image';
 import type { Character, Item } from '@/lib/types';
 import ItemView from './item-view';
 import ItemDetailModal from '@/components/ui/item-detail-modal';
+import { ImageSource } from '@/lib/image-source';
 import { getLevelFromExperience, getRequiredExperience } from '@/lib/utils';
 import { STAT_ICONS, STAT_COLORS, STAT_NAMES } from '@/lib/stat-icons';
 import { 
@@ -85,9 +86,9 @@ export default function CharacterDetailsModal({
             <div className="flex mb-4">
               {/* Left side - portrait and basic info */}
               <div className="w-1/2">
-                <div className="w-16 h-16 rounded-full overflow-hidden relative border-2 border-amber-700 mx-auto bg-stone-800">
+                <div className="w-16 h-16 rounded-full overflow-hidden relative border-2 border-amber-700 mx-auto bg-stone-900">
                   <Image
-                    src={`/image/characters/${character.class.toLowerCase()}.png`}
+                    src={ImageSource.getCharacterImagePath(character.class)}
                     alt={`${character.class} character portrait`}
                     fill
                     sizes="64px"
@@ -284,7 +285,7 @@ export default function CharacterDetailsModal({
             <div className="w-1/3 pr-3">
               <div className="w-24 h-24 rounded-full overflow-hidden relative border-2 border-amber-700 mx-auto mb-3 bg-stone-800">
                 <Image
-                  src={`/image/characters/${character.class.toLowerCase()}.png`}
+                  src={ImageSource.getCharacterImagePath(character.class)}
                   alt={`${character.class} character portrait`}
                   fill
                   sizes="96px"

@@ -6,6 +6,7 @@ import type { Area, Character } from '@/lib/types';
 import { getLevelFromExperience } from '@/lib/utils';
 import { useAdventure } from '../AdventureContext';
 import AreaInfoPopup from '../../ui/area-info-popup';
+import { ImageSource } from '@/lib/image-source';
 
 interface AreaSelectionViewProps {
   areas: Area[];
@@ -89,7 +90,7 @@ const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: 
                 {area.image ? (
                   <>
                     <Image 
-                      src={`/image/area/${area.image}.png`}
+                      src={ImageSource.getAreaImagePath(area)}
                       alt={area.name}
                       width={200}
                       height={200}

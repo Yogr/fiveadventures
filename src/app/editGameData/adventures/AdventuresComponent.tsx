@@ -16,6 +16,7 @@ import {
   getMonsters
 } from '@/app/actions/data-editor';
 import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 import { ChevronDownIcon, ChevronRightIcon, PlusIcon, XCircleIcon } from '@heroicons/react/24/outline';
 
 // Define types based on database schema
@@ -946,7 +947,7 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
                 {selectedAdventure.image_url && (
                   <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
                     <Image 
-                      src={`/image/adventure/${selectedAdventure.image_url}.png`}
+                      src={ImageSource.getAdventureImagePath({ image_url: selectedAdventure.image_url })}
                       alt={selectedAdventure.title}
                       width={240}
                       height={120}

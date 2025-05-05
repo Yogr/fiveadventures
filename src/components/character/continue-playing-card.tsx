@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import type { Character } from '@/lib/types';
+import { ImageSource } from '@/lib/image-source';
 
 interface ContinuePlayingCardProps {
   character: Character;
@@ -25,7 +26,7 @@ export default function ContinuePlayingCard({ character }: ContinuePlayingCardPr
         {/* Character Image */}
         <div className="relative w-24 h-24 md:w-32 md:h-32">
           <Image
-            src={`/image/characters/${character.class.toLowerCase()}.png`}
+            src={ImageSource.getCharacterImagePath(character.class)}
             alt={character.class}
             fill
             className="object-contain"

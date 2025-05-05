@@ -10,6 +10,7 @@ import { getAvailableDungeons, enterDungeon } from '@/app/actions/dungeon';
 import { ROUTES } from '@/lib/constants';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import Image from 'next/image';
+import { ImageSource } from '@/lib/image-source';
 
 interface DungeonContainerProps {
   character: Character;
@@ -151,7 +152,7 @@ export default function DungeonContainer({ character }: DungeonContainerProps) {
                   <div className="flex-shrink-0 mr-4">
                     <div className="w-16 h-16 bg-amber-950 rounded-md overflow-hidden border border-amber-700">
                       <Image
-                        src={`/image/area/${dungeon.image}.png`}
+                        src={ImageSource.getAreaImagePath(dungeon)}
                         alt={dungeon.name}
                         width={64}
                         height={64}
