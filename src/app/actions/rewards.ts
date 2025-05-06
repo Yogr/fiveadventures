@@ -98,8 +98,7 @@ export async function addItemToInventory(characterId: string, itemId: number): P
       .from('character_inventory')
       .insert({
         character_id: characterId,
-        item_id: itemId,
-        equipped: false
+        item_id: itemId
       });
     
     if (error) {
