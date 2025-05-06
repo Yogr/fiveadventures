@@ -1,6 +1,8 @@
 import { getCharacterForUser } from '@/app/actions/character';
-import { getCurrentWorldBoss, getCharacterBossProgress, getPendingRewards, checkWeeklyReset } from '@/app/actions/worldboss';
+import { getCurrentWorldBoss, getCharacterBossProgress, calculatePendingRewards, checkWeeklyReset } from '@/app/actions/worldboss';
+import { getRewardTables, getItems } from '@/app/actions/data-editor';
 import WorldBossContainer from '@/components/worldboss/world-boss-container';
+import type { Item } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -51,9 +53,75 @@ export default async function WorldBossPage() {
   
   const progress = progressResponse.data;
   
-  // Get pending rewards
-  const rewardsResponse = await getPendingRewards(character.id);
-  const pendingRewards = rewardsResponse.success ? rewardsResponse.data || [] : [];
+  // Calculate and process any pending rewards
+  const rewardsResponse = await calculatePendingRewards(character.id);
+  const claimedRewards = rewardsResponse.success ? rewardsResponse.data || [] : [];
+  
+  // Fetch reward tables data
+  const rewardTablesResponse = await getRewardTables();
+  const rewardTables = rewardTablesResponse.success ? rewardTablesResponse.data || [] : [];
+  
+  // Find the reward tables for this boss
+  const legendaryTable = rewardTables.find((table: any) => table.id === worldBoss.legendary_reward_table);
+  const challengerTable = rewardTables.find((table: any) => table.id === worldBoss.challenger_reward_table);
+  const basicTable = rewardTables.find((table: any) => table.id === worldBoss.basic_reward_table);
+  
+  // Fetch all items to get full item details
+  const itemsResponse = await getItems();
+  const allItems = itemsResponse.success ? itemsResponse.data || [] : [];
+  
+  // Extract items from the reward tables
+  const legendaryItems: Item[] = [];
+  const challengerItems: Item[] = [];
+  const basicItems: Item[] = [];
+  
+  // Process legendary items
+  if (legendaryTable?.items) {
+    for (const rewardItem of legendaryTable.items) {
+      // Find the full item details
+      const fullItem = allItems.find((item: any) => item.id === rewardItem.item_id);
+      
+      if (fullItem) {
+        // Use the full item details
+        legendaryItems.push({
+          ...fullItem,
+          rarity: 'Legendary' // Override rarity for legendary rewards
+        });
+      }
+    }
+  }
+  
+  // Process challenger items
+  if (challengerTable?.items) {
+    for (const rewardItem of challengerTable.items) {
+      // Find the full item details
+      const fullItem = allItems.find((item: any) => item.id === rewardItem.item_id);
+      
+      if (fullItem) {
+        // Use the full item details
+        challengerItems.push({
+          ...fullItem,
+          rarity: 'Epic' // Override rarity for challenger rewards
+        });
+      }
+    }
+  }
+  
+  // Process basic items
+  if (basicTable?.items) {
+    for (const rewardItem of basicTable.items) {
+      // Find the full item details
+      const fullItem = allItems.find((item: any) => item.id === rewardItem.item_id);
+      
+      if (fullItem) {
+        // Use the full item details
+        basicItems.push({
+          ...fullItem,
+          rarity: 'Rare' // Override rarity for basic rewards
+        });
+      }
+    }
+  }
   
   return (
     <div className="bg-amber-950 bg-opacity-90 p-4 rounded-lg border-2 border-amber-800 border-t-amber-700 border-l-amber-700">
@@ -63,7 +131,10 @@ export default async function WorldBossPage() {
         initialBoss={worldBoss}
         initialProgress={progress}
         character={character}
-        pendingRewards={pendingRewards}
+        claimedRewards={claimedRewards}
+        legendaryItems={legendaryItems}
+        challengerItems={challengerItems}
+        basicItems={basicItems}
       />
     </div>
   );

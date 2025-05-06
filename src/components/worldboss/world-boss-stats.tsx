@@ -30,7 +30,9 @@ export default function WorldBossStats({
   }, [initialBoss]);
   
   // Calculate HP percentage
-  const hpPercentage = (boss.current_hitpoints / boss.total_hitpoints) * 100;
+  const currentHp = boss.status?.current_hitpoints || 0;
+  const totalHp = boss.status?.total_hitpoints || boss.total_hitpoints;
+  const hpPercentage = (currentHp / totalHp) * 100;
   
   return (
     <div className="bg-amber-950 bg-opacity-50 p-4 rounded-lg">
@@ -59,7 +61,7 @@ export default function WorldBossStats({
       <div className="w-full mb-4">
         <div className="flex justify-between text-sm mb-1 text-amber-200">
           <span>HP</span>
-          <span>{formatNumber(boss.current_hitpoints)} / {formatNumber(boss.total_hitpoints)}</span>
+          <span>{formatNumber(currentHp)} / {formatNumber(totalHp)}</span>
         </div>
         <div className="h-4 bg-amber-900 rounded-md overflow-hidden">
           <div 
@@ -72,15 +74,15 @@ export default function WorldBossStats({
       <div className="grid grid-cols-2 gap-2 text-sm mb-4">
         <div className="bg-amber-900 bg-opacity-50 p-2 rounded-md">
           <div className="text-amber-300">Players</div>
-          <div className="text-amber-100 font-medium">{formatNumber(boss.player_count)}</div>
+          <div className="text-amber-100 font-medium">{formatNumber(boss.status?.player_count || 0)}</div>
         </div>
         <div className="bg-amber-900 bg-opacity-50 p-2 rounded-md">
           <div className="text-amber-300">Attacks</div>
-          <div className="text-amber-100 font-medium">{formatNumber(boss.attack_count)}</div>
+          <div className="text-amber-100 font-medium">{formatNumber(boss.status?.attack_count || 0)}</div>
         </div>
         <div className="bg-amber-900 bg-opacity-50 p-2 rounded-md col-span-2">
           <div className="text-amber-300">Total Damage</div>
-          <div className="text-amber-100 font-medium">{formatNumber(boss.total_damage)}</div>
+          <div className="text-amber-100 font-medium">{formatNumber(boss.status?.total_damage_received || 0)}</div>
         </div>
       </div>
       
@@ -88,7 +90,8 @@ export default function WorldBossStats({
         {boss.description}
       </p>
       
-      {boss.is_defeated && (
+      {((boss.status?.current_hitpoints || 0) <= 0 || 
+        (boss.status?.total_damage_received || 0) >= (boss.status?.total_hitpoints || 0)) && (
         <div className="mt-4 p-2 bg-green-800 bg-opacity-50 text-green-100 text-center rounded-md">
           This boss has been defeated!
         </div>

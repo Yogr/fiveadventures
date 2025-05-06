@@ -198,17 +198,21 @@ export type DungeonState = {
 // World Boss Types
 export type WorldBoss = Database['public']['Tables']['world_boss']['Row'] & {
   scale?: number;
+  status?: WorldBossStatus;
+  legendary_reward_table?: number;
+  challenger_reward_table?: number;
+  basic_reward_table?: number;
+};
+
+export type WorldBossStatus = Database['public']['Tables']['world_boss_status']['Row'] & {
+  is_defeated: boolean;
 };
 
 export type CharacterBossProgress = Database['public']['Tables']['character_boss_progress']['Row'] & {
   boss: WorldBoss;
 };
 
-export type BossReward = Database['public']['Tables']['boss_rewards']['Row'] & {
-  item?: Item | null;
-};
-
-export type RewardTier = 'Top' | 'Middle' | 'Bottom';
+export type RewardTier = 'Legendary' | 'Challenger' | 'Basic';
 
 // User Types
 export type User = Database['public']['Tables']['users']['Row'];
@@ -240,8 +244,9 @@ export type ShopState = {
 
 export type BossState = {
   currentBoss: WorldBoss | null;
+  bossStatus: WorldBossStatus | null;
   characterProgress: CharacterBossProgress | null;
-  pendingRewards: BossReward[] | null;
+  pendingRewards: Item[] | null;
 };
 
 // API Response Types

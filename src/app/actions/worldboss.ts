@@ -1,14 +1,14 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import type { ApiResponse, Character, CharacterBossProgress, WorldBoss, BossReward, RewardItem } from '@/lib/types';
+import type { ApiResponse, Character, CharacterBossProgress, WorldBoss, WorldBossStatus, RewardItem, Item } from '@/lib/types';
 import { generateId, getCurrentGameDay, getCurrentGameWeek, calculateBossDamage } from '@/lib/utils';
 import { getCharacterById } from './character';
 import { addItemToInventory, getRewardForTable } from './rewards';
 import { updateHighestBossDamage, incrementBossesSlain } from './leaderboard';
 
 /**
- * Get the current world boss for the current week
+ * Get the current world boss and its status for the current week
  */
 export async function getCurrentWorldBoss(): Promise<ApiResponse<WorldBoss>> {
   try {
@@ -18,15 +18,80 @@ export async function getCurrentWorldBoss(): Promise<ApiResponse<WorldBoss>> {
     // Try to get the world boss for the current week
     const { data: existingBoss, error: existingBossError } = await supabase
       .from('world_boss')
-      .select('*')
+      .select(`
+        *
+      `)
       .eq('week', currentWeek)
       .single();
     
     if (existingBoss) {
+      // Get the world boss status for this week
+      const { data: bossStatus, error: statusError } = await supabase
+        .from('world_boss_status')
+        .select('*')
+        .eq('boss_id', existingBoss.id)
+        .eq('week', currentWeek)
+        .single();
+      
+      if (statusError && statusError.code !== 'PGRST116') { // Not "No rows found" error
+        console.error('Error getting world boss status:', statusError);
+        return {
+          success: false,
+          error: 'Failed to get world boss status'
+        };
+      }
+      
+      // If no status record exists, create one
+      if (!bossStatus) {
+        const newBossStatus = {
+          boss_id: existingBoss.id,
+          week: currentWeek,
+          total_hitpoints: existingBoss.total_hitpoints,
+          current_hitpoints: existingBoss.total_hitpoints, // Start with full HP
+          player_count: 0,
+          attack_count: 0,
+          total_damage_received: 0,
+          created_at: new Date().toISOString()
+        };
+        
+        const { data: createdStatus, error: createStatusError } = await supabase
+          .from('world_boss_status')
+          .insert(newBossStatus)
+          .select()
+          .single();
+        
+        if (createStatusError) {
+          console.error('Error creating world boss status:', createStatusError);
+          return {
+            success: false,
+            error: 'Failed to create world boss status'
+          };
+        }
+        
+        console.log(`Created new world boss status for week ${currentWeek}:`, createdStatus);
+        
+        // Combine the boss and status
+        const bossWithStatus = {
+          ...existingBoss,
+          status: createdStatus
+        };
+        
+        return {
+          success: true,
+          data: bossWithStatus as WorldBoss
+        };
+      }
+      
+      // Combine the boss and status
+      const bossWithStatus = {
+        ...existingBoss,
+        status: bossStatus
+      };
+      
       console.log(`Found existing world boss for week ${currentWeek}:`, existingBoss.name);
       return {
         success: true,
-        data: existingBoss as WorldBoss
+        data: bossWithStatus as WorldBoss
       };
     }
     
@@ -55,12 +120,10 @@ export async function getCurrentWorldBoss(): Promise<ApiResponse<WorldBoss>> {
         description: bossTemplate.description,
         week: currentWeek,
         total_hitpoints: bossTemplate.total_hitpoints,
-        current_hitpoints: bossTemplate.total_hitpoints, // Start with full HP
-        player_count: 0,
-        attack_count: 0,
-        total_damage: 0,
-        is_defeated: false,
         image_url: bossTemplate.image_url,
+        legendary_reward_table: bossTemplate.legendary_reward_table || (bossTemplate.id * 10) + 4,
+        challenger_reward_table: bossTemplate.challenger_reward_table || (bossTemplate.id * 10) + 2,
+        basic_reward_table: bossTemplate.basic_reward_table || (bossTemplate.id * 10) + 1,
         created_at: new Date().toISOString()
       };
       
@@ -78,10 +141,42 @@ export async function getCurrentWorldBoss(): Promise<ApiResponse<WorldBoss>> {
         };
       }
       
-      console.log(`Created new world boss for week ${currentWeek}:`, createdBoss.name);
+      // Create a new boss status record for the current week
+      const newBossStatus = {
+        boss_id: createdBoss.id,
+        week: currentWeek,
+        total_hitpoints: bossTemplate.total_hitpoints,
+        current_hitpoints: bossTemplate.total_hitpoints, // Start with full HP
+        player_count: 0,
+        attack_count: 0,
+        total_damage_received: 0,
+        created_at: new Date().toISOString()
+      };
+      
+      const { data: createdStatus, error: createStatusError } = await supabase
+        .from('world_boss_status')
+        .insert(newBossStatus)
+        .select()
+        .single();
+      
+      if (createStatusError) {
+        console.error('Error creating new world boss status:', createStatusError);
+        return {
+          success: false,
+          error: 'Failed to create new world boss status'
+        };
+      }
+      
+      // Combine the boss and status
+      const bossWithStatus = {
+        ...createdBoss,
+        status: createdStatus
+      };
+      
+      console.log(`Created new world boss for week ${currentWeek}:`, bossWithStatus.name);
       return {
         success: true,
-        data: createdBoss as WorldBoss
+        data: bossWithStatus as WorldBoss
       };
     }
     
@@ -147,7 +242,7 @@ export async function getCharacterBossProgress(
         week: currentWeek,
         attack_count: 0,
         total_damage: 0,
-        pending_rewards: false,
+        reward_claimed: false,
         last_attack: null
       };
       
@@ -286,7 +381,8 @@ export async function attackWorldBoss(
     const worldBoss = worldBossResponse.data;
     
     // Check if boss is already defeated
-    if (worldBoss.is_defeated) {
+    if ((worldBoss.status?.current_hitpoints || 0) <= 0 || 
+        (worldBoss.status?.total_damage_received || 0) >= (worldBoss.status?.total_hitpoints || 0)) {
       return {
         success: false,
         error: 'World boss has already been defeated'
@@ -351,50 +447,40 @@ export async function attackWorldBoss(
     // Check if this is the character's first attack on this boss
     const isFirstAttack = progress.attack_count === 0;
     
-    // Update world boss HP and stats
-    const newCurrentHitpoints = Math.max(0, worldBoss.current_hitpoints - damage);
-    const bossDefeated = newCurrentHitpoints === 0;
+    // Update world boss status
+    const currentHitpoints = worldBoss.status?.current_hitpoints || 0;
+    const totalHitpoints = worldBoss.status?.total_hitpoints || worldBoss.total_hitpoints;
+    const newCurrentHitpoints = Math.max(0, currentHitpoints - damage);
+    const newTotalDamage = (worldBoss.status?.total_damage_received || 0) + damage;
+    const bossDefeated = newCurrentHitpoints <= 0 || newTotalDamage >= totalHitpoints;
     
     const { error: updateBossError } = await supabase
-      .from('world_boss')
+      .from('world_boss_status')
       .update({
         current_hitpoints: newCurrentHitpoints,
-        player_count: isFirstAttack ? worldBoss.player_count + 1 : worldBoss.player_count,
-        attack_count: worldBoss.attack_count + 1,
-        total_damage: worldBoss.total_damage + damage,
-        is_defeated: bossDefeated,
+        player_count: isFirstAttack ? (worldBoss.status?.player_count || 0) + 1 : worldBoss.status?.player_count,
+        attack_count: (worldBoss.status?.attack_count || 0) + 1,
+        total_damage_received: (worldBoss.status?.total_damage_received || 0) + damage,
         defeated_at: bossDefeated ? now : null
       })
-      .eq('id', worldBoss.id);
+      .eq('boss_id', worldBoss.id)
+      .eq('week', worldBoss.week);
     
     if (updateBossError) {
-      console.error('Error updating world boss:', updateBossError);
+      console.error('Error updating world boss status:', updateBossError);
       return {
         success: false,
-        error: 'Failed to update world boss'
+        error: 'Failed to update world boss status'
       };
     }
     
     // Update character's highest boss damage if this is higher
     updateHighestBossDamage(characterId, damage, supabase as any);
     
-    // If boss is defeated, increment bosses slain count and set pending rewards for all participants
+    // If boss is defeated, increment bosses slain count
     if (bossDefeated) {
       // Increment character's bosses slain count
       incrementBossesSlain(characterId, supabase as any);
-      
-      const { error: pendingRewardsError } = await supabase
-        .from('character_boss_progress')
-        .update({
-          pending_rewards: true
-        })
-        .eq('boss_id', worldBoss.id)
-        .eq('week', worldBoss.week);
-      
-      if (pendingRewardsError) {
-        console.error('Error setting pending rewards:', pendingRewardsError);
-        // Not critical, continue anyway
-      }
     }
     
     return {
@@ -415,40 +501,123 @@ export async function attackWorldBoss(
 }
 
 /**
- * Get pending rewards for a character
+ * Calculate and process pending rewards for a character
  */
-export async function getPendingRewards(
+export async function calculatePendingRewards(
   characterId: string
-): Promise<ApiResponse<BossReward[]>> {
+): Promise<ApiResponse<Item[]>> {
   try {
     const supabase = await createClient();
+    const currentWeek = getCurrentGameWeek();
     
-    // Get all boss rewards that are not claimed
-    const { data: rewards, error: rewardsError } = await supabase
-      .from('boss_rewards')
+    // Get all character progress records for previous weeks that haven't been claimed
+    const { data: pendingProgress, error: pendingError } = await supabase
+      .from('character_boss_progress')
       .select(`
         *,
-        boss:boss_id(*),
-        item:item_id(*)
+        boss:boss_id(*)
       `)
       .eq('character_id', characterId)
-      .eq('is_claimed', false)
-      .order('week', { ascending: false });
+      .eq('reward_claimed', false)
+      .lt('week', currentWeek);
     
-    if (rewardsError) {
-      console.error('Error getting pending rewards:', rewardsError);
+    if (pendingError) {
+      console.error('Error getting pending progress:', pendingError);
       return {
         success: false,
-        error: 'Failed to get pending rewards'
+        error: 'Failed to get pending progress'
       };
+    }
+    
+    if (!pendingProgress || pendingProgress.length === 0) {
+      // No pending rewards to process
+      return {
+        success: true,
+        data: []
+      };
+    }
+    
+    const rewardedItems: Item[] = [];
+    
+    // Process each pending progress record
+    for (const progress of pendingProgress) {
+      // Get the world boss status for this week and boss
+      const { data: bossStatus, error: statusError } = await supabase
+        .from('world_boss_status')
+        .select('*')
+        .eq('boss_id', progress.boss_id)
+        .eq('week', progress.week)
+        .single();
+      
+      if (statusError) {
+        console.error('Error getting boss status:', statusError);
+        continue; // Try next progress
+      }
+      
+      // Determine reward tier based on performance
+      let rewardTableId: number;
+      
+      // Check if boss was defeated
+      const bossDefeated = bossStatus.current_hitpoints <= 0 || 
+                          bossStatus.total_damage_received >= bossStatus.total_hitpoints;
+      
+      if (!bossDefeated) {
+        // Boss wasn't defeated, use basic reward table
+        rewardTableId = progress.boss.basic_reward_table;
+      } else {
+        // Calculate average damage
+        const avgDamage = bossStatus.total_damage_received / bossStatus.player_count;
+        
+        if (progress.total_damage >= avgDamage) {
+          // Above average, use legendary reward table
+          rewardTableId = progress.boss.legendary_reward_table;
+        } else {
+          // Below average, use challenger reward table
+          rewardTableId = progress.boss.challenger_reward_table;
+        }
+      }
+      
+      // Get a reward from the appropriate table
+      const rewardResponse = await getRewardForTable(rewardTableId);
+      
+      if (!rewardResponse.success || !rewardResponse.data) {
+        console.error('Error getting reward for table:', rewardResponse.error);
+        continue; // Try next progress
+      }
+      
+      const reward = rewardResponse.data;
+      
+      // Add item to character's inventory
+      const addItemResponse = await addItemToInventory(characterId, reward.item_id);
+      
+      if (!addItemResponse.success) {
+        console.error('Error adding item to inventory:', addItemResponse.error);
+        continue; // Try next progress
+      }
+      
+      // Add the item to our list of rewarded items
+      rewardedItems.push(reward.item);
+      
+      // Mark progress as claimed
+      const { error: updateError } = await supabase
+        .from('character_boss_progress')
+        .update({
+          reward_claimed: true
+        })
+        .eq('id', progress.id);
+      
+      if (updateError) {
+        console.error('Error marking reward as claimed:', updateError);
+        // Not critical, continue anyway
+      }
     }
     
     return {
       success: true,
-      data: rewards as BossReward[]
+      data: rewardedItems
     };
   } catch (err) {
-    console.error('Unexpected error getting pending rewards:', err);
+    console.error('Unexpected error calculating rewards:', err);
     return {
       success: false,
       error: 'An unexpected error occurred'
@@ -457,20 +626,22 @@ export async function getPendingRewards(
 }
 
 /**
- * Check for character progress with pending rewards and generate rewards
+ * Process character rewards for all characters with unclaimed rewards
  */
 export async function processCharacterRewards(): Promise<ApiResponse<boolean>> {
   try {
     const supabase = await createClient();
+    const currentWeek = getCurrentGameWeek();
     
-    // Get all character progress records with pending rewards
+    // Get all character progress records for previous weeks that haven't been claimed
     const { data: pendingProgress, error: pendingError } = await supabase
       .from('character_boss_progress')
       .select(`
         *,
         boss:boss_id(*)
       `)
-      .eq('pending_rewards', true);
+      .eq('reward_claimed', false)
+      .lt('week', currentWeek);
     
     if (pendingError) {
       console.error('Error getting pending progress:', pendingError);
@@ -488,106 +659,9 @@ export async function processCharacterRewards(): Promise<ApiResponse<boolean>> {
       };
     }
     
-    // Group by boss_id to get total damage per boss
-    const bossTotalDamage = pendingProgress.reduce((acc, progress) => {
-      if (!acc[progress.boss_id]) {
-        acc[progress.boss_id] = {
-          totalDamage: 0,
-          playerCount: 0
-        };
-      }
-      
-      acc[progress.boss_id].totalDamage += progress.total_damage;
-      acc[progress.boss_id].playerCount += 1;
-      
-      return acc;
-    }, {} as Record<number, { totalDamage: number; playerCount: number }>);
-    
-    // For each pending progress, generate a reward
+    // Process each character's rewards
     for (const progress of pendingProgress) {
-      // Skip if total damage is 0
-      if (progress.total_damage === 0) {
-        continue;
-      }
-      
-      // Calculate contribution percentage
-      const bossStats = bossTotalDamage[progress.boss_id];
-      const contributionPercentage = (progress.total_damage / bossStats.totalDamage) * 100;
-      
-      // Determine reward tier based on contribution
-      // Higher contribution = better chance for higher tier rewards
-      let legendaryChance = contributionPercentage * 0.5; // 0-50%
-      let epicChance = contributionPercentage * 1.0;      // 0-100%
-      let rareChance = contributionPercentage * 1.5;      // 0-150%
-      
-      // Apply random factor
-      const roll = Math.random() * 100;
-      let rewardTier: string;
-      
-      if (roll < legendaryChance) {
-        rewardTier = 'Legendary';
-      } else if (roll < legendaryChance + epicChance) {
-        rewardTier = 'Epic';
-      } else if (roll < legendaryChance + epicChance + rareChance) {
-        rewardTier = 'Rare';
-      } else {
-        rewardTier = 'Common';
-      }
-      
-      // Get a reward item from the appropriate reward table
-      // The reward table ID should be unique for each boss and tier
-      // For example: boss_1_legendary, boss_1_epic, etc.
-      // We'd need to have these set up in the reward_tables table
-      const rewardTableId = progress.boss_id * 10 + 
-        (rewardTier === 'Legendary' ? 4 :
-         rewardTier === 'Epic' ? 3 :
-         rewardTier === 'Rare' ? 2 : 1);
-      
-      const rewardResponse = await getRewardForTable(rewardTableId);
-      
-      if (!rewardResponse.success) {
-        console.error('Error getting reward for table:', rewardResponse.error);
-        continue; // Try next progress
-      }
-      
-      const reward = rewardResponse.data;
-      
-      if (!reward) {
-        console.error('No reward generated for table:', rewardTableId);
-        continue; // Try next progress
-      }
-      
-      // Create reward record
-      const { error: createRewardError } = await supabase
-        .from('boss_rewards')
-        .insert({
-          id: generateId(),
-          character_id: progress.character_id,
-          boss_id: progress.boss_id,
-          week: progress.week,
-          reward_tier: rewardTier,
-          item_id: reward.item_id,
-          is_claimed: false,
-          created_at: new Date().toISOString()
-        });
-      
-      if (createRewardError) {
-        console.error('Error creating reward:', createRewardError);
-        continue; // Try next progress
-      }
-      
-      // Mark progress as processed
-      const { error: updateProgressError } = await supabase
-        .from('character_boss_progress')
-        .update({
-          pending_rewards: false
-        })
-        .eq('id', progress.id);
-      
-      if (updateProgressError) {
-        console.error('Error updating progress:', updateProgressError);
-        // Not critical, continue anyway
-      }
+      await calculatePendingRewards(progress.character_id);
     }
     
     return {
@@ -604,78 +678,6 @@ export async function processCharacterRewards(): Promise<ApiResponse<boolean>> {
 }
 
 /**
- * Claim a boss reward
- */
-export async function claimBossReward(
-  rewardId: string
-): Promise<ApiResponse<boolean>> {
-  try {
-    const supabase = await createClient();
-    
-    // Get the reward
-    const { data: reward, error: rewardError } = await supabase
-      .from('boss_rewards')
-      .select('*')
-      .eq('id', rewardId)
-      .single();
-    
-    if (rewardError || !reward) {
-      console.error('Error getting reward:', rewardError);
-      return {
-        success: false,
-        error: 'Failed to get reward'
-      };
-    }
-    
-    // Check if already claimed
-    if (reward.is_claimed) {
-      return {
-        success: false,
-        error: 'Reward has already been claimed'
-      };
-    }
-    
-    // Add item to character's inventory
-    const addItemResponse = await addItemToInventory(reward.character_id, reward.item_id);
-    
-    if (!addItemResponse.success) {
-      return {
-        success: false,
-        error: addItemResponse.error || 'Failed to add item to inventory'
-      };
-    }
-    
-    // Mark as claimed
-    const { error: updateError } = await supabase
-      .from('boss_rewards')
-      .update({
-        is_claimed: true,
-        claimed_at: new Date().toISOString()
-      })
-      .eq('id', rewardId);
-    
-    if (updateError) {
-      console.error('Error updating reward:', updateError);
-      return {
-        success: false,
-        error: 'Failed to mark reward as claimed'
-      };
-    }
-    
-    return {
-      success: true,
-      data: true
-    };
-  } catch (err) {
-    console.error('Unexpected error claiming reward:', err);
-    return {
-      success: false,
-      error: 'An unexpected error occurred'
-    };
-  }
-}
-
-/**
  * Check for new week and process end-of-week actions
  */
 export async function checkWeeklyReset(): Promise<ApiResponse<boolean>> {
@@ -684,7 +686,7 @@ export async function checkWeeklyReset(): Promise<ApiResponse<boolean>> {
     
     // Check if it's the start of a new week (day % 7 === 0)
     if (currentDay % 7 === 0) {
-      // Process pending rewards
+      // Process pending rewards for all characters
       await processCharacterRewards();
       
       // Create new world boss for the new week
@@ -703,47 +705,6 @@ export async function checkWeeklyReset(): Promise<ApiResponse<boolean>> {
     };
   } catch (err) {
     console.error('Unexpected error checking weekly reset:', err);
-    return {
-      success: false,
-      error: 'An unexpected error occurred'
-    };
-  }
-}
-
-/**
- * Get boss reward details by ID
- */
-export async function getBossRewardById(
-  rewardId: string
-): Promise<ApiResponse<BossReward>> {
-  try {
-    const supabase = await createClient();
-    
-    // Get the reward with related data
-    const { data: reward, error: rewardError } = await supabase
-      .from('boss_rewards')
-      .select(`
-        *,
-        boss:boss_id(*),
-        item:item_id(*)
-      `)
-      .eq('id', rewardId)
-      .single();
-    
-    if (rewardError || !reward) {
-      console.error('Error getting reward:', rewardError);
-      return {
-        success: false,
-        error: 'Failed to get reward'
-      };
-    }
-    
-    return {
-      success: true,
-      data: reward as BossReward
-    };
-  } catch (err) {
-    console.error('Unexpected error getting reward:', err);
     return {
       success: false,
       error: 'An unexpected error occurred'

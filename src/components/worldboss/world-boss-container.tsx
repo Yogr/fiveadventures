@@ -2,29 +2,34 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import type { WorldBoss, CharacterBossProgress, Character, BossReward } from '@/lib/types';
+import type { WorldBoss, CharacterBossProgress, Character, Item } from '@/lib/types';
 import WorldBossScene from './WorldBossScene';
 import WorldBossAttackPanel from './world-boss-attack-panel';
-import WorldBossRewardsPanel from './world-boss-rewards-panel';
-import { canAttackWorldBossToday, getPendingRewards } from '@/app/actions/worldboss';
+import WorldBossPotentialRewards from './world-boss-potential-rewards';
+import { canAttackWorldBossToday } from '@/app/actions/worldboss';
 
 interface WorldBossContainerProps {
   initialBoss: WorldBoss;
   initialProgress: CharacterBossProgress;
   character: Character;
-  pendingRewards: BossReward[];
+  claimedRewards: Item[];
+  legendaryItems: Item[];
+  challengerItems: Item[];
+  basicItems: Item[];
 }
 
 export default function WorldBossContainer({
   initialBoss,
   initialProgress,
   character,
-  pendingRewards: initialPendingRewards
+  claimedRewards,
+  legendaryItems,
+  challengerItems,
+  basicItems
 }: WorldBossContainerProps) {
   const [boss, setBoss] = useState<WorldBoss>(initialBoss);
   const [progress, setProgress] = useState<CharacterBossProgress>(initialProgress);
   const [canAttackToday, setCanAttackToday] = useState(false);
-  const [pendingRewards, setPendingRewards] = useState<BossReward[]>(initialPendingRewards);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [combatLog, setCombatLog] = useState<string[]>([]);
@@ -51,14 +56,22 @@ export default function WorldBossContainer({
     // Add attack message to combat log
     const attackMessage = `${character.name} dealt ${damage.toLocaleString()} damage to ${boss.name}!`;
     setCombatLog(prev => [...prev.slice(-2), attackMessage]); // Keep only the last 3 messages maximum
+    
     // Update boss stats
-    setBoss(prevBoss => ({
-      ...prevBoss,
-      current_hitpoints: Math.max(0, prevBoss.current_hitpoints - damage),
-      attack_count: prevBoss.attack_count + 1,
-      total_damage: prevBoss.total_damage + damage,
-      is_defeated: bossDefeated || prevBoss.is_defeated
-    }));
+    setBoss(prevBoss => {
+      if (!prevBoss.status) return prevBoss;
+      
+      return {
+        ...prevBoss,
+        status: {
+          ...prevBoss.status,
+          current_hitpoints: Math.max(0, (prevBoss.status.current_hitpoints || 0) - damage),
+          attack_count: (prevBoss.status.attack_count || 0) + 1,
+          total_damage_received: (prevBoss.status.total_damage_received || 0) + damage,
+          defeated_at: bossDefeated ? new Date().toISOString() : prevBoss.status.defeated_at
+        }
+      };
+    });
     
     // Update character progress
     setProgress(prevProgress => ({
@@ -72,22 +85,6 @@ export default function WorldBossContainer({
     setCanAttackToday(canAttackAgain);
   };
   
-  // Handle reward claimed
-  const handleRewardClaimed = async () => {
-    setIsLoading(true);
-    
-    try {
-      const response = await getPendingRewards(character.id);
-      
-      if (response.success) {
-        setPendingRewards(response.data || []);
-      }
-    } catch (err) {
-      console.error('Error refreshing rewards:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
   
   return (
     <div>
@@ -128,13 +125,35 @@ export default function WorldBossContainer({
       <WorldBossAttackPanel
         characterId={character.id}
         progress={progress}
-        canAttack={(canAttackToday && !boss.is_defeated && character.status !== 'unlinked')}
+        canAttack={(canAttackToday && 
+          !((boss.status?.current_hitpoints || 0) <= 0 || 
+            (boss.status?.total_damage_received || 0) >= (boss.status?.total_hitpoints || 0)) && 
+          character.status !== 'unlinked')}
         onAttackComplete={handleAttackComplete}
       />
       
-      <WorldBossRewardsPanel
-        pendingRewards={pendingRewards}
-        onRewardClaimed={handleRewardClaimed}
+      {/* Display claimed rewards notification if any */}
+      {claimedRewards.length > 0 && (
+        <div className="bg-gradient-to-b from-yellow-950 to-black p-4 rounded-lg mt-4 border border-amber-900">
+          <h4 className="text-amber-200 font-bold mb-3 text-center">Rewards Claimed</h4>
+          <div className="text-amber-100">
+            <p>You've received {claimedRewards.length} item{claimedRewards.length !== 1 ? 's' : ''} from previous World Boss battles:</p>
+            <ul className="list-disc pl-5 mt-2">
+              {claimedRewards.map((item, index) => (
+                <li key={index} className="text-amber-300">{item.name} ({item.rarity})</li>
+              ))}
+            </ul>
+            <p className="mt-2 text-sm text-amber-400">These items have been added to your inventory.</p>
+          </div>
+        </div>
+      )}
+      
+      {/* Display potential rewards information */}
+      <WorldBossPotentialRewards 
+        boss={boss}
+        legendaryItems={legendaryItems}
+        challengerItems={challengerItems}
+        basicItems={basicItems}
       />
       
       {error && (

@@ -24,7 +24,8 @@ export default function WorldBossScene({
 }: WorldBossSceneProps) {
   
   // Calculate HP percentage for the boss
-  const hpPercentage = (boss.current_hitpoints / boss.total_hitpoints) * 100;
+  const currentHp = boss.status?.current_hitpoints || 0;
+  const hpPercentage = (currentHp / boss.total_hitpoints) * 100;
   
   // Select appropriate background based on boss name/type
   const getBackgroundForBoss = () => {
@@ -68,7 +69,7 @@ export default function WorldBossScene({
       <div className="absolute top-3 left-1/2 transform -translate-x-1/2 z-20 w-3/4 max-w-md">
         <div className="flex justify-between text-sm mb-1 text-amber-200">
           <span>{boss.name}</span>
-          <span>{boss.current_hitpoints.toLocaleString()} / {boss.total_hitpoints.toLocaleString()}</span>
+          <span>{currentHp.toLocaleString()} / {boss.total_hitpoints.toLocaleString()}</span>
         </div>
         <div className="h-4 bg-amber-900 rounded-md overflow-hidden border border-amber-700">
           <div 
@@ -100,7 +101,7 @@ export default function WorldBossScene({
             name={boss.name}
             image={ImageSource.getBossImagePath(boss)}
             imageAlt={boss.name}
-            currentHp={boss.current_hitpoints}
+            currentHp={currentHp}
             maxHp={boss.total_hitpoints}
             scale={boss.scale || 4.0}
             isEnemy={true}
@@ -112,7 +113,15 @@ export default function WorldBossScene({
       </div>
       
       {/* Defeated message (if applicable) */}
-      {boss.is_defeated && (
+      {/* Debug info */}
+      <div className="absolute top-20 left-0 z-30 bg-black bg-opacity-70 text-white p-2 text-xs">
+        <div>Current HP: {boss.status?.current_hitpoints || 0}</div>
+        <div>Total HP: {boss.status?.total_hitpoints || boss.total_hitpoints}</div>
+        <div>Total Damage: {boss.status?.total_damage_received || 0}</div>
+        <div>Defeated: {((boss.status?.current_hitpoints || 0) <= 0 || (boss.status?.total_damage_received || 0) >= (boss.status?.total_hitpoints || 0)) ? 'Yes' : 'No'}</div>
+      </div>
+      
+      {((boss.status?.current_hitpoints || 0) <= 0 || (boss.status?.total_damage_received || 0) >= (boss.status?.total_hitpoints || 0)) && (
         <div className="absolute inset-0 flex items-center justify-center z-30">
           <div className="bg-green-800 bg-opacity-70 text-green-100 py-3 px-6 rounded-md text-xl font-bold animate-pulse">
             Boss Defeated!

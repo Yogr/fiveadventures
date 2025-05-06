@@ -1034,14 +1034,11 @@ export interface Database {
           description: string
           week: number
           total_hitpoints: number
-          current_hitpoints: number
-          player_count: number
-          attack_count: number
-          total_damage: number
-          is_defeated: boolean
           image_url: string | null
           created_at: string
-          defeated_at: string | null
+          legendary_reward_table: number | null
+          challenger_reward_table: number | null
+          basic_reward_table: number | null
         }
         Insert: {
           id?: number
@@ -1049,14 +1046,11 @@ export interface Database {
           description: string
           week: number
           total_hitpoints: number
-          current_hitpoints: number
-          player_count?: number
-          attack_count?: number
-          total_damage?: number
-          is_defeated?: boolean
           image_url?: string | null
           created_at?: string
-          defeated_at?: string | null
+          legendary_reward_table?: number | null
+          challenger_reward_table?: number | null
+          basic_reward_table?: number | null
         }
         Update: {
           id?: number
@@ -1064,16 +1058,62 @@ export interface Database {
           description?: string
           week?: number
           total_hitpoints?: number
-          current_hitpoints?: number
+          image_url?: string | null
+          created_at?: string
+          legendary_reward_table?: number | null
+          challenger_reward_table?: number | null
+          basic_reward_table?: number | null
+        }
+        Relationships: []
+      }
+      world_boss_status: {
+        Row: {
+          id: number
+          boss_id: number
+          week: number
+          total_hitpoints: number
+          current_hitpoints: number
+          player_count: number
+          attack_count: number
+          total_damage_received: number
+          is_defeated: boolean
+          created_at: string
+          defeated_at: string | null
+        }
+        Insert: {
+          id?: number
+          boss_id: number
+          week: number
+          total_hitpoints: number
+          current_hitpoints: number
           player_count?: number
           attack_count?: number
-          total_damage?: number
+          total_damage_received?: number
           is_defeated?: boolean
-          image_url?: string | null
           created_at?: string
           defeated_at?: string | null
         }
-        Relationships: []
+        Update: {
+          id?: number
+          boss_id?: number
+          week?: number
+          total_hitpoints?: number
+          current_hitpoints?: number
+          player_count?: number
+          attack_count?: number
+          total_damage_received?: number
+          is_defeated?: boolean
+          created_at?: string
+          defeated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "world_boss_status_boss_id_fkey"
+            columns: ["boss_id"]
+            referencedRelation: "world_boss"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       character_boss_progress: {
         Row: {
@@ -1083,8 +1123,7 @@ export interface Database {
           week: number
           attack_count: number
           total_damage: number
-          pending_rewards: boolean
-          pending_reward_week: number | null
+          reward_claimed: boolean
           last_attack: string
         }
         Insert: {
@@ -1094,8 +1133,7 @@ export interface Database {
           week: number
           attack_count?: number
           total_damage?: number
-          pending_rewards?: boolean
-          pending_reward_week?: number | null
+          reward_claimed?: boolean
           last_attack?: string
         }
         Update: {
@@ -1105,8 +1143,7 @@ export interface Database {
           week?: number
           attack_count?: number
           total_damage?: number
-          pending_rewards?: boolean
-          pending_reward_week?: number | null
+          reward_claimed?: boolean
           last_attack?: string
         }
         Relationships: [
@@ -1120,61 +1157,6 @@ export interface Database {
             foreignKeyName: "character_boss_progress_boss_id_fkey"
             columns: ["boss_id"]
             referencedRelation: "world_boss"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      boss_rewards: {
-        Row: {
-          id: string
-          character_id: string
-          boss_id: number
-          week: number
-          reward_tier: string
-          item_id: number | null
-          is_claimed: boolean
-          created_at: string
-          claimed_at: string | null
-        }
-        Insert: {
-          id?: string
-          character_id: string
-          boss_id: number
-          week: number
-          reward_tier: string
-          item_id?: number | null
-          is_claimed?: boolean
-          created_at?: string
-          claimed_at?: string | null
-        }
-        Update: {
-          id?: string
-          character_id?: string
-          boss_id?: number
-          week?: number
-          reward_tier?: string
-          item_id?: number | null
-          is_claimed?: boolean
-          created_at?: string
-          claimed_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "boss_rewards_character_id_fkey"
-            columns: ["character_id"]
-            referencedRelation: "characters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "boss_rewards_boss_id_fkey"
-            columns: ["boss_id"]
-            referencedRelation: "world_boss"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "boss_rewards_item_id_fkey"
-            columns: ["item_id"]
-            referencedRelation: "items"
             referencedColumns: ["id"]
           }
         ]

@@ -66,6 +66,11 @@ export class ImageSource {
   static getItemImagePath(item: any): string {
     if (!item || !item.image_url) return '';
     
+    // Check if image_url is in the format "item_123"
+    if (item.image_url.startsWith('item_')) {
+      return this.createImageUrl('items', item.image_url);
+    }
+    
     // Items are stored in different folders based on type
     const itemType = item.type?.toLowerCase() || 'misc';
     return this.createImageUrl(itemType, item.image_url);
