@@ -48,7 +48,7 @@ export default function CombatMessagePanel({ messages }: CombatMessagePanelProps
           displayMessages.map((message, index) => (
             <p 
               key={index} 
-              className="text-center text-yellow-300 font-bold text-shadow"
+              className="text-center text-yellow-300 text-shadow"
               dangerouslySetInnerHTML={{ __html: formatMessage(message) }}
             />
           ))

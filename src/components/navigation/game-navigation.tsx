@@ -162,7 +162,7 @@ export default function GameNavigation({
                     className="object-contain"
                   />
                 </div>
-                <span className="text-lg text-white group-hover:text-amber-200 -mt-3 z-20">Shop</span>
+                <span className="text-lg text-shadow text-white group-hover:text-amber-200 -mt-5 z-20">Shop</span>
               </Link>
               
               {/* Leaderboard Button */}
@@ -178,7 +178,7 @@ export default function GameNavigation({
                     className="object-contain"
                   />
                 </div>
-                <span className="text-lg text-white group-hover:text-amber-200 -mt-3 z-20">Top</span>
+                <span className="text-lg text-shadow text-white group-hover:text-amber-200 -mt-5 z-20">Top</span>
               </Link>
               
               {/* Adventure Button */}
@@ -194,7 +194,7 @@ export default function GameNavigation({
                     className="object-contain"
                   />
                 </div>
-                <span className="text-lg text-white group-hover:text-amber-200 -mt-3 z-20">Adventure</span>
+                <span className="text-lg text-shadow text-white group-hover:text-amber-200 -mt-5 z-20">Adventure</span>
               </Link>
               
               {/* Guild Button */}
@@ -210,7 +210,7 @@ export default function GameNavigation({
                     className="object-contain"
                   />
                 </div>
-                <span className="text-lg text-white group-hover:text-amber-200 -mt-3 z-20">Guild</span>
+                <span className="text-lg text-shadow text-white group-hover:text-amber-200 -mt-5 z-20">Guild</span>
               </Link>
               
               {/* World Boss Button */}
@@ -227,7 +227,7 @@ export default function GameNavigation({
                       className="object-contain"
                     />
                   </div>
-                  <span className="text-lg text-white group-hover:text-amber-200 -mt-3 z-20">Boss</span>
+                  <span className="text-lg text-shadow text-white group-hover:text-amber-200 -mt-5 z-20">Boss</span>
                 </Link>
                 
                 {showWorldBossCompanion && (

@@ -10,6 +10,13 @@ const config = {
       fontFamily: {
         pixel: ['VT323', 'monospace'],
       },
+      textShadow: {
+        DEFAULT: '0 1px 2px rgba(0, 0, 0, 0.5)',
+        sm: '0 1px 2px rgba(0, 0, 0, 0.6)',
+        md: '0 2px 4px rgba(0, 0, 0, 0.7)',
+        lg: '0 2px 6px rgba(0, 0, 0, 0.8)',
+        xl: '0 3px 8px rgba(0, 0, 0, 0.9)',
+      },
       colors: {
         primary: {
           50: '#f5f3ff',
@@ -62,7 +69,31 @@ const config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function ({ addUtilities }) {
+      const newUtilities = {
+        '.text-shadow': {
+          textShadow: '0 1px 2px rgba(0, 0, 0, 1.0)',
+        },
+        '.text-shadow-sm': {
+          textShadow: '0 1px 2px rgba(0, 0, 0, 0.6)',
+        },
+        '.text-shadow-md': {
+          textShadow: '0 2px 4px rgba(0, 0, 0, 0.7)',
+        },
+        '.text-shadow-lg': {
+          textShadow: '0 2px 6px rgba(0, 0, 0, 0.8)',
+        },
+        '.text-shadow-xl': {
+          textShadow: '0 3px 8px rgba(0, 0, 0, 0.9)',
+        },
+        '.text-shadow-none': {
+          textShadow: 'none',
+        },
+      };
+      addUtilities(newUtilities);
+    },
+  ],
   future: {
     hoverOnlyWhenSupported: true, // Better touch device support
   },

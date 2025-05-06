@@ -112,15 +112,6 @@ export default function WorldBossScene({
         </div>
       </div>
       
-      {/* Defeated message (if applicable) */}
-      {/* Debug info */}
-      <div className="absolute top-20 left-0 z-30 bg-black bg-opacity-70 text-white p-2 text-xs">
-        <div>Current HP: {boss.status?.current_hitpoints || 0}</div>
-        <div>Total HP: {boss.status?.total_hitpoints || boss.total_hitpoints}</div>
-        <div>Total Damage: {boss.status?.total_damage_received || 0}</div>
-        <div>Defeated: {((boss.status?.current_hitpoints || 0) <= 0 || (boss.status?.total_damage_received || 0) >= (boss.status?.total_hitpoints || 0)) ? 'Yes' : 'No'}</div>
-      </div>
-      
       {((boss.status?.current_hitpoints || 0) <= 0 || (boss.status?.total_damage_received || 0) >= (boss.status?.total_hitpoints || 0)) && (
         <div className="absolute inset-0 flex items-center justify-center z-30">
           <div className="bg-green-800 bg-opacity-70 text-green-100 py-3 px-6 rounded-md text-xl font-bold animate-pulse">
