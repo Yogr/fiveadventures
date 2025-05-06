@@ -506,6 +506,13 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   const handleUseSkill = async (skill: Skill) => {
     if (!combat || actionInProgress) return;
     
+    // Check energy before attempting to use skill
+    if (character.current_energy < skill.energy_cost) {
+      setError('Not enough energy to use this skill');
+      setTimeout(() => setError(null), 3000); // Clear error after 3 seconds
+      return;
+    }
+    
     setActionInProgress(true);
     setSelectedSkill(skill);
     
@@ -516,10 +523,18 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       // Show skill name as effect
       createFloatingNumber('character', 0, 'effect', skill.name);
       
+      // Update energy locally immediately for responsive UI
+      const energyCost = skill.energy_cost;
+      setCharacter(prevChar => ({
+        ...prevChar,
+        current_energy: Math.max(0, prevChar.current_energy - energyCost)
+      }));
+      
       const result = await startCombatTurn(combatId, 'skill', skill);
       
       if (!result.success || !result.data) {
         setError(result.error || 'Failed to use skill');
+        setTimeout(() => setError(null), 3000); // Clear error after 3 seconds
         setActionInProgress(false);
         return;
       }
@@ -558,6 +573,34 @@ export default function CombatInterface({ combatId, character: initialCharacter,
         animateElement('.monster-avatar', 'hit');
         
         addToCombatLog(`You dealt ${damageDealt} damage to the ${combat.monster.name}!`);
+      }
+      
+      // Check if healing was done by comparing character HP
+      // We need to get the updated character data from the server
+      let updatedCharacterHP = character.current_hitpoints;
+      
+      // Try to get the latest character data if available
+      if (result.data && result.data.character_id) {
+        const charResponse = await getCharacterById(result.data.character_id);
+        if (charResponse.success && charResponse.data) {
+          updatedCharacterHP = charResponse.data.current_hitpoints;
+        }
+      }
+      
+      // If healing occurred (current HP is higher than before)
+      if (updatedCharacterHP > character.current_hitpoints) {
+        const healingDone = updatedCharacterHP - character.current_hitpoints;
+        
+        // Show floating healing number on character
+        createFloatingNumber('character', healingDone, 'heal');
+        
+        // Update character HP locally
+        setCharacter(prevChar => ({
+          ...prevChar,
+          current_hitpoints: updatedCharacterHP
+        }));
+        
+        addToCombatLog(`You healed for ${healingDone} health!`);
         
         // Display DoT effects after a slight delay
         setTimeout(() => {
@@ -644,24 +687,27 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     }
   }, [combatLog]);
 
+  // Create error overlay component
+  const ErrorOverlay = () => {
+    if (!error) return null;
+    
+    return (
+      <div className="absolute top-0 left-0 right-0 z-50 bg-red-900 border border-red-500 p-2 rounded-md text-center mx-auto max-w-md">
+        <p className="text-white mb-1">{error}</p>
+        <button 
+          onClick={() => setError(null)} 
+          className="text-xs bg-red-700 hover:bg-red-600 text-white px-2 py-1 rounded"
+        >
+          Dismiss
+        </button>
+      </div>
+    );
+  };
+  
   if (loading) {
     return (
       <div className="flex justify-center items-center w-full h-full min-h-[400px]">
         <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-900 border border-red-500 p-4 rounded-md text-center">
-        <p className="text-xl mb-4">{error}</p>
-        <button 
-          onClick={() => setError(null)} 
-          className="pixel-button"
-        >
-          Try Again
-        </button>
       </div>
     );
   }
@@ -680,7 +726,9 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   
   return (
     <>
-      <div className="animate-fadeIn">
+      <div className="animate-fadeIn relative">
+        {/* Error overlay */}
+        <ErrorOverlay />
         {/* Combat Scene Component - Contains background, fighters, and messages */}
         <CombatScene
           character={character}
