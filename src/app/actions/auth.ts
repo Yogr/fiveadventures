@@ -1,7 +1,5 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 // Authentication functions
@@ -9,7 +7,7 @@ export async function signInWithGoogle() {
   const supabase = await createClient();
   
   // Get site URL with fallback to localhost for development
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localshmost:3000';
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
