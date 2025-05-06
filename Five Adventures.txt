@@ -6,25 +6,11 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 Bugs
 ----------
 
-
-- Front page not loading proper character level 
-
 - Giant spider is floating
-
-- Damage calculation for World Boss needs to be unique, factor in gear score, class + stats, and attack damage.
-- Add some black outline border to font or a shadow at least
-
-
+- Delete function needs to delete character_stats row as well
 
 Todo
 -------------
-- Put RLS policies in place for all rows
-
-- Improve world boss
-  - World boss data should be separate from 'world_boss_progress' data. 'world_boss_progress' table needs to be created to track global weekly progress against that world boss. Character boss progress table already exists for individual progress, but we need a tracker for global progress that aggregates all of the attack damage dealt to it, among other things. (Players that've attacked it, its total hitpoints, the week number its spawned, etc). These fields already exist in the world_boss able and should be removed from there and moved to the new table, and all code referencing it for that data should be split off, or a join should be made to fetch the world_boss_progress for that specific week combined with the base world_boss static data that will not change week to week.
-  - Add rewards for consolation prizes when boss is not defeated.
-  - World boss progress state should have 'finished' and 'claimed' or use the end date / day to determine which ones may have pending rewards.
-
 - Rebalance attacks and skills. Spells are too strong
 - Add spell effects to combat
 - Play test and balance all 5 characters
@@ -37,9 +23,6 @@ Todo
   - Advanced stats
   - About
   - Help
-
-- Leaderboards
-  - Daily Cron Job to calculate all character gear scores
 
 
 ------- Soft Launch Game -------------
@@ -54,6 +37,7 @@ Todo
   - 
 
 - Trading hub / Marketplace
+- Crafting
 
 - 'Order of the 7' subscription - $4.99
   - Monthly delivery of 10,000 gold, 20 dungeon keys, removes ads, currency X

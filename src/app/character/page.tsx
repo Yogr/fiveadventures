@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCharacterForUser } from '@/app/actions/character';
 import { ROUTES } from '@/lib/constants';
 import CharacterStats from '@/components/character/character-stats';
 import AdventureTracker from '@/components/adventure/adventure-tracker';
-import DungeonProgress from '@/components/character/dungeon-progress';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import type { Character } from '@/lib/types';
 
@@ -15,7 +13,6 @@ export default function CharacterPage() {
   const [character, setCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     async function loadCharacter() {

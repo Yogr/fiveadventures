@@ -66,7 +66,11 @@ export default async function Home() {
                 </div>
               )}
               
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense fallback={
+                <div className="flex justify-center items-center w-full py-8">
+                  <LoadingSpinner />
+                </div>
+              }>
                 <CharacterCreationForm />
               </Suspense>
             </div>

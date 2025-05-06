@@ -645,7 +645,11 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   }, [combatLog]);
 
   if (loading) {
-    return <LoadingSpinner size="lg" />;
+    return (
+      <div className="flex justify-center items-center w-full h-full min-h-[400px]">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   if (error) {

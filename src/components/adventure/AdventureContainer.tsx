@@ -92,7 +92,11 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
   }, [character?.id, character?.last_played_day, loadAreaData]);
   
   if (loading) {
-    return <LoadingSpinner size="lg" />;
+    return (
+      <div className="flex justify-center items-center w-full h-full min-h-[400px]">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
   
   if (error) {

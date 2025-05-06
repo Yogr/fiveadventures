@@ -94,7 +94,7 @@ export default function CombatWrapper({ combatId }: CombatWrapperProps) {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center">
         <LoadingSpinner size="lg" />
       </div>
     );

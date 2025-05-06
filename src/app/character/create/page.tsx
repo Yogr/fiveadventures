@@ -19,7 +19,11 @@ export default function CharacterCreatePage() {
         </div>
         
         <div className="bg-amber-950 bg-opacity-90 p-3 sm:p-4 rounded-lg">
-          <Suspense fallback={<LoadingSpinner />}>
+          <Suspense fallback={
+            <div className="flex justify-center items-center w-full py-8">
+              <LoadingSpinner />
+            </div>
+          }>
             <CharacterCreationForm />
           </Suspense>
         </div>
