@@ -13,7 +13,6 @@ interface BuffBarProps {
 }
 
 export default function BuffBar({ effects, size = 'md', maxBuffs = 4 }: BuffBarProps) {
-  console.log('BuffBar', effects, size, maxBuffs);
   if (!effects || effects.length === 0) {
     return null;
   }

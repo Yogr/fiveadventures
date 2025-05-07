@@ -29,7 +29,6 @@ export default function AudioTestButton() {
     if (Howler.ctx?.state !== 'running') {
       Howler.ctx?.resume().then(() => {
         setStatus('Audio context resumed, unlocking audio...');
-        console.log('Audio context resumed successfully through test button');
       }).catch(err => {
         setStatus(`Failed to resume audio context: ${err.message}`);
         console.error('Failed to resume audio context:', err);

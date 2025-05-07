@@ -364,8 +364,6 @@ export function calculateTotalDamage(character: Character, activeEffects?: Recor
         baseDamage += Math.ceil(effects.elemental.damage / 2);
       }
     }
-
-    console.log('Base damage after weapon and stats:', baseDamage);
   }
   
   // Apply active effects that directly modify damage
@@ -673,8 +671,6 @@ export function calculateCriticalHit(character: Character, weapon?: Item | null,
   const roll = Math.random() * 100;
   const isCritical = roll <= critChance;
 
-  console.log(`Critical Hit Roll: ${roll} (Chance: ${critChance}%) = isCritical? ${isCritical}`);
-  
   return {
     isCritical,
     multiplier: isCritical ? critMultiplier : 1.0

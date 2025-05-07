@@ -69,7 +69,6 @@ export function MusicProvider({
     }
 
     if (!musicHowls.current[trackName]) {
-      console.log(`Creating new Howl instance for: ${trackName}`);
       musicHowls.current[trackName] = new Howl({
         src: [MUSIC_TRACKS[trackName]],
         volume: 0.15,

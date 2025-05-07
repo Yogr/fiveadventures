@@ -77,9 +77,6 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
     
     // Update inventory locally (add the purchased item)
     loadData();
-    
-    // Show success message or toast if you have a UI component for that
-    console.log(`Successfully purchased ${purchasedItem.name} for ${price} gold`);
   };
   
   return (

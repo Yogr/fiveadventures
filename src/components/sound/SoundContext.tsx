@@ -68,7 +68,6 @@ export function SoundProvider({
     }
 
     if (!soundHowls.current[soundName]) {
-      console.log(`Creating new Howl instance for sound: ${soundName}`);
       soundHowls.current[soundName] = new Howl({
         src: [SOUND_EFFECTS[soundName]],
         volume: 0.5,

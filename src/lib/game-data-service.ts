@@ -96,16 +96,8 @@ export const getCachedItems = unstable_cache(
  */
 export const getCachedItemById = unstable_cache(
   async (id: number, supabaseClient?: SupabaseClient) => {
-    console.log(`Fetching item with ID ${id} (might hit cache)`);
     try {
       const result = await getItemById(id, supabaseClient);
-      console.log(`Item fetch result for ID ${id}:`, {
-        success: result.success,
-        hasData: !!result.data,
-        itemType: result.data?.type || 'N/A',
-        itemName: result.data?.name || 'N/A',
-        error: result.error || 'None'
-      });
       return result;
     } catch (err) {
       console.error(`Error in getCachedItemById for ID ${id}:`, err);
@@ -559,8 +551,6 @@ async function getSkills(supabaseClient?: SupabaseClient): Promise<ApiResponse<S
       .select('*')
       .order('id');
     
-    console.log('Fetched skills:', data); // Debugging line
-    
     if (error) {
       console.error('Error fetching skills:', error);
       return { success: false, error: error.message };
@@ -608,7 +598,6 @@ async function getSkillById(id: number, supabaseClient?: SupabaseClient): Promis
 export const getCachedSkills = unstable_cache(
   async (supabaseClient?: SupabaseClient) => {
     const result = await getSkills(supabaseClient);
-    console.log('getSkills Cache function skills:', result); // Debugging line
     return result;
   },
   ['skills'],

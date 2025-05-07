@@ -19,18 +19,13 @@ export function GlobalMusicPlayer() {
   // Set up event listeners for unlocking audio on user interaction
   useEffect(() => {
     const unlockAudio = () => {
-      // This creates a silent sound and plays it to unlock the audio context
-      console.log('User interacted with the page, unlocking audio context');
-      
       // Unlock Howler audio context
       if (Howler.ctx && Howler.ctx.state !== 'running') {
         Howler.ctx.resume().then(() => {
-          console.log('Audio context resumed successfully');
           initialized.current = true;
           
           // Try to play music if enabled
           if (musicEnabled && (!currentTrack || currentTrack !== 'mainTheme')) {
-            //console.log('Playing main theme after context resume');
             // Temporarily disabling music for now.
             //playMusic('mainTheme');
           }
@@ -61,7 +56,6 @@ export function GlobalMusicPlayer() {
   // Start main theme when music is enabled (after initialization)
   useEffect(() => {
     if (initialized.current && musicEnabled && (!currentTrack || currentTrack !== 'mainTheme')) {
-      console.log('GlobalMusicPlayer: Starting main theme (music enabled changed)');
       playMusic('mainTheme');
     }
   }, [musicEnabled, currentTrack, playMusic]);

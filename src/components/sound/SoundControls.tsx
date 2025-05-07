@@ -15,7 +15,6 @@ export function SoundControls() {
   // The GlobalMusicPlayer component will handle playing music when it's enabled
 
   const handleSoundToggle = () => {
-    console.log('Sound toggle clicked');
     userInteractedRef.current = true;
 
     setSoundEnabled(!soundEnabled);
