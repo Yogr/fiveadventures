@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import MobileMenuWrapper from "./components/MobileMenuWrapper";
 
 export default async function GameDataEditorLayout({
   children,
@@ -33,7 +34,9 @@ export default async function GameDataEditorLayout({
   
   return (
     <div className="min-h-screen bg-amber-900 text-amber-100">
-      {children}
+      <MobileMenuWrapper>
+        {children}
+      </MobileMenuWrapper>
     </div>
   );
 }

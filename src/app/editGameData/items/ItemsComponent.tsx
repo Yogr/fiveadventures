@@ -167,23 +167,25 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
   }));
   
   return (
-    <div className="flex">
-      <ListComponent
-        items={itemsList}
-        onSelect={(item) => setSelectedItem(item.item as EditorItem)}
-        onAdd={handleAdd}
-        onDelete={handleDelete}
-        selectedId={selectedItem?.id}
-        isReadOnly={!isAdmin}
-      />
+    <div className="flex flex-col md:flex-row">
+      <div className="w-full md:w-auto">
+        <ListComponent
+          items={itemsList}
+          onSelect={(item) => setSelectedItem(item.item as EditorItem)}
+          onAdd={handleAdd}
+          onDelete={handleDelete}
+          selectedId={selectedItem?.id}
+          isReadOnly={!isAdmin}
+        />
+      </div>
       
-      <div className="flex-1 p-4 text-amber-100">
+      <div className="flex-1 p-2 md:p-4 text-amber-100">
         {selectedItem ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">{selectedItem.name}</h2>
             
-            <div className="space-y-2">
-              <div className=" grid grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Name</label>
                   <input
@@ -212,8 +214,8 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium mb-1">Type</label>
                   <select
                     value={selectedItem.type}
@@ -231,7 +233,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                   </select>
                 </div>
                 
-                <div>
+                <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium mb-1">Rarity</label>
                   <select
                     value={selectedItem.rarity}
@@ -251,45 +253,45 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                 </div>
               </div>
               
-              {selectedItem.type === 'Weapon' && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">Weapon Type</label>
-                  <select
-                    value={selectedItem.weapon_type || ''}
-                    onChange={(e) => setSelectedItem({
-                      ...selectedItem,
-                      weapon_type: e.target.value || null
-                    })}
-                    className="admin-input w-full"
-                    disabled={!isAdmin}
-                  >
-                    <option value="Slashing">Slashing</option>
-                    <option value="Blunt">Blunt</option>
-                    <option value="Piercing">Piercing</option>
-                    <option value="Magic">Magic</option>
-                  </select>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-4">
-                {(selectedItem.type === 'Weapon') && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Base Damage</label>
-                    <input
-                      type="number"
-                      value={selectedItem.base_damage || ''}
-                      onChange={(e) => setSelectedItem({
-                        ...selectedItem,
-                        base_damage: e.target.value ? parseInt(e.target.value) : null
-                      })}
-                      className="admin-input w-full"
-                      disabled={!isAdmin}
-                    />
-                  </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {selectedItem.type === 'Weapon' && (
+                  <>
+                    <div className="col-span-1 sm:col-span-2">
+                      <label className="block text-sm font-medium mb-1">Weapon Type</label>
+                      <select
+                        value={selectedItem.weapon_type || ''}
+                        onChange={(e) => setSelectedItem({
+                          ...selectedItem,
+                          weapon_type: e.target.value || null
+                        })}
+                        className="admin-input w-full"
+                        disabled={!isAdmin}
+                      >
+                        <option value="Slashing">Slashing</option>
+                        <option value="Blunt">Blunt</option>
+                        <option value="Piercing">Piercing</option>
+                        <option value="Magic">Magic</option>
+                      </select>
+                    </div>
+                    
+                    <div className="col-span-1">
+                      <label className="block text-sm font-medium mb-1">Base Damage</label>
+                      <input
+                        type="number"
+                        value={selectedItem.base_damage || ''}
+                        onChange={(e) => setSelectedItem({
+                          ...selectedItem,
+                          base_damage: e.target.value ? parseInt(e.target.value) : null
+                        })}
+                        className="admin-input w-full"
+                        disabled={!isAdmin}
+                      />
+                    </div>
+                  </>
                 )}
                 
                 {(selectedItem.type === 'Armor' || selectedItem.type === 'Helmet') && (
-                  <div>
+                  <div className="col-span-1 sm:col-span-2">
                     <label className="block text-sm font-medium mb-1">Base Defense</label>
                     <input
                       type="number"
@@ -304,7 +306,7 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                   </div>
                 )}
                 
-                <div>
+                <div className="col-span-1">
                   <label className="block text-sm font-medium mb-1">Value (Gold)</label>
                   <input
                     type="number"
@@ -319,51 +321,60 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                 </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium mb-1">Image URL</label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    value={selectedItem.image_url || ''}
-                    onChange={(e) => setSelectedItem({
-                      ...selectedItem,
-                      image_url: e.target.value || null
-                    })}
-                    className="admin-input flex-grow"
-                    disabled={!isAdmin}
-                  />
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-3 py-1 bg-amber-700 text-amber-100 rounded hover:bg-amber-600 text-sm"
-                    >
-                      Upload
-                    </button>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/png"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                  />
-                </div>
-                {selectedItem.image_url && (
-                  <div className="mt-2 border p-2 inline-block">
-                    <Image
-                      src={ImageSource.getItemImagePath(selectedItem)}
-                      alt={selectedItem.name}
-                      width={128}
-                      height={128}
-                      className="h-16 w-16 object-contain"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = 'https://via.placeholder.com/64?text=No+Image';
-                      }}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div className="col-span-1 sm:col-span-3">
+                  <label className="block text-sm font-medium mb-1">Image URL</label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={selectedItem.image_url || ''}
+                      onChange={(e) => setSelectedItem({
+                        ...selectedItem,
+                        image_url: e.target.value || null
+                      })}
+                      className="admin-input flex-grow"
+                      disabled={!isAdmin}
+                    />
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-3 py-1 bg-amber-700 text-amber-100 rounded hover:bg-amber-600 text-sm transition-colors"
+                      >
+                        Upload
+                      </button>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png"
+                      className="hidden"
+                      onChange={handleImageUpload}
                     />
                   </div>
-                )}
+                </div>
+                
+                <div className="col-span-1">
+                  {selectedItem.image_url ? (
+                    <div className="mt-2 border border-amber-700 p-2 rounded-md bg-amber-900/30 flex justify-center">
+                      <Image
+                        src={ImageSource.getItemImagePath(selectedItem)}
+                        alt={selectedItem.name}
+                        width={128}
+                        height={128}
+                        className="h-16 w-16 object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'https://via.placeholder.com/64?text=No+Image';
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="mt-2 border border-amber-700/50 p-2 rounded-md bg-amber-900/20 flex justify-center items-center h-[72px] text-amber-500/70 text-xs">
+                      No image
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div>

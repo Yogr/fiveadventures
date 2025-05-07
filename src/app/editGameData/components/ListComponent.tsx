@@ -26,7 +26,7 @@ export default function ListComponent({
   isReadOnly
 }: ListComponentProps) {
   return (
-    <div className="w-64 border-r border-amber-800 pr-4">
+    <div className="w-full md:w-64 md:border-r border-amber-800 md:pr-4 mb-6 md:mb-0 bg-amber-950/50 p-3 rounded-md">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-medium text-amber-300">Items ({items.length})</h3>
         {!isReadOnly && onAdd && (
@@ -40,7 +40,7 @@ export default function ListComponent({
         )}
       </div>
       
-      <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
+      <div className="overflow-y-auto max-h-[300px] md:max-h-[calc(100vh-200px)] border border-amber-800/50 rounded-md p-2">
         {items.length === 0 ? (
           <div className="text-amber-400/70 text-sm">No items yet.</div>
         ) : (

@@ -1,5 +1,5 @@
 import { isUserAdmin } from '@/app/actions/auth';
-import AdminMenu from '../components/AdminMenu';
+import ClientLayout from '../components/ClientLayout';
 import AdventuresComponent from './AdventuresComponent';
 
 export default async function AdventuresPage() {
@@ -7,12 +7,9 @@ export default async function AdventuresPage() {
   const isAdmin = await isUserAdmin();
   
   return (
-    <div className="flex w-full">
-      <AdminMenu />
-      <div className="flex-1 p-6">
-        <h1 className="text-2xl font-bold mb-6">Adventures Editor</h1>
-        <AdventuresComponent isAdmin={isAdmin} />
-      </div>
-    </div>
+    <ClientLayout>
+      <h1 className="text-2xl font-bold mb-6 text-amber-100">Adventures Editor</h1>
+      <AdventuresComponent isAdmin={isAdmin} />
+    </ClientLayout>
   );
 }

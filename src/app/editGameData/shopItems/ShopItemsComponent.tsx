@@ -201,17 +201,19 @@ export default function ShopItemsComponent({ isAdmin }: { isAdmin: boolean }) {
   }));
   
   return (
-    <div className="flex">
-      <ListComponent
-        items={shopItemsList}
-        onSelect={(item) => setSelectedItem(item.shopItem as ShopItem)}
-        onAdd={isAdmin ? handleAdd : undefined}
-        onDelete={isAdmin ? handleDelete : undefined}
-        selectedId={selectedItem?.id}
-        isReadOnly={!isAdmin}
-      />
+    <div className="flex flex-col md:flex-row">
+      <div className="w-full md:w-auto">
+        <ListComponent
+          items={shopItemsList}
+          onSelect={(item) => setSelectedItem(item.shopItem as ShopItem)}
+          onAdd={isAdmin ? handleAdd : undefined}
+          onDelete={isAdmin ? handleDelete : undefined}
+          selectedId={selectedItem?.id}
+          isReadOnly={!isAdmin}
+        />
+      </div>
       
-      <div className="flex-1 p-4 text-amber-100">
+      <div className="flex-1 p-2 md:p-4 text-amber-100">
         {selectedItem ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">{selectedItem.item_name || `Shop Item #${selectedItem.id}`}</h2>

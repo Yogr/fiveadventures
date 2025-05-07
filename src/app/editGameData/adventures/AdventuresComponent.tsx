@@ -798,17 +798,19 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
   }));
   
   return (
-    <div className="flex">
-      <ListComponent
-        items={adventureItems}
-        onSelect={(item) => setSelectedAdventure(item.adventure as Adventure)}
-        onAdd={isAdmin ? handleAdd : undefined}
-        onDelete={isAdmin ? handleDelete : undefined}
-        selectedId={selectedAdventure?.id}
-        isReadOnly={!isAdmin}
-      />
+    <div className="flex flex-col md:flex-row">
+      <div className="w-full md:w-auto">
+        <ListComponent
+          items={adventureItems}
+          onSelect={(item) => setSelectedAdventure(item.adventure as Adventure)}
+          onAdd={isAdmin ? handleAdd : undefined}
+          onDelete={isAdmin ? handleDelete : undefined}
+          selectedId={selectedAdventure?.id}
+          isReadOnly={!isAdmin}
+        />
+      </div>
       
-      <div className="flex-1 p-4 text-amber-100 overflow-y-auto max-h-screen">
+      <div className="flex-1 p-2 md:p-4 text-amber-100 overflow-y-auto max-h-screen">
         {selectedAdventure ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">{selectedAdventure.title}</h2>

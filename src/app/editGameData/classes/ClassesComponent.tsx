@@ -70,17 +70,19 @@ export default function ClassesComponent({ isAdmin }: { isAdmin: boolean }) {
   }));
   
   return (
-    <div className="flex">
-      <ListComponent
-        items={classItems}
-        onSelect={(item) => setSelectedClass(item.class as Class)}
-        onAdd={undefined} // No adding new classes
-        onDelete={undefined} // No deleting classes
-        selectedId={selectedClass?.id}
-        isReadOnly={true} // Always read-only since classes are hard-coded
-      />
+    <div className="flex flex-col md:flex-row">
+      <div className="w-full md:w-auto">
+        <ListComponent
+          items={classItems}
+          onSelect={(item) => setSelectedClass(item.class as Class)}
+          onAdd={undefined} // No adding new classes
+          onDelete={undefined} // No deleting classes
+          selectedId={selectedClass?.id}
+          isReadOnly={true} // Always read-only since classes are hard-coded
+        />
+      </div>
       
-      <div className="flex-1 p-4 text-amber-100">
+      <div className="flex-1 p-2 md:p-4 text-amber-100">
         {selectedClass ? (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">{selectedClass.name}</h2>

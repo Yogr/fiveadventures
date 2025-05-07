@@ -193,17 +193,19 @@ export default function MonstersComponent({ isAdmin }: { isAdmin: boolean }) {
   }));
   
   return (
-    <div className="flex">
-      <ListComponent
-        items={monsterItems}
-        onSelect={(item) => setSelectedMonster(item.monster as EditorMonster)}
-        onAdd={isAdmin ? handleAdd : undefined}
-        onDelete={isAdmin ? handleDelete : undefined}
-        selectedId={selectedMonster?.id}
-        isReadOnly={!isAdmin}
-      />
+    <div className="flex flex-col md:flex-row">
+      <div className="w-full md:w-auto">
+        <ListComponent
+          items={monsterItems}
+          onSelect={(item) => setSelectedMonster(item.monster as EditorMonster)}
+          onAdd={isAdmin ? handleAdd : undefined}
+          onDelete={isAdmin ? handleDelete : undefined}
+          selectedId={selectedMonster?.id}
+          isReadOnly={!isAdmin}
+        />
+      </div>
       
-      <div className="flex-1 p-4 text-amber-100">
+      <div className="flex-1 p-2 md:p-4 text-amber-100">
         {selectedMonster ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">{selectedMonster.name}</h2>
