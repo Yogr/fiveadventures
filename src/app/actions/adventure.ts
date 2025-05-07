@@ -35,7 +35,6 @@ export async function getAdventure(
   area: Area,
 ): Promise<ApiResponse<Adventure>> {
   const startTime = new Date().getTime();
-  console.log(`[${new Date().toISOString()}] getAdventure: Starting adventure selection process`);
   console.log('getAdventure: Character info:', {
     id: character.id,
     name: character.name,

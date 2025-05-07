@@ -113,37 +113,6 @@ export default function LeaderboardTabs({
         </div>
       )}
       
-      {/* Boss category tabs */}
-      {isBossCategory && (
-        <div className="bg-gray-800/50 rounded-md p-3">
-          <div className="mb-2 text-sm text-amber-200">{bossTabsTitle}</div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => onCategoryChange('bosses_slain')}
-              className={`
-                px-3 py-1 text-xs font-medium rounded-md
-                ${currentCategory === 'bosses_slain'
-                  ? 'bg-amber-900 text-amber-200 border border-amber-700'
-                  : 'bg-gray-700 text-gray-300 hover:bg-amber-900/30 hover:text-amber-200'}
-              `}
-            >
-              Most Bosses Slain
-            </button>
-            
-            <button
-              onClick={() => onCategoryChange('boss_damage')}
-              className={`
-                px-3 py-1 text-xs font-medium rounded-md
-                ${currentCategory === 'boss_damage'
-                  ? 'bg-amber-900 text-amber-200 border border-amber-700'
-                  : 'bg-gray-700 text-gray-300 hover:bg-amber-900/30 hover:text-amber-200'}
-              `}
-            >
-              Highest Boss Damage
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

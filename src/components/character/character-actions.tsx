@@ -26,8 +26,6 @@ export default function CharacterActions({ character, onSuccess }: CharacterActi
       const result = await deleteCharacter(character.id);
       
       if (result.success) {
-        console.log('Character deleted successfully');
-        
         // Close the confirmation dialog
         setShowConfirmDelete(false);
         

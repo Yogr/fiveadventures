@@ -20,7 +20,6 @@ const AdventureView = memo(function AdventureView({ adventure, character }: Adve
   };
   
   const handleCompleteAdventure = async () => {
-    console.log('Completing adventure...');
     // Complete the adventure first
     await completeAdventure();
     

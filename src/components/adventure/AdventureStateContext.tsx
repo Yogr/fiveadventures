@@ -104,7 +104,6 @@ export function AdventureStateProvider({
   const refreshAdventureState = useCallback(async (newState?: CharacterAdventureState) => {
     if (newState) {
       // If we're given a new state directly, use it without fetching
-      console.log('AdventureStateContext: Directly updating state with:', newState);
       setState(prev => ({
         ...prev,
         adventureState: newState,
@@ -123,9 +122,6 @@ export function AdventureStateProvider({
     
     // Get the current adventure state
     fetchAdventureState();
-    
-    // No subscription - we'll rely on server action responses to update state
-    console.log('AdventureStateContext: Initialized with character ID:', character.id);
     
   }, [character?.id, fetchAdventureState]);
 

@@ -59,10 +59,6 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
   // State for the reward item - initialize with the passed rewardItem if available
   const [rewardItem, setRewardItem] = useState<RewardItem | null>(initialRewardItem || null);
 
-  console.log('OutcomeView: messageOverride =', messageOverride);
-  console.log('OutcomeView: outcome.description =', outcome.description);
-  console.log('OutcomeView: Show level up:', showLevelUp);
-  
   // Create rewards array
   const rewards: Reward[] = [];
   
@@ -106,24 +102,12 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
     });
   }
   
-  // Log outcome and reward details for debugging
-  useEffect(() => {
-    console.log('Outcome details:', {
-      id: outcome.id,
-      reward_table_id: outcome.reward_table_id,
-      hasRewardTable: !!outcome.reward_table_id,
-      currentRewardItem: rewardItem
-    });
-  }, [outcome.id, outcome.reward_table_id, rewardItem]);
-
   // Check if this was the final adventure (5th adventure)
   // We need to check if the character has completed 4 adventures and is now completing the 5th one
   const isFinalAdventure = character.daily_adventure_count === MAX_ADVENTURES_PER_DAY;
   
   // Handle continue button click - just navigate to next adventure
   const handleContinue = async () => {
-    console.log('Continuing to next adventure');
-    
     // No need to increment adventure number here - it's already incremented
     // when the adventure is completed in the completeAdventure function
     
@@ -135,21 +119,18 @@ const OutcomeView: React.FC<OutcomeViewProps> = ({
   // Simplified animation handlers
   const handleMessageComplete = () => {
     if (messageComplete) return; // Prevent multiple executions
-    console.log('Message animation complete');
     setMessageComplete(true);
     setAnimationState('item');
   };
   
   const handleItemComplete = () => {
     if (itemComplete) return; // Prevent multiple executions
-    console.log('Item animation complete');
     setItemComplete(true);
     setAnimationState('rewards');
   };
   
   const handleRewardsComplete = () => {
     if (rewardsComplete) return; // Prevent multiple executions
-    console.log('Rewards animation complete');
     setRewardsComplete(true);
     setAnimationState('complete');
   };

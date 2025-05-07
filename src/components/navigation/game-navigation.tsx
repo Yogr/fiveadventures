@@ -35,19 +35,8 @@ export default function GameNavigation({
 
   // Set up Supabase subscription for character updates
   useEffect(() => {
-    console.log('Setting up Supabase subscription for character updates in GameNavigation');
     const supabase = createClient();
     const characterId = initialCharacter.id;
-    
-    // Enhanced logging for debugging
-    console.log('GameNavigation: Creating subscription for character ID:', characterId);
-    console.log('GameNavigation: Initial character state:', {
-      name: initialCharacter.name,
-      hp: `${initialCharacter.current_hitpoints}/${initialCharacter.max_hitpoints}`,
-      energy: `${initialCharacter.current_energy}/${initialCharacter.max_energy}`,
-      gold: initialCharacter.gold,
-      adventureCount: initialCharacter.daily_adventure_count
-    });
     
     // Subscribe to character updates - using a unique channel name for navigation
     const subscription = supabase
@@ -61,47 +50,13 @@ export default function GameNavigation({
           filter: `id=eq.${characterId}`
         },
         async (payload) => {
-          // Enhanced logging for debugging
-          console.log('GameNavigation: Received database update event:', {
-            eventType: 'UPDATE',
-            table: 'characters',
-            recordId: payload.new.id,
-            timestamp: new Date().toISOString()
-          });
-          console.log('GameNavigation: Updated character data from payload:', {
-            name: payload.new.name,
-            hp: `${payload.new.current_hitpoints}/${payload.new.max_hitpoints}`,
-            energy: `${payload.new.current_energy}/${payload.new.max_energy}`,
-            gold: payload.new.gold,
-            adventureCount: payload.new.daily_adventure_count
-          });
-          
           // Refresh character data when updated
-          console.log('GameNavigation: Fetching full character data from server...');
-          
           try {
             const response = await getCharacterById(characterId);
             
             if (response.success && response.data) {
-              console.log('GameNavigation: Successfully fetched character data');
-              console.log('GameNavigation: Character state comparison:', {
-                old: {
-                  hp: `${character.current_hitpoints}/${character.max_hitpoints}`,
-                  energy: `${character.current_energy}/${character.max_energy}`,
-                  gold: character.gold,
-                  adventureCount: character.daily_adventure_count
-                },
-                new: {
-                  hp: `${response.data.current_hitpoints}/${response.data.max_hitpoints}`,
-                  energy: `${response.data.current_energy}/${response.data.max_energy}`,
-                  gold: response.data.gold,
-                  adventureCount: response.data.daily_adventure_count
-                }
-              });
-              
               // Update the character state
               setCharacter(response.data);
-              console.log('GameNavigation: Character state updated');
             } else {
               console.error('GameNavigation: Failed to get character data:', response.error);
             }
@@ -116,10 +71,7 @@ export default function GameNavigation({
         }
       });
     
-    console.log('GameNavigation: Subscription initialized with channel:', `character-${characterId}`);
-    
     return () => {
-      console.log('GameNavigation: Cleaning up Supabase subscription');
       supabase.removeChannel(subscription);
     };
   }, [initialCharacter.id]); // Keep dependency on initialCharacter.id only

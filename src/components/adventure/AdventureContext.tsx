@@ -133,13 +133,10 @@ function adventureReducer(state: AdventureState, action: AdventureAction): Adven
     case 'SET_REWARD_ITEM':
       return { ...state, rewardItem: action.payload };
     case 'SET_COMBAT_RESULT':
-      console.log('AdventureContext: Reducer processing SET_COMBAT_RESULT action with payload:', action.payload);
       return { ...state, combatResult: action.payload };
     case 'SET_TRANSITIONING':
-      console.log('AdventureContext: Setting transitioning state to', action.payload);
       return { ...state, transitioning: action.payload };
     case 'SET_COMPLETING':
-      console.log('AdventureContext: Setting completing state to', action.payload);
       return { ...state, completing: action.payload };
     case 'RESET_ADVENTURE_STATE':
       return {
@@ -185,16 +182,6 @@ export function AdventureProvider({
     selectedArea: initialSelectedArea,
     loading: false, // Start with loading false since we have initial data
   });
-  
-  // Log initial state for debugging
-  useEffect(() => {
-    console.log('AdventureProvider initialized with:', {
-      character: state.character?.name,
-      areasCount: state.areas.length,
-      selectedArea: state.selectedArea?.name || 'None',
-      loading: state.loading
-    });
-  }, []);
 
   // Load character data
   const loadCharacterData = useCallback(async (characterId: string) => {
@@ -220,29 +207,22 @@ export function AdventureProvider({
   // Load area data
   const loadAreaData = useCallback(async (characterId: string, day: number) => {
     try {
-      console.log('Loading area data for character:', characterId, 'day:', day);
       const selectedAreaResponse = await getSelectedArea(characterId, day);
-      
-      console.log('Selected area response:', selectedAreaResponse);
       
       if (selectedAreaResponse.success && selectedAreaResponse.data) {
         // Find the area object from the areas array
         const areaId = selectedAreaResponse.data;
         const areas = state.areas; // Capture areas to avoid dependency on state.areas
-        console.log('Found area ID:', areaId, 'looking in areas:', areas.map(a => a.id));
         
         const selectedAreaObj = areas.find(area => area.id === areaId);
         
         if (selectedAreaObj) {
-          console.log('Found matching area object:', selectedAreaObj.name);
           dispatch({ type: 'SET_SELECTED_AREA', payload: selectedAreaObj });
         } else {
-          console.log('Area ID not found in areas array');
           // Area ID not found in areas array, set selectedArea to null
           dispatch({ type: 'SET_SELECTED_AREA', payload: null });
         }
       } else {
-        console.log('No area selected yet, setting selectedArea to null');
         // No area selected yet, set selectedArea to null
         dispatch({ type: 'SET_SELECTED_AREA', payload: null });
       }
@@ -262,30 +242,17 @@ export function AdventureProvider({
     
     try {
       const startTime = new Date().getTime();
-      console.log(`[${new Date().toISOString()}] AdventureContext: loadAdventureData started`);
-      console.log('AdventureContext: Current adventure state:', {
-        characterId: state.character.id,
-        selectedArea: state.selectedArea.name,
-        adventure: state.adventure?.title || 'None',
-        adventureId: state.adventure?.id || 'None',
-        skipCombatCheck: options?.forceSkipCombatCheck || state.skipCombatCheck,
-        forceLoadNewAdventure: options?.forceLoadNewAdventure || false,
-        hasOutcome: !!state.outcome,
-        adventureCount: state.character.daily_adventure_count
-      });
       
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
       
       const characterId = state.character.id;
-      const selectedAreaId = state.selectedArea.id;
       const skipCombatCheck = options?.forceSkipCombatCheck || state.skipCombatCheck;
       const forceLoadNewAdventure = options?.forceLoadNewAdventure || false;
       const hasOutcome = !!state.outcome;
       const adventureCount = state.character.daily_adventure_count;
       
       // Get current adventure state
-      console.log('AdventureContext: Fetching adventure state from database');
       const dbFetchStartTime = new Date().getTime();
       const adventureStateResponse = await import('@/app/actions/adventure-state').then(
         ({ getAdventureState }) => getAdventureState(characterId)
@@ -294,18 +261,12 @@ export function AdventureProvider({
       let currentState = 'none';
       if (adventureStateResponse.success && adventureStateResponse.data) {
         currentState = adventureStateResponse.data.current_state;
-        console.log(`AdventureContext: Current state from database: "${currentState}" (fetched in ${new Date().getTime() - dbFetchStartTime}ms)`);
-        console.log('AdventureContext: Full DB state:', JSON.stringify(adventureStateResponse.data));
-      } else {
-        console.log('AdventureContext: Failed to get adventure state from database:', adventureStateResponse.error);
       }
       
       // Check if character has completed all adventures for the day
       if (adventureCount >= 5) { // Using 5 as MAX_ADVENTURES_PER_DAY
-        console.log('AdventureContext: Character has completed all adventures for the day');
         // Update state to adventures_completed if not already
         if (currentState !== 'adventures_completed') {
-          console.log('AdventureContext: Updating state to adventures_completed');
           await updateAdventureState(characterId, {
             current_state: 'adventures_completed',
             current_adventure_id: null,
@@ -322,15 +283,12 @@ export function AdventureProvider({
 
       // Only check for active combat if the character's state is 'combat' or we're skipping the check
       if ((currentState === 'combat' || skipCombatCheck) && !skipCombatCheck) {
-        console.log('AdventureContext: Checking for active combat');
         // Check if character is in active combat
         const activeCombatResponse = await getActiveCharacterCombat(characterId);
         
         if (activeCombatResponse.success && activeCombatResponse.data) {
-          console.log('AdventureContext: Character is in active combat:', activeCombatResponse.data.id);
           // Update state to combat if not already
           if (currentState !== 'combat') {
-            console.log('AdventureContext: Updating state to combat');
             await updateAdventureState(characterId, {
               current_state: 'combat',
               current_adventure_id: null,
@@ -346,40 +304,31 @@ export function AdventureProvider({
           
           // We already have the outcome available from getAdventureState
           // Check if we're resuming a game with an existing combat
-          console.log('AdventureContext: Checking for outcome for pre-combat view');
           const adventureStateResponse = await import('@/app/actions/adventure-state').then(
             ({ getAdventureState }) => getAdventureState(characterId)
           );
           
           if (adventureStateResponse.success && 
               adventureStateResponse.data && 
-              adventureStateResponse.data.outcome_id) {
-            // If we have an outcome_id, try to get the outcome from the state
-            console.log('AdventureContext: Found outcome ID in adventure state:', adventureStateResponse.data.outcome_id);
-            
+              adventureStateResponse.data.outcome_id) {            
             // If we have an outcome in the state, show pre-combat view
             // Otherwise proceed directly to combat
             if (state.outcome) {
-              console.log('AdventureContext: Using existing outcome from state:', state.outcome.description);
               // Show pre-combat view first, then combat
               dispatch({ type: 'SET_SHOW_COMBAT', payload: false });
               dispatch({ type: 'SET_SHOW_PRE_COMBAT', payload: true });
             } else {
-              console.log('AdventureContext: No outcome in state, proceeding directly to combat');
               dispatch({ type: 'SET_SHOW_COMBAT', payload: true });
             }
           } else {
-            console.log('AdventureContext: No outcome ID found in adventure state, proceeding directly to combat');
             dispatch({ type: 'SET_SHOW_COMBAT', payload: true });
           }
           
           dispatch({ type: 'SET_LOADING', payload: false });
           return;
         } else {
-          console.log('AdventureContext: No active combat found');
         }
       } else if (skipCombatCheck) {
-        console.log('AdventureContext: Skipping combat check, resetting flag');
         // Reset the skip combat check flag after using it once
         dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: false });
       }
@@ -387,15 +336,12 @@ export function AdventureProvider({
       // If character is in 'outcome' state, don't load a new adventure
       // UNLESS we're explicitly requesting a new adventure (skipCombatCheck or forceLoadNewAdventure is true)
       if (currentState === 'outcome' && hasOutcome && !skipCombatCheck && !forceLoadNewAdventure) {
-        console.log('AdventureContext: Character in outcome state with outcome, skipping adventure load');
-        console.log('AdventureContext: skipCombatCheck=', skipCombatCheck, 'forceLoadNewAdventure=', forceLoadNewAdventure);
         dispatch({ type: 'SET_LOADING', payload: false });
         return;
       }
       
       // Update state to adventure if it's not already
       if (currentState !== 'adventure') {
-        console.log('AdventureContext: Updating state to adventure (current state is', currentState, ')');
         await updateAdventureState(characterId, {
           current_state: 'adventure',
           current_adventure_id: null,
@@ -405,20 +351,9 @@ export function AdventureProvider({
           day: state.character.last_played_day,
           adventure_number: adventureCount
         });
-      } else {
-        console.log('AdventureContext: State is already adventure, no need to update');
       }
       
       // Fetch a new adventure
-      console.log('AdventureContext: Fetching new adventure');
-      console.log('AdventureContext: Adventure Parameters:', {
-        characterName: state.character.name,
-        characterLevel: state.character.level,
-        dailyAdventureCount: state.character.daily_adventure_count,
-        selectedAreaName: state.selectedArea.name,
-        selectedAreaId: state.selectedArea.id
-      });
-      
       const adventureFetchStartTime = new Date().getTime();
       const adventureResponse = await getAdventure(state.character, state.selectedArea);
       
@@ -432,20 +367,9 @@ export function AdventureProvider({
         return;
       }
       
-      console.log(`AdventureContext: Adventure fetched in ${new Date().getTime() - adventureFetchStartTime}ms`);
-      console.log('AdventureContext: New adventure:', {
-        id: adventureResponse.data.id,
-        title: adventureResponse.data.title,
-        isViolent: adventureResponse.data.is_violent,
-        decisionCount: adventureResponse.data.decisions?.length || 0
-      });
-      
       // Set the new adventure in state
       dispatch({ type: 'SET_ADVENTURE', payload: adventureResponse.data });
       dispatch({ type: 'SET_LOADING', payload: false });
-      
-      console.log(`[${new Date().toISOString()}] AdventureContext: loadAdventureData completed in ${new Date().getTime() - startTime}ms`);
-      console.log('AdventureContext: Final adventure loaded:', adventureResponse.data.id, adventureResponse.data.title);
     } catch (error) {
       console.error('Error loading adventure data:', error);
       dispatch({ type: 'SET_ERROR', payload: 'An unexpected error occurred' });
@@ -483,7 +407,6 @@ export function AdventureProvider({
       
       if (result.success) {
         dispatch({ type: 'SET_SELECTED_AREA', payload: area });
-        console.log('Area selected, state updated');
       } else {
         dispatch({ type: 'SET_ERROR', payload: result.error || 'Failed to select area' });
       }
@@ -508,7 +431,6 @@ export function AdventureProvider({
     
     // Prevent duplicate submissions by checking completing flag
     if (state.completing) {
-      console.log('AdventureContext: Adventure completion already in progress, ignoring duplicate request');
       return;
     }
     
@@ -518,13 +440,6 @@ export function AdventureProvider({
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
-      
-      console.log('AdventureContext: Starting adventure completion for:', {
-        characterId: state.character.id,
-        adventureId: state.adventure.id,
-        adventureTitle: state.adventure.title,
-        decisionId: state.selectedDecision.id
-      });
       
       const characterId = state.character.id;
       const adventureId = state.adventure.id;
@@ -573,7 +488,6 @@ export function AdventureProvider({
         dispatch({ type: 'SET_SHOW_COMBAT', payload: false });
         dispatch({ type: 'SET_SHOW_PRE_COMBAT', payload: true });
         
-        console.log('Setting up pre-combat screen with outcome:', result.data.outcome.description);
       } else {
         // Update adventure state to outcome
         await updateAdventureState(characterId, {
@@ -599,7 +513,6 @@ export function AdventureProvider({
       
       // Update character
       dispatch({ type: 'SET_CHARACTER', payload: result.data.character });
-      console.log('Adventure completed, state updated');
     } catch (error) {
       console.error('Error completing adventure:', error);
       dispatch({ type: 'SET_ERROR', payload: 'An unexpected error occurred' });
@@ -612,8 +525,6 @@ export function AdventureProvider({
 
   // Handle combat end
   const handleCombatEnd = useCallback((result: { isVictory: boolean; ranAway: boolean; monsterName: string }) => {
-    console.log('AdventureContext: handleCombatEnd called with result:', result);
-    
     // Set flag to skip combat check on next loadAdventureData call
     dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: true });
     
@@ -631,7 +542,6 @@ export function AdventureProvider({
     
     // If the player ran away, show a different outcome
     if (result.ranAway) {
-      console.log('AdventureContext: Player ran away, creating custom outcome');
       dispatch({
         type: 'SET_OUTCOME',
         payload: {
@@ -654,7 +564,6 @@ export function AdventureProvider({
     } else if (result.isVictory) {
       // For victories, create an outcome with the rewards
       // The actual reward values will be set by the completeCombat function
-      console.log('AdventureContext: Player won, creating victory outcome');
       dispatch({
         type: 'SET_OUTCOME',
         payload: {
@@ -683,7 +592,6 @@ export function AdventureProvider({
       // Get the updated character data
       getCharacterById(characterId).then(response => {
         if (response.success && response.data) {
-          console.log('AdventureContext: Character data refreshed after combat end');
           
           // Update character in state
           dispatch({ type: 'SET_CHARACTER', payload: response.data });
@@ -694,8 +602,6 @@ export function AdventureProvider({
             const newLevel = getLevelFromExperience(response.data.experience);
             
             if (newLevel > oldLevel) {
-              console.log(`AdventureContext: Character leveled up from ${oldLevel} to ${newLevel}`);
-              
               // Save old experience for level up check
               dispatch({ type: 'SET_OLD_EXPERIENCE', payload: state.character.experience });
               // Set showLevelUp flag
@@ -713,7 +619,6 @@ export function AdventureProvider({
                 gold_bonus: goldGained
               };
               
-              console.log('AdventureContext: Updating outcome with actual rewards:', updatedOutcome);
               dispatch({ type: 'SET_OUTCOME', payload: updatedOutcome });
             }
           }
@@ -731,7 +636,6 @@ export function AdventureProvider({
       });
     }
     
-    console.log('AdventureContext: Combat ended');
   }, [state.character, state.combatId, state.outcome, loadCharacterData, dispatch]);
 
   // Continue to next adventure
@@ -745,15 +649,9 @@ export function AdventureProvider({
       const characterId = state.character.id;
       const startTime = new Date().getTime();
       
-      console.log(`[${new Date().toISOString()}] AdventureContext: Starting transition to next adventure`);
-      console.log('AdventureContext: BEFORE STATE - Current adventure:', 
-        state.adventure?.id, state.adventure?.title,
-        'Adventure count:', state.character.daily_adventure_count);
-      
       dispatch({ type: 'SET_LOADING', payload: true });
       
       // First, update adventure state in the database
-      console.log('AdventureContext: Updating database adventure state to "adventure"');
       const stateUpdateResult = await updateAdventureState(characterId, {
         current_state: 'adventure',
         current_adventure_id: null,
@@ -772,11 +670,8 @@ export function AdventureProvider({
         return;
       }
       
-      console.log(`AdventureContext: Successfully updated adventure state in database to "adventure" in ${new Date().getTime() - startTime}ms`);
-      console.log('AdventureContext: Adventure state from DB:', JSON.stringify(stateUpdateResult.data));
       
       // Only reset client state after successful database update
-      console.log('AdventureContext: Resetting client adventure state');
       dispatch({ type: 'RESET_ADVENTURE_STATE' });
       
       // Set flag to skip combat check on next loadAdventureData call
@@ -786,21 +681,10 @@ export function AdventureProvider({
       dispatch({ type: 'SET_COMBAT_ID', payload: null });
       
       // Get character data directly and update state
-      console.log('AdventureContext: Fetching updated character data');
       const characterFetchStartTime = new Date().getTime();
       const { getCharacterById } = await import('@/app/actions/character');
       const response = await getCharacterById(characterId);
       if (response.success && response.data) {
-        console.log(`AdventureContext: Character data refreshed in ${new Date().getTime() - characterFetchStartTime}ms`);
-        console.log('AdventureContext: UPDATED CHARACTER STATE:', {
-          name: response.data.name,
-          hp: `${response.data.current_hitpoints}/${response.data.max_hitpoints}`,
-          energy: `${response.data.current_energy}/${response.data.max_energy}`,
-          gold: response.data.gold,
-          previousAdventureCount: state.character.daily_adventure_count,
-          newAdventureCount: response.data.daily_adventure_count
-        });
-        
         // Update character in state directly
         dispatch({ type: 'SET_CHARACTER', payload: response.data });
       } else {
@@ -810,7 +694,6 @@ export function AdventureProvider({
       }
       
       // Verify current adventure state again before loading new adventure
-      console.log('AdventureContext: Verifying current adventure state from database');
       const verifyStartTime = new Date().getTime();
       const currentStateResponse = await import('@/app/actions/adventure-state').then(
         ({ getAdventureState }) => getAdventureState(characterId)
@@ -820,25 +703,14 @@ export function AdventureProvider({
         console.error('AdventureContext: Failed to verify current adventure state:', currentStateResponse.error);
       } else if (currentStateResponse.data.current_state !== 'adventure') {
         console.warn(`AdventureContext: ⚠️ Current state is not "adventure" as expected: "${currentStateResponse.data.current_state}"`);
-      } else {
-        console.log(`AdventureContext: Verified current state is "adventure" in ${new Date().getTime() - verifyStartTime}ms`);
       }
       
-      console.log('AdventureContext: STATE BEFORE loadAdventureData - Current adventure:', 
-        state.adventure?.id, state.adventure?.title);
-      
       // Load adventure data with forced new adventure to ensure we don't stay in the old one
-      console.log('AdventureContext: Loading new adventure data with force options');
       const loadStartTime = new Date().getTime();
       await loadAdventureData({
         forceSkipCombatCheck: true,
         forceLoadNewAdventure: true
       });
-      console.log(`AdventureContext: New adventure data loaded in ${new Date().getTime() - loadStartTime}ms`);
-      
-      console.log(`[${new Date().toISOString()}] AdventureContext: Successfully transitioned to next adventure in ${new Date().getTime() - startTime}ms`);
-      console.log('AdventureContext: FINAL STATE - Current adventure:', 
-        state.adventure?.id, state.adventure?.title);
     } catch (error) {
       console.error('Error loading next adventure:', error);
       dispatch({ type: 'SET_ERROR', payload: 'An unexpected error occurred' });
@@ -867,7 +739,6 @@ export function AdventureProvider({
   useEffect(() => {
     if (!state.character || !state.selectedArea) return;
     
-    console.log('AdventureContext: Loading adventure data due to character or area change');
     loadAdventureData();
   }, [
     state.character?.id,

@@ -41,34 +41,26 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
 
   // Function to get message override based on combat outcome
   const getMessageOverride = () => {
-    console.log('AdventureContainer: getMessageOverride called');
-    console.log('AdventureContainer: state.combatResult =', state.combatResult);
-    
     // If we don't have outcome, return undefined
     if (!outcome) {
-      console.log('AdventureContainer: No outcome, returning undefined');
+      console.error('AdventureContainer: No outcome, returning undefined');
       return undefined;
     }
     
     // Use the combat result stored in state if available
     if (state.combatResult) {
-      console.log('AdventureContainer: Using combat result from state');
       if (state.combatResult.ranAway) {
         const message = `You ran away from the ${state.combatResult.monsterName}!`;
-        console.log('AdventureContainer: Returning message:', message);
         return message;
       } else if (state.combatResult.isVictory) {
         const message = `You were victorious against the ${state.combatResult.monsterName}!`;
-        console.log('AdventureContainer: Returning message:', message);
         return message;
       } else {
         const message = `You were defeated by the ${state.combatResult.monsterName}!`;
-        console.log('AdventureContainer: Returning message:', message);
         return message;
       }
     }
-    
-    console.log('AdventureContainer: No combat result, returning undefined');
+
     return undefined;
   };
   
@@ -86,7 +78,6 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
   // Load selected area if character exists
   useEffect(() => {
     if (character) {
-      console.log('Character exists, loading area data...');
       loadAreaData(character.id, character.last_played_day);
     }
   }, [character?.id, character?.last_played_day, loadAreaData]);
@@ -109,7 +100,6 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
   
   // Show pre-combat view if available
   if (showPreCombat && outcome && combatId && character && selectedArea && !showCombat) {
-    console.log('AdventureContainer: Showing pre-combat view');
     return (
       <PreCombatView
         outcome={outcome}
@@ -120,7 +110,6 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
 
   // Show combat if available - this takes precedence over outcome
   if (showCombat && combatId && character && selectedArea) {
-    console.log('AdventureContainer: Showing combat interface');
     // Convert area.id from number to string to match the expected type
     const areaForCombat = {
       id: String(selectedArea.id),
@@ -140,9 +129,7 @@ const AdventureContainerInner = memo(function AdventureContainerInner() {
   
   // Show outcome if available
   if (outcome) {
-    console.log('AdventureContainer: Rendering OutcomeView with state.combatResult =', state.combatResult);
     const messageOverride = getMessageOverride();
-    console.log('AdventureContainer: messageOverride =', messageOverride);
     
     return (
       <OutcomeView

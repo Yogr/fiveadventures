@@ -49,8 +49,6 @@ export default function CharacterCreationForm() {
       
       if (result.success && result.data?.characterId) {
         // Character created successfully, now set the cookie and redirect
-        console.log('Character created successfully:', result.data.characterId);
-
         try {
           // Add character ID to cookies using server action
           await setCharacterIdCookie(result.data.characterId);

@@ -47,13 +47,10 @@ const AreaSelectionView = memo(function AreaSelectionView({ areas, character }: 
       
       // Also select the area
       setPreSelectedArea(area);
-      console.log('Area selected:', area.name);
     }
   };
   
   const handleConfirmSelection = async (area: Area) => {
-    console.log('Area confirmed:', area.name, 'with ID:', area.id);
-    console.log('Character ID:', character.id);
     await selectArea(area);
   };
   

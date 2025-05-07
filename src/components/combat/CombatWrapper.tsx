@@ -89,7 +89,7 @@ export default function CombatWrapper({ combatId }: CombatWrapperProps) {
 
   const handleMonsterInfoClick = () => {
     // You can implement monster info display logic here if needed
-    console.log('Monster info clicked');
+    
   };
 
   if (loading) {

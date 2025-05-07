@@ -150,31 +150,6 @@ CREATE POLICY user_manage_own_character_boss_progress ON character_boss_progress
 CREATE POLICY admin_all_character_boss_progress ON character_boss_progress 
   FOR ALL USING (is_admin());
 
--- Boss Rewards Table
-DROP POLICY IF EXISTS admin_all_boss_rewards ON boss_rewards;
-
-CREATE POLICY user_manage_own_boss_rewards ON boss_rewards
-  FOR ALL USING (
-    -- Allow if user is admin
-    is_admin() OR
-    -- Allow if character belongs to the current user
-    EXISTS (
-      SELECT 1 FROM characters
-      WHERE characters.id = boss_rewards.character_id
-      AND characters.user_id = auth.uid()
-    ) OR
-    -- Allow if this is a new character being created (for triggers)
-    EXISTS (
-      SELECT 1 FROM characters
-      WHERE characters.id = boss_rewards.character_id
-      AND (characters.user_id IS NULL OR characters.status = 'unlinked')
-    )
-  );
-
--- Add back the admin policy with lower priority
-CREATE POLICY admin_all_boss_rewards ON boss_rewards 
-  FOR ALL USING (is_admin());
-
 -- Combat Table
 DROP POLICY IF EXISTS admin_all_combat ON combat;
 

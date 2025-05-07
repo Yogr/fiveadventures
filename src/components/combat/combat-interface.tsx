@@ -46,7 +46,6 @@ export default function CombatInterface({ combatId, character: initialCharacter,
       setError(null);
       
       try {
-        console.log('CombatInterface: Loading combat data for ID:', combatId);
         // Get combat data
         const combatResponse = await getCombat(combatId);
         if (!combatResponse.success || !combatResponse.data) {
@@ -56,18 +55,10 @@ export default function CombatInterface({ combatId, character: initialCharacter,
           return;
         }
         
-        console.log('CombatInterface: Combat data loaded successfully, combat: ', combatResponse.data);
         setCombat(combatResponse.data);
         
         // Get character skills
-        console.log('CombatInterface: Loading skills for character ID:', character.id);
         const skillsResponse = await getCharacterSkills(character.id);
-        console.log('CombatInterface: Skills response:', {
-          success: skillsResponse.success,
-          count: skillsResponse.data?.length || 0,
-          error: skillsResponse.error,
-          data: skillsResponse.data
-        });
         
         if (skillsResponse.success && skillsResponse.data) {
           setSkills(skillsResponse.data);
@@ -90,7 +81,6 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   useEffect(() => {
     if (!combat) return;
     
-    console.log('CombatInterface: Updating active effects from combat data, combat.player_effects:', combat.player_effects, 'combat.enemy_effects:', combat.enemy_effects);    
     // Get effects from the combat object
     const playerEffects = Array.isArray(combat.player_effects) ? combat.player_effects : [];
     const enemyEffects = Array.isArray(combat.enemy_effects) ? combat.enemy_effects : [];
@@ -100,7 +90,6 @@ export default function CombatInterface({ combatId, character: initialCharacter,
     
     // Update combat log from server data
     if (combat.combat_log && Array.isArray(combat.combat_log)) {
-      console.log('CombatInterface: Updating combat log from server data, combat.combat_log:', combat.combat_log);
       // Filter out any non-string values and convert to string[]
       const stringLogs = combat.combat_log
         .filter(entry => typeof entry === 'string')
@@ -113,17 +102,8 @@ export default function CombatInterface({ combatId, character: initialCharacter,
   useEffect(() => {
     if (!combat || combatEndingRef.current) return;
     
-    console.log('CombatInterface: Checking if combat is completed:', {
-      id: combat.id,
-      is_completed: combat.is_completed,
-      is_victory: combat.is_victory,
-      turns: Array.isArray(combat.turns) ? combat.turns.length : 0
-    });
-    
     // End combat if server says it's completed
     if (combat.is_completed && combat.is_victory !== null) {
-      console.log('CombatInterface: Combat is completed according to server');
-      
       // Check if this was a "run away" scenario
       const ranAway = combat.turns && Array.isArray(combat.turns) && combat.turns.some((turn: any) => {
         // Only consider turns where the player successfully ran away

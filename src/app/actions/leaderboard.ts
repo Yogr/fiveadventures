@@ -403,6 +403,8 @@ export const getLevelLeaderboard = unstable_cache(
           error: 'Failed to get leaderboard data'
         };
       }
+
+      console.log('Leaderboard Data:', leaderboardData);
       
       // Transform to LeaderboardItem format with ranks
       const entries: LeaderboardItem[] = leaderboardData.map((character: any, index: number) => ({
@@ -446,7 +448,7 @@ export const getLevelLeaderboard = unstable_cache(
     }
   },
   ['level-leaderboard'],
-  { revalidate: 3600 } // Cache for 1 hour
+  { revalidate: 30 } // Cache for 1 hour
 );
 
 /**

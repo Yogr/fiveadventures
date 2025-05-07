@@ -7,8 +7,6 @@ import AdventureContainer from '@/components/adventure/AdventureContainer';
 export const dynamic = 'force-dynamic';
 
 export default async function AdventurePage() {
-  console.log('Rendering AdventurePage on server');
-  
   // Get character from layout
   const characterResponse = await getCharacterForUser();
   const character = characterResponse.data!; // We know this exists because of the layout check
@@ -18,11 +16,6 @@ export default async function AdventurePage() {
   const areasResponse = await getAreas();
   const areas = areasResponse.success && areasResponse.data ? areasResponse.data : [];
   
-  console.log('Server-side data fetched:');
-  console.log('- Character:', character.name);
-  console.log('- Current day:', currentDay);
-  console.log('- Areas loaded:', areas.length);
-  
   // Try to get selected area
   let selectedArea = null;
   try {
@@ -30,9 +23,6 @@ export default async function AdventurePage() {
     if (selectedAreaResponse.success && selectedAreaResponse.data && areas.length > 0) {
       const areaId = selectedAreaResponse.data;
       selectedArea = areas.find(area => area.id === areaId) || null;
-      console.log('- Selected area:', selectedArea ? selectedArea.name : 'None');
-    } else {
-      console.log('- No selected area for today');
     }
   } catch (error) {
     console.error('Error getting selected area:', error);
