@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
 import { 
@@ -555,6 +555,38 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
   const [selectedAdventure, setSelectedAdventure] = useState<Adventure | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [areas, setAreas] = useState<any[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0 || !selectedAdventure) {
+      return;
+    }
+    
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    try {
+      // If no image_url exists yet, create one based on the adventure title
+      if (!selectedAdventure.image_url) {
+        const newImageName = selectedAdventure.title.toLowerCase().replace(/\s+/g, '_');
+        setSelectedAdventure({
+          ...selectedAdventure,
+          image_url: newImageName
+        });
+      }
+      
+      // Upload the image using the image_url field value, not the file name
+      const imageUrl = selectedAdventure.image_url || '';
+      await ImageSource.uploadImageClient(file, 'adventure', imageUrl);
+      
+      // Force a re-render to show the new image
+      setSelectedAdventure({...selectedAdventure});
+      
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image. Please try again.');
+    }
+  };
   
   useEffect(() => {
     async function loadData() {
@@ -936,16 +968,34 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
               
               <div>
                 <label className="block text-sm font-medium mb-1">Image URL</label>
-                <input
-                  type="text"
-                  value={selectedAdventure.image_url || ''}
-                  onChange={(e) => setSelectedAdventure({
-                    ...selectedAdventure,
-                    image_url: e.target.value || null
-                  })}
-                  className="admin-input"
-                  disabled={!isAdmin}
-                />
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={selectedAdventure.image_url || ''}
+                    onChange={(e) => setSelectedAdventure({
+                      ...selectedAdventure,
+                      image_url: e.target.value || null
+                    })}
+                    className="admin-input flex-grow"
+                    disabled={!isAdmin}
+                  />
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1 bg-amber-700 text-amber-100 rounded hover:bg-amber-600 text-sm transition-colors"
+                    >
+                      Upload
+                    </button>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </div>
                 {selectedAdventure.image_url && (
                   <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
                     <Image 
