@@ -2,7 +2,6 @@
 
 import React from 'react';
 import FighterDisplay from '../combat/fighter-display';
-import CombatMessagePanel from '../combat/CombatMessagePanel';
 import StatusBar from '../combat/status-bar';
 import type { Character, WorldBoss } from '@/lib/types';
 import { getTotalMaxHitpoints } from '@/lib/character-utils';
@@ -12,14 +11,12 @@ import { ImageSource } from '@/lib/image-source';
 interface WorldBossSceneProps {
   character: Character;
   boss: WorldBoss;
-  combatLog?: string[];
   areaImage?: string;
 }
 
 export default function WorldBossScene({
   character,
   boss,
-  combatLog = [],
   areaImage = 'abyssal-realm' // Default background
 }: WorldBossSceneProps) {
   
@@ -59,11 +56,6 @@ export default function WorldBossScene({
         {/* Semi-transparent overlay for better readability */}
         <div className="absolute inset-0 bg-black bg-opacity-40"></div>
       </div>
-      
-      {/* Combat log messages overlay at the top (if enabled) */}
-      {combatLog.length > 0 && (
-        <CombatMessagePanel messages={combatLog} />
-      )}
       
       {/* World Boss HP Bar - positioned at the top center */}
       <div className="absolute top-3 left-1/2 transform -translate-x-1/2 z-20 w-3/4 max-w-md">

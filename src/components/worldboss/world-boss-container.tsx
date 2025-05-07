@@ -32,7 +32,6 @@ export default function WorldBossContainer({
   const [canAttackToday, setCanAttackToday] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [combatLog, setCombatLog] = useState<string[]>([]);
   
   // Check if character can attack today
   useEffect(() => {
@@ -53,10 +52,6 @@ export default function WorldBossContainer({
   
   // Handle attack completion
   const handleAttackComplete = (damage: number, canAttackAgain: boolean, bossDefeated: boolean) => {
-    // Add attack message to combat log
-    const attackMessage = `${character.name} dealt ${damage.toLocaleString()} damage to ${boss.name}!`;
-    setCombatLog(prev => [...prev.slice(-2), attackMessage]); // Keep only the last 3 messages maximum
-    
     // Update boss stats
     setBoss(prevBoss => {
       if (!prevBoss.status) return prevBoss;
@@ -92,7 +87,6 @@ export default function WorldBossContainer({
       <WorldBossScene 
         character={character}
         boss={boss}
-        combatLog={combatLog}
         areaImage="abyssal-realm"
       />
       

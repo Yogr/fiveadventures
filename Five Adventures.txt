@@ -5,17 +5,15 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Bugs
 ----------
-
 - Giant spider is floating
-- Delete function needs to delete character_stats row as well
-- Remove combat log from World Boss scene
+
 
 Todo
 -------------
 - Rebalance attacks and skills. Spells are too strong
 - Add spell effects to combat
 - Add artwork for the catacombs
-- Start next set of adventures
+- Start next set of adventure game data
 - Add streaks and streak bonus
  
 - Add menu nav
