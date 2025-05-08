@@ -15,6 +15,7 @@ import {
   getRewardTables,
   getMonsters
 } from '@/app/actions/data-editor';
+import { uploadImageToSupabase } from '@/app/actions/image-actions';
 import Image from 'next/image';
 import { ImageSource } from '@/lib/image-source';
 import { ChevronDownIcon, ChevronRightIcon, PlusIcon, XCircleIcon } from '@heroicons/react/24/outline';
@@ -575,16 +576,33 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
         });
       }
       
-      // Upload the image using the image_url field value, not the file name
+      // Upload the image using server action instead of client-side upload
       const imageUrl = selectedAdventure.image_url || '';
-      await ImageSource.uploadImageClient(file, 'adventure', imageUrl);
+      await uploadImageToSupabase(file, 'adventure', imageUrl);
       
       // Force a re-render to show the new image
       setSelectedAdventure({...selectedAdventure});
       
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Failed to upload image. Please try again.');
+      
+      // Extract the error message from the error object
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Try to parse JSON error message if present
+        try {
+          const jsonError = JSON.parse(error.message);
+          if (jsonError.message) {
+            errorMessage = jsonError.message;
+          }
+        } catch (e) {
+          // Not a JSON error, use the original message
+        }
+      }
+      
+      alert(`Failed to upload image: ${errorMessage}`);
     }
   };
   
@@ -996,19 +1014,27 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
                     onChange={handleImageUpload}
                   />
                 </div>
-                {selectedAdventure.image_url && (
+                {selectedAdventure.image_url ? (
                   <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
                     <Image 
-                      src={ImageSource.getAdventureImagePath({ image_url: selectedAdventure.image_url })}
+                      src={selectedAdventure.image_url ? ImageSource.getAdventureImagePath({ image_url: selectedAdventure.image_url }) : '/placeholder.png'}
                       alt={selectedAdventure.title}
                       width={240}
                       height={120}
                       className="h-32 w-64 object-cover"
                       onError={(e) => {
+                        // Prevent infinite retries by setting a flag on the element
                         const target = e.target as HTMLImageElement;
-                        target.src = 'https://via.placeholder.com/320x160?text=No+Image';
+                        if (!(target as any).hasErrored) {
+                          (target as any).hasErrored = true;
+                          target.src = 'https://via.placeholder.com/320x160?text=No+Image';
+                        }
                       }}
                     />
+                  </div>
+                ) : (
+                  <div className="mt-3 border border-amber-700/50 p-2 inline-block bg-amber-900/20 rounded flex justify-center items-center h-32 w-64 text-amber-500/70 text-xs">
+                    No image
                   </div>
                 )}
               </div>

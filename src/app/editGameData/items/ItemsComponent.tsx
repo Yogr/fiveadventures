@@ -5,6 +5,7 @@ import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
 import EffectsEditor from '../components/EffectsEditor';
 import { getItems, saveItem, deleteItem } from '@/app/actions/data-editor';
+import { uploadImageToSupabase } from '@/app/actions/image-actions';
 import Image from 'next/image';
 import { ImageSource } from '@/lib/image-source';
 
@@ -45,16 +46,33 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
         });
       }
       
-      // Upload the image
+      // Upload the image using server action instead of client-side upload
       const imageUrl = selectedItem.image_url || '';
-      await ImageSource.uploadImageClient(file, selectedItem.type.toLowerCase(), imageUrl);
+      await uploadImageToSupabase(file, selectedItem.type.toLowerCase(), imageUrl);
       
       // Force a re-render to show the new image
       setSelectedItem({...selectedItem});
       
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Failed to upload image. Please try again.');
+      
+      // Extract the error message from the error object
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Try to parse JSON error message if present
+        try {
+          const jsonError = JSON.parse(error.message);
+          if (jsonError.message) {
+            errorMessage = jsonError.message;
+          }
+        } catch (e) {
+          // Not a JSON error, use the original message
+        }
+      }
+      
+      alert(`Failed to upload image: ${errorMessage}`);
     }
   };
   const [isLoading, setIsLoading] = useState(true);
@@ -358,14 +376,18 @@ export default function ItemsComponent({ isAdmin }: { isAdmin: boolean }) {
                   {selectedItem.image_url ? (
                     <div className="mt-2 border border-amber-700 p-2 rounded-md bg-amber-900/30 flex justify-center">
                       <Image
-                        src={ImageSource.getItemImagePath(selectedItem)}
+                        src={selectedItem.image_url ? ImageSource.getItemImagePath(selectedItem) : '/placeholder.png'}
                         alt={selectedItem.name}
                         width={128}
                         height={128}
                         className="h-16 w-16 object-contain"
                         onError={(e) => {
+                          // Prevent infinite retries by setting a flag on the element
                           const target = e.target as HTMLImageElement;
-                          target.src = 'https://via.placeholder.com/64?text=No+Image';
+                          if (!(target as any).hasErrored) {
+                            (target as any).hasErrored = true;
+                            target.src = 'https://via.placeholder.com/64?text=No+Image';
+                          }
                         }}
                       />
                     </div>

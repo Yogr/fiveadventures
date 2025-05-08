@@ -5,6 +5,7 @@ import ListComponent from '../components/ListComponent';
 import SaveButton from '../components/SaveButton';
 import EffectsEditor from '../components/EffectsEditor';
 import { getSkills, saveSkill, deleteSkill } from '@/app/actions/data-editor';
+import { uploadImageToSupabase } from '@/app/actions/image-actions';
 import Image from 'next/image';
 import { ImageSource } from '@/lib/image-source';
 
@@ -47,16 +48,33 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
         });
       }
       
-      // Upload the image using the image_url field value, not the file name
+      // Upload the image using server action instead of client-side upload
       const imageUrl = selectedSkill.image_url || '';
-      await ImageSource.uploadImageClient(file, 'skill', imageUrl);
+      await uploadImageToSupabase(file, 'skill', imageUrl);
       
       // Force a re-render to show the new image
       setSelectedSkill({...selectedSkill});
       
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Failed to upload image. Please try again.');
+      
+      // Extract the error message from the error object
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Try to parse JSON error message if present
+        try {
+          const jsonError = JSON.parse(error.message);
+          if (jsonError.message) {
+            errorMessage = jsonError.message;
+          }
+        } catch (e) {
+          // Not a JSON error, use the original message
+        }
+      }
+      
+      alert(`Failed to upload image: ${errorMessage}`);
     }
   };
   
@@ -356,19 +374,27 @@ export default function SkillsComponent({ isAdmin }: { isAdmin: boolean }) {
                     onChange={handleImageUpload}
                   />
                 </div>
-                {selectedSkill.image_url && (
+                {selectedSkill.image_url ? (
                   <div className="mt-3 border border-amber-700 p-2 inline-block bg-amber-950 rounded">
                     <Image
-                      src={ImageSource.getSkillImagePath({ image_url: selectedSkill.image_url })} 
+                      src={selectedSkill.image_url ? ImageSource.getSkillImagePath({ image_url: selectedSkill.image_url }) : '/placeholder.png'} 
                       alt={selectedSkill.name} 
                       width={128}
                       height={128}
                       className="h-16 w-16 object-contain"
                       onError={(e) => {
+                        // Prevent infinite retries by setting a flag on the element
                         const target = e.target as HTMLImageElement;
-                        target.src = 'https://via.placeholder.com/64?text=No+Image';
+                        if (!(target as any).hasErrored) {
+                          (target as any).hasErrored = true;
+                          target.src = 'https://via.placeholder.com/64?text=No+Image';
+                        }
                       }}
                     />
+                  </div>
+                ) : (
+                  <div className="mt-3 border border-amber-700/50 p-2 inline-block bg-amber-900/20 rounded flex justify-center items-center h-16 w-16 text-amber-500/70 text-xs">
+                    No image
                   </div>
                 )}
               </div>

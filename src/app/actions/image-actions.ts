@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { requireAdmin } from './auth';
 
 /**
  * Upload an image to Supabase storage (server-side)
@@ -10,18 +11,26 @@ import { createClient } from '@/lib/supabase/server';
  * @returns Promise resolving to the filename that was uploaded
  */
 export async function uploadImageToSupabase(file: File, type: string, filename: string): Promise<string> {
+  // Ensure user has admin privileges
+  await requireAdmin();
+  
   const STORAGE_BUCKET = 'images';
   const supabase = await createClient();
   const filePath = `${type}/${filename}.png`;
   
-  const { data, error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(filePath, file, { 
-      upsert: true,
-      contentType: 'image/png'
-    });
+  try {
+    const { data, error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(filePath, file, { 
+        upsert: true,
+        contentType: 'image/png'
+      });
+      
+    if (error) throw error;
     
-  if (error) throw error;
-  
-  return filename; // Return just the filename to store in DB
+    return filename; // Return just the filename to store in DB
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error;
+  }
 }

@@ -630,14 +630,34 @@ export async function saveAdventureDecision(decision: any) {
       created_at: decision.created_at || new Date().toISOString()
     };
     
-    // Insert or update the decision
-    const { data: savedDecision, error: decisionError } = await supabase
+    // Check if the decision already exists
+    const { data: existingDecision } = await supabase
       .from('adventure_decisions')
-      .upsert(decisionData, { onConflict: 'id' })
-      .select();
+      .select('id')
+      .eq('id', decision.id)
+      .single();
     
-    if (decisionError) {
-      throw decisionError;
+    let savedDecision;
+    
+    if (existingDecision) {
+      // Update existing decision
+      const { data, error } = await supabase
+        .from('adventure_decisions')
+        .update(decisionData)
+        .eq('id', decision.id)
+        .select();
+      
+      if (error) throw error;
+      savedDecision = data;
+    } else {
+      // Insert new decision
+      const { data, error } = await supabase
+        .from('adventure_decisions')
+        .insert(decisionData)
+        .select();
+      
+      if (error) throw error;
+      savedDecision = data;
     }
     
     return { success: true, data: savedDecision ? savedDecision[0] : null };
@@ -708,14 +728,34 @@ export async function saveAdventureOutcome(outcome: any) {
       created_at: outcome.created_at || new Date().toISOString()
     };
     
-    // Insert or update the outcome
-    const { data: savedOutcome, error: outcomeError } = await supabase
+    // Check if the outcome already exists
+    const { data: existingOutcome } = await supabase
       .from('adventure_outcomes')
-      .upsert(outcomeData, { onConflict: 'id' })
-      .select();
+      .select('id')
+      .eq('id', outcome.id)
+      .single();
     
-    if (outcomeError) {
-      throw outcomeError;
+    let savedOutcome;
+    
+    if (existingOutcome) {
+      // Update existing outcome
+      const { data, error } = await supabase
+        .from('adventure_outcomes')
+        .update(outcomeData)
+        .eq('id', outcome.id)
+        .select();
+      
+      if (error) throw error;
+      savedOutcome = data;
+    } else {
+      // Insert new outcome
+      const { data, error } = await supabase
+        .from('adventure_outcomes')
+        .insert(outcomeData)
+        .select();
+      
+      if (error) throw error;
+      savedOutcome = data;
     }
     
     return { success: true, data: savedOutcome ? savedOutcome[0] : null };
