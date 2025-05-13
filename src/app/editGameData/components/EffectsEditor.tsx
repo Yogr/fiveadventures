@@ -2,36 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { XCircleIcon, PlusIcon } from '@heroicons/react/24/outline';
-
-// Define the effect types and their descriptions
-const EFFECT_TYPES = [
-  { value: 'damage_bonus', label: 'Damage Bonus', type: 'number', description: 'Increases damage by a flat amount' },
-  { value: 'defense_bonus', label: 'Defense Bonus', type: 'number', description: 'Increases defense by a flat amount' },
-  { value: 'strength_bonus', label: 'Strength Bonus', type: 'number', description: 'Increases strength by a flat amount' },
-  { value: 'intelligence_bonus', label: 'Intelligence Bonus', type: 'number', description: 'Increases intelligence by a flat amount' },
-  { value: 'agility_bonus', label: 'Agility Bonus', type: 'number', description: 'Increases agility by a flat amount' },
-  { value: 'luck_bonus', label: 'Luck Bonus', type: 'number', description: 'Increases luck by a flat amount' },
-  { value: 'wisdom_bonus', label: 'Wisdom Bonus', type: 'number', description: 'Increases wisdom by a flat amount' },
-  { value: 'hitpoints_bonus', label: 'Hitpoints Bonus', type: 'number', description: 'Increases maximum hitpoints by a flat amount' },
-  { value: 'energy_bonus', label: 'Energy Bonus', type: 'number', description: 'Increases maximum energy by a flat amount' },
-  { value: 'critical_chance', label: 'Critical Chance', type: 'number', description: 'Increases critical hit chance by percentage' },
-  { value: 'damage_multiplier', label: 'Damage Multiplier', type: 'number', description: 'Multiplies damage by this factor' },
-  { value: 'defense_multiplier', label: 'Defense Multiplier', type: 'number', description: 'Multiplies defense by this factor' },
-  { value: 'lifesteal', label: 'Life Steal', type: 'number', description: 'Percentage of damage dealt returned as health' },
-  { value: 'dodge_chance', label: 'Dodge Chance', type: 'number', description: 'Chance to completely avoid an attack' },
-  { value: 'gold_find', label: 'Gold Find', type: 'number', description: 'Increases gold found by percentage' },
-  { value: 'experience_bonus', label: 'Experience Bonus', type: 'number', description: 'Increases experience gained by percentage' },
-  { value: 'healing_bonus', label: 'Healing Bonus', type: 'number', description: 'Increases healing received by percentage' },
-  { value: 'damage_reduction', label: 'Damage Reduction', type: 'number', description: 'Reduces damage taken by percentage' },
-  { value: 'bleed_chance', label: 'Bleed Chance', type: 'number', description: 'Chance to cause a bleeding effect' },
-  { value: 'bleed_damage', label: 'Bleed Damage', type: 'number', description: 'Damage dealt by bleeding effect per turn' },
-  { value: 'poison_chance', label: 'Poison Chance', type: 'number', description: 'Chance to cause a poison effect' },
-  { value: 'poison_damage', label: 'Poison Damage', type: 'number', description: 'Damage dealt by poison effect per turn' },
-  { value: 'burn_chance', label: 'Burn Chance', type: 'number', description: 'Chance to cause a burning effect' },
-  { value: 'burn_damage', label: 'Burn Damage', type: 'number', description: 'Damage dealt by burning effect per turn' },
-  { value: 'stun_chance', label: 'Stun Chance', type: 'number', description: 'Chance to stun the target for one turn' },
-  { value: 'skill_cooldown_reduction', label: 'Skill Cooldown Reduction', type: 'number', description: 'Reduces skill cooldowns by turns' },
-];
+import { 
+  EFFECT_TYPES, 
+  addCustomEffectTypes as addCustomEffectTypesToGlobal,
+  getEffectTypeByValue
+} from '@/lib/effect-types';
 
 // Type for a single effect
 type Effect = {
@@ -51,27 +26,15 @@ function objectToEffectsArray(effectsObj: any): Effect[] {
 
 // Add any unknown effect types to the EFFECT_TYPES array
 function addCustomEffectTypes(effects: Effect[]) {
-  effects.forEach(effect => {
-    const existingEffectType = EFFECT_TYPES.find(et => et.value === effect.type);
-    if (!existingEffectType) {
-      // Create a capitalized label from the effect type
-      const label = effect.type
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, char => char.toUpperCase());
-      
-      // Determine the type based on the value
-      const valueType = typeof effect.value === 'number' ? 'number' : 
-                       typeof effect.value === 'boolean' ? 'checkbox' : 'text';
-      
-      // Add the custom effect type
-      EFFECT_TYPES.push({
-        value: effect.type,
-        label,
-        type: valueType,
-        description: `Custom effect: ${label}`
-      });
-    }
+  // Convert to the format expected by the global function
+  const effectsAsRecords = effects.map(effect => {
+    const record: Record<string, any> = {};
+    record[effect.type] = effect.value;
+    return record;
   });
+  
+  // Call the global function to add custom effect types
+  addCustomEffectTypesToGlobal(effectsAsRecords);
 }
 
 // Convert an array of effects back to an object

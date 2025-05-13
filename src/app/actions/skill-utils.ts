@@ -3,6 +3,7 @@
 import type { Fighter, Skill, Combat } from '@/lib/types';
 import type { CombatEffect } from './server-effect-utils';
 import { createEffectFromSkill, createEffectFromMonsterAbility } from './server-effect-utils';
+import { getEffectTypeByValue } from './effect-types-server';
 import { createClient } from '@/lib/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {

@@ -613,6 +613,15 @@ export async function saveAdventureDecision(decision: any) {
   // First check if user has admin privileges
   await requireAdmin();
   
+  // Validate required fields
+  if (!decision.adventure_id) {
+    console.error('Missing required field: adventure_id', decision);
+    return { 
+      success: false, 
+      error: "Missing required field: adventure_id" 
+    };
+  }
+  
   const supabase = await createClient();
   
   try {
@@ -706,6 +715,15 @@ export async function deleteAdventureDecision(id: number) {
 export async function saveAdventureOutcome(outcome: any) {
   // First check if user has admin privileges
   await requireAdmin();
+  
+  // Validate required fields
+  if (!outcome.decision_id) {
+    console.error('Missing required field: decision_id', outcome);
+    return { 
+      success: false, 
+      error: "Missing required field: decision_id" 
+    };
+  }
   
   const supabase = await createClient();
   

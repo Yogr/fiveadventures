@@ -11,7 +11,7 @@ Bugs
 Todo
 -------------
 - Rebalance attacks and skills. Spells are too strong
-- Add spell effects to combat
+- Add spell effects to combat ?
 - Add artwork for the catacombs
 - Start next set of adventure game data
 - Add streaks and streak bonus

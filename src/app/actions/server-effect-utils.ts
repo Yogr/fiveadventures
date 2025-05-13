@@ -1,6 +1,7 @@
 'use server';
 
 import type { Skill } from '@/lib/types';
+import { determineEffectType as determineEffectTypeFromCentral } from './effect-types-server';
 
 /**
  * Represents a combat effect applied to a character or monster
@@ -47,43 +48,7 @@ export interface CombatEffect {
  * Server-side version
  */
 export async function determineEffectType(effect: Record<string, any>): Promise<'buff' | 'debuff' | undefined> {
-  // Define which properties indicate buffs
-  const buffProperties = [
-    'strength_boost',
-    'intelligence_boost',
-    'agility_boost',
-    'luck_boost',
-    'wisdom_boost',
-    'healing',
-    'shield',
-    'defense_boost',
-    'gold_chance',
-    'exp_boost'
-  ];
-  
-  // Define which properties indicate debuffs
-  const debuffProperties = [
-    'slow',
-    'immobilize',
-    'damage_over_time',
-    'defense_reduction',
-    'attack_reduction',
-    'stun'
-  ];
-  
-  // Count how many buff and debuff properties exist in this effect
-  const buffCount = buffProperties.filter(prop => effect[prop] !== undefined).length;
-  const debuffCount = debuffProperties.filter(prop => effect[prop] !== undefined).length;
-  
-  // Classify based on which type has more properties
-  if (buffCount > 0 && buffCount >= debuffCount) {
-    return 'buff';
-  } else if (debuffCount > 0) {
-    return 'debuff';
-  }
-  
-  // If no recognizable properties, return undefined
-  return undefined;
+  return determineEffectTypeFromCentral(effect);
 }
 
 /**

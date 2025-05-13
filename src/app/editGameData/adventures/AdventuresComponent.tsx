@@ -355,7 +355,12 @@ const OutcomeComponent = ({
   }, [isExpanded]);
   
   const handleFieldChange = (field: keyof AdventureOutcome, value: any) => {
+    // Create updated outcome with the new field value
     const updatedOutcome = { ...localOutcome, [field]: value };
+    
+    // Ensure decision_id is always set correctly
+    updatedOutcome.decision_id = decisionId;
+    
     setLocalOutcome(updatedOutcome);
     onUpdate(updatedOutcome);
   };
@@ -657,20 +662,38 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
         return;
       }
       
-      // Then save all decisions
+      // Get the saved adventure ID (important for new adventures)
+      const savedAdventureId = adventureResponse.data.id;
+      
+      // Then save all decisions with the correct adventure_id
       if (selectedAdventure.decisions && selectedAdventure.decisions.length > 0) {
         for (const decision of selectedAdventure.decisions) {
-          const decisionResponse = await saveAdventureDecision(decision);
+          // Explicitly ensure adventure_id is set to the saved adventure's ID
+          const decisionWithAdventureId = {
+            ...decision,
+            adventure_id: savedAdventureId
+          };
+          
+          const decisionResponse = await saveAdventureDecision(decisionWithAdventureId);
           
           if (!decisionResponse.success) {
             alert(`Error saving decision: ${decisionResponse.error}`);
             continue;
           }
           
-          // Save all outcomes for this decision
+          // Get the saved decision ID
+          const savedDecisionId = decisionResponse.data?.id;
+          
+          // Save all outcomes for this decision with the correct decision_id
           if (decision.outcomes && decision.outcomes.length > 0) {
             for (const outcome of decision.outcomes) {
-              const outcomeResponse = await saveAdventureOutcome(outcome);
+              // Ensure decision_id is set correctly
+              const outcomeWithDecisionId = {
+                ...outcome,
+                decision_id: savedDecisionId || decision.id
+              };
+              
+              const outcomeResponse = await saveAdventureOutcome(outcomeWithDecisionId);
               
               if (!outcomeResponse.success) {
                 alert(`Error saving outcome: ${outcomeResponse.error}`);
@@ -789,8 +812,14 @@ export default function AdventuresComponent({ isAdmin }: { isAdmin: boolean }) {
   const handleDecisionUpdate = (updatedDecision: AdventureDecision) => {
     if (!selectedAdventure || !selectedAdventure.decisions) return;
     
+    // Ensure adventure_id is set correctly
+    const decisionWithAdventureId = {
+      ...updatedDecision,
+      adventure_id: selectedAdventure.id
+    };
+    
     const updatedDecisions = selectedAdventure.decisions.map(decision => 
-      decision.id === updatedDecision.id ? updatedDecision : decision
+      decision.id === updatedDecision.id ? decisionWithAdventureId : decision
     );
     
     const updatedAdventure = { ...selectedAdventure, decisions: updatedDecisions };
