@@ -1,15 +1,14 @@
 'use client';
 
-import { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
+import { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import type { Character, Adventure, AdventureDecision, AdventureOutcome, Combat, Area, RewardItem } from '@/lib/types';
+import type { Character, Adventure, AdventureDecision, AdventureOutcome, Area, RewardItem } from '@/lib/types';
 import { getCharacterById } from '@/app/actions/character';
 import { getAdventure } from '@/app/actions/adventure';
 import { getActiveCharacterCombat } from '@/app/actions/combat';
 import { getSelectedArea } from '@/app/actions/area';
-import { updateAdventureState } from '@/app/actions/adventure-state';
+import { getAdventureState, updateAdventureState } from '@/app/actions/adventure-state';
 import { getLevelFromExperience } from '@/lib/utils';
 
 // Define the state shape
@@ -241,8 +240,7 @@ export function AdventureProvider({
     if (!state.character || !state.selectedArea) return;
     
     try {
-      const startTime = new Date().getTime();
-      
+
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
       
@@ -253,10 +251,7 @@ export function AdventureProvider({
       const adventureCount = state.character.daily_adventure_count;
       
       // Get current adventure state
-      const dbFetchStartTime = new Date().getTime();
-      const adventureStateResponse = await import('@/app/actions/adventure-state').then(
-        ({ getAdventureState }) => getAdventureState(characterId)
-      );
+      const adventureStateResponse = await getAdventureState(characterId);
       
       let currentState = 'none';
       if (adventureStateResponse.success && adventureStateResponse.data) {

@@ -1,7 +1,7 @@
 'use server';
 
 import type { Skill } from '@/lib/types';
-import { determineEffectType as determineEffectTypeFromCentral } from './effect-types-server';
+import { determineEffectType as determineEffectTypeFromCentral } from '@/lib/effect-types'
 
 /**
  * Represents a combat effect applied to a character or monster

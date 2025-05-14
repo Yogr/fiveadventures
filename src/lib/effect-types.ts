@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Interface for effect type definitions
  */
