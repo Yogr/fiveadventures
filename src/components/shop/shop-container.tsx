@@ -85,13 +85,33 @@ export default function ShopContainer({ initialGold, equipment }: ShopContainerP
       <div className="relative">
         {/* Shop background */}
         <div className="absolute inset-0 z-0 overflow-hidden">
-          <Image
-            src="/image/ui/shop_bg.png"
-            alt="Shop Background"
-            fill
-            className="object-cover object-top opacity-80 w-full"
-            priority
-          />
+          <div style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <Image
+              src="/image/ui/shop_bg.png"
+              alt="Shop Background"
+              fill={false}
+              width={1200}
+              height={500}
+              style={{
+                width: '100%',  
+                height: 'auto',
+                maxHeight: '100%',
+                transform: 'scaleX(1.2)', // Stretch horizontally by 20%
+                transformOrigin: 'center'
+              }}
+              className="opacity-80"
+              priority
+            />
+          </div>
         </div>
         
         {/* Shop content container */}
