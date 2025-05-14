@@ -713,6 +713,41 @@ export async function checkWeeklyReset(): Promise<ApiResponse<boolean>> {
 }
 
 /**
+ * Get the total number of adventurers who have attacked the current world boss
+ */
+export async function getTotalAttackers(): Promise<ApiResponse<number>> {
+  try {
+    const supabase = await createClient();
+    const currentWeek = getCurrentGameWeek();
+    
+    // Count total rows in character_boss_progress for the current week
+    const { count, error } = await supabase
+      .from('character_boss_progress')
+      .select('id', { count: 'exact', head: true })
+      .eq('week', currentWeek);
+    
+    if (error) {
+      console.error('Error getting total attackers:', error);
+      return {
+        success: false,
+        error: 'Failed to get total attackers'
+      };
+    }
+    
+    return {
+      success: true,
+      data: count || 0
+    };
+  } catch (err) {
+    console.error('Unexpected error getting total attackers:', err);
+    return {
+      success: false,
+      error: 'An unexpected error occurred'
+    };
+  }
+}
+
+/**
  * Get all world bosses
  */
 export async function getAllWorldBosses(): Promise<ApiResponse<WorldBoss[]>> {

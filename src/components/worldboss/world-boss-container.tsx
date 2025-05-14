@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { WorldBoss, CharacterBossProgress, Character, Item } from '@/lib/types';
 import WorldBossScene from './WorldBossScene';
+import WorldProgressSection from './world-progress-section';
 import WorldBossAttackPanel from './world-boss-attack-panel';
 import WorldBossPotentialRewards from './world-boss-potential-rewards';
 import { canAttackWorldBossToday } from '@/app/actions/worldboss';
@@ -16,6 +17,8 @@ interface WorldBossContainerProps {
   legendaryItems: Item[];
   challengerItems: Item[];
   basicItems: Item[];
+  totalAdventurers: number;
+  daysRemaining: number;
 }
 
 export default function WorldBossContainer({
@@ -25,7 +28,9 @@ export default function WorldBossContainer({
   claimedRewards,
   legendaryItems,
   challengerItems,
-  basicItems
+  basicItems,
+  totalAdventurers,
+  daysRemaining
 }: WorldBossContainerProps) {
   const [boss, setBoss] = useState<WorldBoss>(initialBoss);
   const [progress, setProgress] = useState<CharacterBossProgress>(initialProgress);
@@ -124,6 +129,12 @@ export default function WorldBossContainer({
             (boss.status?.total_damage_received || 0) >= (boss.status?.total_hitpoints || 0)) && 
           character.status !== 'unlinked')}
         onAttackComplete={handleAttackComplete}
+      />
+
+      {/* World Progress section */}
+      <WorldProgressSection
+        totalAdventurers={totalAdventurers}
+        daysRemaining={daysRemaining}
       />
       
       {/* Display claimed rewards notification if any */}

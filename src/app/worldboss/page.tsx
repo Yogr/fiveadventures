@@ -1,11 +1,23 @@
 import { getCharacterForUser } from '@/app/actions/character';
-import { getCurrentWorldBoss, getCharacterBossProgress, calculatePendingRewards, checkWeeklyReset } from '@/app/actions/worldboss';
+import { getCurrentWorldBoss, getCharacterBossProgress, calculatePendingRewards, checkWeeklyReset, getTotalAttackers } from '@/app/actions/worldboss';
 import { getRewardTables, getItems } from '@/app/actions/data-editor';
 import WorldBossContainer from '@/components/worldboss/world-boss-container';
 import type { Item } from '@/lib/types';
+import { getCurrentGameDay, getCurrentGameWeek } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+// Function to calculate days remaining in the current week
+function getDaysRemainingInWeek(): number {
+  const currentDay = getCurrentGameDay();
+  // Calculate the first day of the current week
+  const currentWeekStartDay = (getCurrentGameWeek() - 1) * 7 + 1;
+  // Calculate the first day of the next week
+  const nextWeekStartDay = currentWeekStartDay + 7;
+  // Return the difference
+  return nextWeekStartDay - currentDay;
+}
 
 export default async function WorldBossPage() {
   // Check for weekly reset (if it's a new week, process rewards and create new boss)
@@ -52,6 +64,13 @@ export default async function WorldBossPage() {
   }
   
   const progress = progressResponse.data;
+  
+  // Get total number of adventurers who have attacked
+  const totalAttackersResponse = await getTotalAttackers();
+  const totalAttackers = totalAttackersResponse.success ? (totalAttackersResponse.data || 0) : 0;
+  
+  // Calculate days remaining in the current week
+  const daysRemaining = getDaysRemainingInWeek();
   
   // Calculate and process any pending rewards
   const rewardsResponse = await calculatePendingRewards(character.id);
@@ -135,6 +154,8 @@ export default async function WorldBossPage() {
         legendaryItems={legendaryItems}
         challengerItems={challengerItems}
         basicItems={basicItems}
+        totalAdventurers={totalAttackers}
+        daysRemaining={daysRemaining}
       />
     </div>
   );

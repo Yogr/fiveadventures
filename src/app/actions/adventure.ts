@@ -5,11 +5,10 @@ import {
   calculateSuccessRate,
   getLevelFromExperience,
   generateId,
-  getPrimaryStat,
   getCurrentGameDay,
   CLASS_STAT_GROWTH
 } from '@/lib/utils';
-import { getTotalMaxHitpoints, getTotalMaxEnergy, calculatePowerLevel } from '@/lib/character-utils';
+import { getTotalMaxHitpoints, getTotalMaxEnergy } from '@/lib/character-utils';
 import { incrementAdventuresCompleted, updateCharacterPowerLevel } from '@/app/actions/leaderboard';
 import { MAX_ADVENTURES_PER_DAY } from '@/lib/constants';
 import type {
@@ -18,13 +17,10 @@ import type {
   AdventureOutcome,
   Character,
   Combat,
-  Monster,
   CharacterAdventure,
-  Item,
   Area,
   RewardItem
 } from '@/lib/types';
-import { getCharacterById } from './character';
 import { createClient } from '@/lib/supabase/server';
 
 // No need for getOutcomeById - we already have the outcome from the decision

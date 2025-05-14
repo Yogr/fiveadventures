@@ -116,7 +116,7 @@ export const getRequiredExperience = (level: number): number => {
   if (level === 4) return 600;
   
   // Exponential growth for higher levels
-  return Math.floor(100 * Math.pow(level, 2));
+  return 600 + Math.floor(40 * Math.pow(level, 1.7));
 };
 
 // Calculate level from experience
