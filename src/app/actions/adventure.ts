@@ -85,7 +85,7 @@ export async function getAdventure(
         outcomes:adventure_outcomes(*)
       )
     `)
-    .eq('area_id', area.id)
+    .filter('area_ids', 'cs', `{${area.id}}`)
     .eq('is_violent', !needsNonViolent)
     
     if (error || !adventures || adventures.length === 0) {

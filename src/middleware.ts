@@ -69,9 +69,11 @@ export async function middleware(request: NextRequest) {
   // We don't need to redirect users since we allow unauthenticated play
   // But we'll keep the middleware for session refreshing and cookie handling
 
-  // Redirect /dungeon to /adventure as we've integrated dungeon functionality into the adventure page
+  // Redirect /dungeon to /adventure with tab=dungeon query param
   if (request.nextUrl.pathname === '/dungeon') {
-    return NextResponse.redirect(new URL('/adventure', request.url))
+    const adventureUrl = new URL('/adventure', request.url)
+    adventureUrl.searchParams.set('tab', 'dungeon')
+    return NextResponse.redirect(adventureUrl)
   }
 
   // Redirect /character to home page

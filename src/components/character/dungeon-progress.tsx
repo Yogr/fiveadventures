@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import type { Character, CharacterDungeon } from '@/lib/types';
-import { ROUTES } from '@/lib/constants';
 
 interface DungeonProgressProps {
   character: Character;
@@ -75,12 +73,6 @@ export default function DungeonProgress({ character }: DungeonProgressProps) {
             <span className="text-amber-300">{activeDungeon.current_adventure_count}</span>
           </div>
           
-          <Link 
-            href={ROUTES.DUNGEON}
-            className="mt-2 inline-block bg-amber-700 hover:bg-amber-600 text-amber-100 px-3 py-1 rounded text-sm transition-colors"
-          >
-            Continue Dungeon
-          </Link>
         </div>
       )}
       

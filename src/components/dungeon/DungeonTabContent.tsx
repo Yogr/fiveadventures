@@ -8,8 +8,9 @@ import { getAvailableDungeons, enterDungeon } from '@/app/actions/dungeon';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import Image from 'next/image';
 import { ImageSource } from '@/lib/image-source';
-import CombatInterface from '@/components/combat/combat-interface';
 import { useDungeon, useDungeonState } from './DungeonContext';
+import { DungeonAdventureProvider } from './DungeonAdventureContext';
+import DungeonAdventureView from './DungeonAdventureView';
 
 interface DungeonTabContentProps {
   character: Character;
@@ -137,34 +138,6 @@ export default function DungeonTabContent({ character }: DungeonTabContentProps)
     }
   };
 
-  // Render active dungeon combat
-  if (state.combatId && dungeonState === 'combat' && activeDungeon) {
-    // Get area from active dungeon
-    const areaForCombat = {
-      id: String(activeDungeon.area.id),
-      name: activeDungeon.area.name,
-      image: activeDungeon.area.image || 'dungeonbackground'
-    };
-    
-    return (
-      <CombatInterface
-        combatId={state.combatId}
-        character={character}
-        area={areaForCombat}
-        onCombatEnd={(result) => {
-          // Update combat result in context
-          dispatch({ type: 'SET_COMBAT_VICTORY', payload: result.isVictory });
-          dispatch({ type: 'SET_COMBAT_ID', payload: null });
-          
-          // Reload dungeon data after combat ends
-          setTimeout(() => {
-            window.location.reload();
-          }, 500);
-        }}
-      />
-    );
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -173,23 +146,37 @@ export default function DungeonTabContent({ character }: DungeonTabContentProps)
     );
   }
 
-  // If there's an active dungeon but we're not in combat, let the original DungeonContainer handle it
+  // If there's an active dungeon but we're not in combat, use DungeonAdventureProvider
   if (activeDungeon) {
     return (
       <div className="w-full">
-        <DungeonProgress character={character} />
-        <div className="mt-4 p-4 bg-amber-900/40 rounded-lg border border-amber-800">
-          <h2 className="text-xl font-bold text-amber-100 mb-2">Active Dungeon: {activeDungeon.area.name}</h2>
-          <p className="text-amber-200 mb-4">Continue your exploration of this dungeon!</p>
-          <div className="flex justify-between items-center">
+        {/* Display dungeon-specific info at the bottom */}
+        <div className="mt-4 p-3 bg-amber-900/20 rounded-lg border border-amber-800">
+          <div className="flex justify-between items-center text-sm">
             <span className="text-amber-300">
-              Progress: {activeDungeon.current_adventure_count} / 3 adventures
+              Dungeon progress: {activeDungeon.current_adventure_count} / 3 adventures
             </span>
             <span className="text-amber-300">
-              Current state: {dungeonState}
+              Area: {activeDungeon.area.name}
             </span>
           </div>
         </div>
+
+        {/* Display adventure content for the dungeon using DungeonAdventureProvider */}
+        <div className="mt-4 mb-2">
+          <DungeonAdventureProvider
+            character={character}
+            dungeon={activeDungeon}
+          >
+            <div className="w-full">
+              {/* Use our DungeonAdventureView component to render the appropriate view */}
+              <DungeonAdventureView />
+            </div>
+          </DungeonAdventureProvider>
+        </div>
+
+        <DungeonProgress character={character} />
+
       </div>
     );
   }
@@ -235,6 +222,7 @@ export default function DungeonTabContent({ character }: DungeonTabContentProps)
                     fill
                     className="object-cover"
                   />
+                  <div className="absolute inset-0 bg-black/40"></div>
                 </div>
                 
                 {/* Content overlay */}

@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import TabNavigation from '@/components/ui/tab-navigation';
 import type { TabItem } from '@/components/ui/tab-navigation';
 import AdventureContainer from '@/components/adventure/AdventureContainer';
-import DungeonTabContent from '@/components/dungeon/DungeonTabContent';
 import { AdventureProvider } from '@/components/adventure/AdventureContext';
 import { DungeonProvider, DungeonStateProvider } from '@/components/dungeon/DungeonContext';
 import type { Area, Character } from '@/lib/types';
+import DungeonTabContent from '@/components/dungeon/DungeonTabContent';
+import Image from 'next/image';
 
 interface AdventureTabContainerProps {
   character: Character;
@@ -23,6 +25,15 @@ export default function AdventureTabContainer({
   selectedArea
 }: AdventureTabContainerProps) {
   const [activeTab, setActiveTab] = useState<string>('adventure');
+  const searchParams = useSearchParams();
+  
+  // Check for tab parameter in URL and set active tab accordingly
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'dungeon') {
+      setActiveTab('dungeon');
+    }
+  }, [searchParams]);
 
   const tabs: TabItem[] = [
     {
@@ -33,7 +44,7 @@ export default function AdventureTabContainer({
     {
       id: 'dungeon',
       label: 'Dungeon',
-      icon: '/image/ui/dungeon_key.png' // Placeholder until a proper dungeon gate icon is created
+      icon: '/image/ui/dungeon_key.png'
     }
   ];
 
@@ -45,7 +56,7 @@ export default function AdventureTabContainer({
     <div className="w-full">
       <TabNavigation 
         tabs={tabs} 
-        defaultTab="adventure" 
+        defaultTab={activeTab}  // Use defaultTab instead of activeTab
         onTabChange={handleTabChange}
         fullWidth={true}
         className="mb-4"
@@ -62,11 +73,13 @@ export default function AdventureTabContainer({
             <AdventureContainer />
           </AdventureProvider>
         ) : (
-          <DungeonProvider>
-            <DungeonStateProvider>
-              <DungeonTabContent character={character} />
-            </DungeonStateProvider>
-          </DungeonProvider>
+          <div className="w-full relative">
+            <DungeonProvider>
+              <DungeonStateProvider>
+                <DungeonTabContent character={character} />
+              </DungeonStateProvider>
+            </DungeonProvider>
+          </div>
         )}
       </div>
     </div>
