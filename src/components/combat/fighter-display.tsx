@@ -163,6 +163,7 @@ export default function FighterDisplay({
               priority={true}
               style={{
                 objectFit: 'contain',
+                objectPosition: isEnemy ? 'bottom' : 'center',
                 width: `${imageWidth}px`,
                 height: `${imageHeight}px`,
               }}

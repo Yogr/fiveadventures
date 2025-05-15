@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import type { Character, CharacterDungeon } from '@/lib/types';
 import { ROUTES } from '@/lib/constants';
@@ -60,7 +61,6 @@ export default function DungeonProgress({ character }: DungeonProgressProps) {
   
   return (
     <div className="bg-amber-900/20 p-4 rounded-lg mb-4 border border-amber-800/50">
-      <h3 className="text-lg font-semibold text-amber-100 mb-2">Dungeon Status</h3>
       
       {/* Active Dungeon */}
       {activeDungeon && (
@@ -86,7 +86,14 @@ export default function DungeonProgress({ character }: DungeonProgressProps) {
       
       {/* Available Keys */}
       <div className="flex items-center justify-between mb-1">
-        <span className="text-amber-200 font-medium">Dungeon Keys:</span>
+        <span className="text-amber-200 font-medium">
+          <Image
+            src="/image/ui/dungeon_key.png"
+            alt="Dungeon Key"
+            width={20}
+            height={20}
+            className="inline-block mr-1"
+          />Dungeon Keys:</span>
         <span className="text-amber-300">
           {character.dungeon_keys || 0}
           {character.dungeon_key_parts > 0 && (
@@ -110,16 +117,6 @@ export default function DungeonProgress({ character }: DungeonProgressProps) {
             {character.dungeon_key_parts.toFixed(1)}/1.0 parts to next key
           </div>
         </div>
-      )}
-      
-      {/* Enter Dungeon Button - Only if character has keys and no active dungeon */}
-      {character.dungeon_keys > 0 && !activeDungeon && (
-        <Link 
-          href={ROUTES.DUNGEON}
-          className="mt-3 inline-block bg-amber-700 hover:bg-amber-600 text-amber-100 px-3 py-1 rounded text-sm transition-colors"
-        >
-          Enter Dungeon
-        </Link>
       )}
     </div>
   );

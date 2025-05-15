@@ -69,6 +69,16 @@ export async function middleware(request: NextRequest) {
   // We don't need to redirect users since we allow unauthenticated play
   // But we'll keep the middleware for session refreshing and cookie handling
 
+  // Redirect /dungeon to /adventure as we've integrated dungeon functionality into the adventure page
+  if (request.nextUrl.pathname === '/dungeon') {
+    return NextResponse.redirect(new URL('/adventure', request.url))
+  }
+
+  // Redirect /character to home page
+  if (request.nextUrl.pathname === '/character' && !request.nextUrl.pathname.startsWith('/character/create')) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
   // Check if user is trying to access the data editor but doesn't have admin privileges
   if (request.nextUrl.pathname.startsWith('/editGameData')) {
     if (!user) {

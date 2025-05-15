@@ -1,8 +1,7 @@
 import { getCharacterForUser } from '@/app/actions/character';
 import { getAreas, getSelectedArea } from '@/app/actions/area';
 import { getCurrentGameDay } from '@/lib/utils';
-import { AdventureProvider } from '@/components/adventure/AdventureContext';
-import AdventureContainer from '@/components/adventure/AdventureContainer';
+import AdventureTabContainer from '@/components/adventure/AdventureTabContainer';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,13 +28,13 @@ export default async function AdventurePage() {
   }
   
   return (
-    <AdventureProvider 
-      initialCharacter={character} 
-      currentDay={currentDay}
-      initialAreas={areas}
-      initialSelectedArea={selectedArea}
-    >
-      <AdventureContainer />
-    </AdventureProvider>
+    <div className="w-full">
+      <AdventureTabContainer
+        character={character}
+        currentDay={currentDay}
+        areas={areas}
+        selectedArea={selectedArea}
+      />
+    </div>
   );
 }

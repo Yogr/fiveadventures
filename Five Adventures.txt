@@ -5,7 +5,6 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Bugs
 ----------
-- Giant spider is floating
 
 
 Todo
