@@ -222,21 +222,23 @@ export default function DungeonTabContent({ character }: DungeonTabContentProps)
             {availableDungeons.map((dungeon) => (
               <div
                 key={dungeon.id}
-                className="p-4 bg-amber-900/40 rounded-lg border border-amber-800 transition-colors text-left flex items-start"
+                className="p-4 rounded-lg border border-amber-800 transition-colors text-left relative overflow-hidden"
+                style={{
+                  height: '180px'
+                }}
               >
-                <div className="flex-shrink-0 mr-4">
-                  <div className="w-16 h-16 bg-amber-950 rounded-md overflow-hidden border border-amber-700">
-                    <Image
-                      src={ImageSource.getAreaImagePath(dungeon)}
-                      alt={dungeon.name}
-                      width={64}
-                      height={64}
-                      className="object-cover"
-                    />
-                  </div>
+                {/* Background image */}
+                <div className="absolute inset-0 z-0">
+                  <Image
+                    src={ImageSource.getAreaImagePath(dungeon)}
+                    alt={dungeon.name}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
                 
-                <div className="flex-grow">
+                {/* Content overlay */}
+                <div className="relative z-10">
                   <h3 className="text-xl font-semibold text-amber-100">{dungeon.name}</h3>
                   <p className="text-amber-300 text-sm mb-2">{dungeon.description}</p>
                   
