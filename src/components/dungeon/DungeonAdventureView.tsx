@@ -251,45 +251,20 @@ export default function DungeonAdventureView() {
     return <DungeonCompletedView dungeonName={dungeon.area.name} />;
   }
   
-  // If we don't have an adventure, show waiting screen
+  // If we don't have an adventure, try to load one
   if (!adventure) {
     return (
-      <div className="w-full rounded-lg border-2 border-amber-900 border-t-amber-700 border-l-amber-700 bg-gradient-to-b from-yellow-950 to-black">
-        {/* Background image with overlaid content */}
-        <div className="relative w-full h-48">
-          {/* Background image */}
-          <div className="absolute inset-0">
-            <Image
-              src={dungeon?.area?.image 
-                ? ImageSource.getAreaImagePath(dungeon.area)
-                : '/image/ui/dungeonbackground.png'}
-              alt="Loading Adventure"
-              fill
-              className="object-cover rounded-t-md opacity-70"
-              priority
-            />
-            <div className="absolute inset-0 bg-black/60"></div> {/* Darker overlay for loading state */}
-          </div>
-          
-          {/* Content overlay */}
-          <div className="absolute inset-0 flex flex-col justify-center items-center p-4 z-10">
-            <h2 className="text-xl md:text-2xl mb-2 text-amber-300 text-center font-bold" 
-              style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.9), -1px -1px 4px rgba(0,0,0,0.9)" }}
-            >
-              Preparing Next Challenge...
-            </h2>
-          </div>
-        </div>
-        
-        <div className="p-6 text-center">
-          <p className="text-amber-200 mb-6">
-            Your next adventure in the {dungeon.area.name} dungeon awaits.
-          </p>
-          
-          <div className="flex justify-center">
-            <LoadingSpinner size="md" />
-          </div>
-        </div>
+      <div className="flex flex-col items-center p-6 bg-amber-900/50 rounded-lg border border-amber-700 text-center">
+        <h2 className="text-xl font-bold text-amber-200 mb-4">No Adventure Found</h2>
+        <p className="text-amber-300 mb-4">
+          We couldn't find an adventure for your dungeon run.
+        </p>
+        <button 
+          onClick={() => continueToNextAdventure()}
+          className="px-6 py-2 text-lg bg-amber-700 hover:bg-amber-600 active:bg-amber-800 text-white rounded mb-4"
+        >
+          Find Adventure
+        </button>
       </div>
     );
   }

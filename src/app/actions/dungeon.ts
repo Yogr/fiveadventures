@@ -267,6 +267,10 @@ export async function enterDungeon(
         .update({
           current_state: 'started',
           current_adventure_count: 0,
+          current_adventure_id: null,
+          decision_id: null,
+          outcome_id: null,
+          combat_id: null,
           updated_at: new Date().toISOString()
         })
         .eq('id', existingDungeon.id)
@@ -290,7 +294,11 @@ export async function enterDungeon(
           character_id: characterId,
           area_id: areaId,
           current_state: 'started',
-          current_adventure_count: 0
+          current_adventure_count: 0,
+          current_adventure_id: null,
+          decision_id: null,
+          outcome_id: null,
+          combat_id: null
         })
         .select('*, area:area_id(*)')
         .single();

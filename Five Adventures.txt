@@ -5,7 +5,13 @@ supabase projectID: ebmwfcmwnnbeyjxeadmj
 
 Bugs
 ----------
-
+Clean up editor and make sure ALL effects are working and balanced and can be created
+Get all 15 skills working (10 may be broken?)
+Get enemy skills working
+Heals still reverting to hp without the heal factored in
+The Mycelium Mind had no rewards for defeating it
+Didn't receive World Boss reward item
+World boss has duplicate unique key error - need to extend constraint to include the week
 
 Todo
 -------------

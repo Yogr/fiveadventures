@@ -6,6 +6,10 @@ import {
   getDungeonAdventure, 
   completeDungeonAdventure 
 } from '@/app/actions/dungeon';
+import { 
+  getDungeonState,
+  updateDungeonState
+} from '@/app/actions/dungeon-state';
 import { createClient } from '@/lib/supabase/client';
 import type { 
   Character, 
@@ -159,49 +163,151 @@ export function DungeonAdventureProvider({
   const [state, dispatch] = useReducer(dungeonAdventureReducer, initialState);
 
   // Load adventure data
-  const loadAdventureData = useCallback(async () => {
+  const loadAdventureData = useCallback(async (options?: {
+    forceSkipCombatCheck?: boolean,
+    forceLoadNewAdventure?: boolean
+  }) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
+      console.log('Loading dungeon adventure data...');
       
-      // Skip if in combat
-      if (state.showCombat && state.combatId) {
-        dispatch({ type: 'SET_LOADING', payload: false });
-        return;
-      }
+      const skipCombatCheck = options?.forceSkipCombatCheck || state.skipCombatCheck;
+      const forceLoadNewAdventure = options?.forceLoadNewAdventure || false;
       
-      // Skip if showing outcome
-      if (state.outcome) {
-        dispatch({ type: 'SET_LOADING', payload: false });
-        return;
-      }
+      // Get current dungeon state from database
+      const dungeonStateResponse = await getDungeonState(dungeon.id);
       
-      // Get a dungeon adventure
-      const response = await getDungeonAdventure(character, dungeon.id);
-      
-      if (!response.success || !response.data) {
-        console.error('Failed to get dungeon adventure:', response.error);
+      if (!dungeonStateResponse.success || !dungeonStateResponse.data) {
+        console.error('Failed to get dungeon state:', dungeonStateResponse.error);
         dispatch({ 
-          type: 'SET_ERROR', 
-          payload: response.error || 'Failed to load dungeon adventure' 
+          type: 'SET_LOADING', payload: false 
         });
+        return;
+      }
+      
+      const currentDungeonState = dungeonStateResponse.data;
+      const currentState = currentDungeonState.current_state;
+      console.log(`Current dungeon state: ${currentState}, adventure_id: ${currentDungeonState.current_adventure_id}`);
+      
+      // If dungeon is completed, just return
+      if (currentState === 'completed' || currentState === 'exited') {
+        console.log('Dungeon is completed or exited, not loading adventure');
         dispatch({ type: 'SET_LOADING', payload: false });
         return;
       }
       
-      dispatch({ type: 'SET_ADVENTURE', payload: response.data });
+      // Check for active combat if not skipping combat check
+      if (currentState === 'combat' && !skipCombatCheck) {
+        if (currentDungeonState.combat_id) {
+          console.log(`Found active combat: ${currentDungeonState.combat_id}`);
+          dispatch({ type: 'SET_COMBAT_ID', payload: currentDungeonState.combat_id });
+          
+          // If we have an outcome, show pre-combat, otherwise show combat directly
+          if (currentDungeonState.outcome_id) {
+            dispatch({ type: 'SET_SHOW_PRE_COMBAT', payload: true });
+            dispatch({ type: 'SET_SHOW_COMBAT', payload: false });
+          } else {
+            dispatch({ type: 'SET_SHOW_COMBAT', payload: true });
+          }
+          
+          dispatch({ type: 'SET_LOADING', payload: false });
+          return;
+        }
+      } else if (skipCombatCheck) {
+        // Reset the skip combat check flag after using it once
+        dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: false });
+      }
+      
+      // If in outcome state and has outcome, stay there unless forced to load new adventure
+      if (currentState === 'outcome' && currentDungeonState.outcome_id && !forceLoadNewAdventure) {
+        console.log('Found outcome state, not loading new adventure');
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return;
+      }
+      
+      // Check if we have a saved adventure_id and it's not locally loaded
+      const needsToFetchSavedAdventure = currentDungeonState.current_adventure_id && !state.adventure && !forceLoadNewAdventure;
+      const needsNewAdventure = !currentDungeonState.current_adventure_id || !state.adventure || forceLoadNewAdventure;
+      
+      if (needsToFetchSavedAdventure) {
+        console.log(`Fetching saved adventure ID ${currentDungeonState.current_adventure_id}`);
+        // We have a saved adventure_id but no adventure loaded - fetch it
+        const savedResponse = await getDungeonAdventure(character, dungeon.id);
+        
+        if (savedResponse.success && savedResponse.data) {
+          console.log(`Successfully loaded saved adventure: ${savedResponse.data.title}`);
+          dispatch({ type: 'SET_ADVENTURE', payload: savedResponse.data });
+          
+          // Also restore decision if available
+          if (currentDungeonState.decision_id && savedResponse.data.decisions) {
+            const decision = savedResponse.data.decisions.find(d => d.id === currentDungeonState.decision_id);
+            if (decision) {
+              dispatch({ type: 'SET_SELECTED_DECISION', payload: decision });
+            }
+          }
+          
+          dispatch({ type: 'SET_LOADING', payload: false });
+          return;
+        } else {
+          console.error('Failed to load saved adventure:', savedResponse.error);
+          // Fall through to get a new adventure
+        }
+      }
+      
+      // Either we need a new adventure or failed to load saved one
+      if (needsNewAdventure) {
+        console.log('Getting a new adventure...');
+        // Load a new adventure
+        const response = await getDungeonAdventure(character, dungeon.id);
+        
+        if (!response.success || !response.data) {
+          console.error('Failed to get dungeon adventure:', response.error);
+          dispatch({ 
+            type: 'SET_ERROR', 
+            payload: response.error || 'Failed to load dungeon adventure' 
+          });
+          dispatch({ type: 'SET_LOADING', payload: false });
+          return;
+        }
+        
+        console.log(`Successfully loaded new adventure: ${response.data.title}`);
+        // Update the state with the new adventure
+        dispatch({ type: 'SET_ADVENTURE', payload: response.data });
+        
+        // Update the database state to adventure
+        await updateDungeonState(dungeon.id, {
+          current_state: 'adventure',
+          current_adventure_id: response.data.id
+        });
+      }
+      
       dispatch({ type: 'SET_LOADING', payload: false });
     } catch (error) {
       console.error('Error loading dungeon adventure:', error);
       dispatch({ type: 'SET_ERROR', payload: 'An unexpected error occurred' });
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [character, dungeon.id, state.outcome, state.showCombat, state.combatId]);
+  }, [character, dungeon.id, state.adventure, state.skipCombatCheck]);
 
   // Select decision
-  const selectDecision = useCallback((decision: AdventureDecision) => {
+  const selectDecision = useCallback(async (decision: AdventureDecision) => {
     dispatch({ type: 'SET_SELECTED_DECISION', payload: decision });
-  }, []);
+    
+    // Persist the decision to the database
+    if (state.adventure) {
+      try {
+        await updateDungeonState(dungeon.id, {
+          current_state: 'adventure',
+          decision_id: decision.id,
+          current_adventure_id: state.adventure.id
+        });
+      } catch (error) {
+        console.error('Error persisting decision:', error);
+        // Continue anyway as this isn't critical for UI functionality
+      }
+    }
+  }, [dungeon.id, state.adventure]);
 
   // Complete adventure
   const completeAdventure = useCallback(async () => {
@@ -237,9 +343,27 @@ export function DungeonAdventureProvider({
       
       // Check if outcome has combat
       if (result.data.outcome.has_combat && result.data.combat) {
+        // Update database state to combat
+        await updateDungeonState(dungeon.id, {
+          current_state: 'combat',
+          current_adventure_id: state.adventure.id,
+          decision_id: state.selectedDecision.id,
+          outcome_id: result.data.outcome.id,
+          combat_id: result.data.combat.id
+        });
+        
         dispatch({ type: 'SET_COMBAT_ID', payload: result.data.combat.id });
         dispatch({ type: 'SET_SHOW_COMBAT', payload: false });
         dispatch({ type: 'SET_SHOW_PRE_COMBAT', payload: true });
+      } else {
+        // Update database state to outcome if no combat
+        await updateDungeonState(dungeon.id, {
+          current_state: 'outcome',
+          current_adventure_id: state.adventure.id,
+          decision_id: state.selectedDecision.id,
+          outcome_id: result.data.outcome.id,
+          combat_id: null
+        });
       }
       
       // Set reward item if available
@@ -271,7 +395,7 @@ export function DungeonAdventureProvider({
   }, [state.adventure?.id, state.character, state.dungeon.id, state.selectedDecision?.id]);
 
   // Handle combat end
-  const handleCombatEnd = useCallback((result: { isVictory: boolean; ranAway: boolean; monsterName: string }) => {
+  const handleCombatEnd = useCallback(async (result: { isVictory: boolean; ranAway: boolean; monsterName: string }) => {
     // Set flag to skip combat check on next loadAdventureData call
     dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: true });
     
@@ -287,50 +411,64 @@ export function DungeonAdventureProvider({
       dispatch({ type: 'SET_SHOW_REWARDS', payload: true });
     }
     
+    let outcomeData: AdventureOutcome;
+    
     // Create an appropriate outcome message based on the result
     if (result.ranAway) {
-      dispatch({
-        type: 'SET_OUTCOME',
-        payload: {
-          id: 0,
-          decision_id: 0,
-          description: `You ran away from the ${result.monsterName}!`,
-          experience_bonus: 0,
-          gold_bonus: 0,
-          hitpoints_change: 0,
-          energy_change: 0,
-          has_combat: false,
-          monster_ids: [],
-          stat_requirements: null,
-          reward_table_id: null,
-          success_rate_formula: null,
-          created_at: new Date().toISOString(),
-          is_success: false
-        }
-      });
+      outcomeData = {
+        id: 0,
+        decision_id: 0,
+        description: `You ran away from the ${result.monsterName}!`,
+        experience_bonus: 0,
+        gold_bonus: 0,
+        hitpoints_change: 0,
+        energy_change: 0,
+        has_combat: false,
+        monster_ids: [],
+        stat_requirements: null,
+        reward_table_id: null,
+        success_rate_formula: null,
+        created_at: new Date().toISOString(),
+        is_success: false
+      };
+      
+      dispatch({ type: 'SET_OUTCOME', payload: outcomeData });
     } else if (!result.isVictory) {
       // If defeated, create a defeat outcome
-      dispatch({
-        type: 'SET_OUTCOME',
-        payload: {
-          id: 0,
-          decision_id: 0,
-          description: `You were defeated by the ${result.monsterName}!`,
-          experience_bonus: 0, 
-          gold_bonus: 0,
-          hitpoints_change: 0,
-          energy_change: 0,
-          has_combat: true,
-          monster_ids: [],
-          stat_requirements: null,
-          reward_table_id: null,
-          success_rate_formula: null,
-          created_at: new Date().toISOString(),
-          is_success: false
-        }
-      });
+      outcomeData = {
+        id: 0,
+        decision_id: 0,
+        description: `You were defeated by the ${result.monsterName}!`,
+        experience_bonus: 0, 
+        gold_bonus: 0,
+        hitpoints_change: 0,
+        energy_change: 0,
+        has_combat: true,
+        monster_ids: [],
+        stat_requirements: null,
+        reward_table_id: null,
+        success_rate_formula: null,
+        created_at: new Date().toISOString(),
+        is_success: false
+      };
+      
+      dispatch({ type: 'SET_OUTCOME', payload: outcomeData });
+    } else {
+      // If victory, we already have the outcome in state, use that
+      outcomeData = state.outcome!;
     }
-  }, []);
+    
+    // Update database state to reflect combat result
+    try {
+      await updateDungeonState(dungeon.id, {
+        current_state: 'outcome',
+        combat_id: null
+      });
+    } catch (error) {
+      console.error('Error updating dungeon state after combat:', error);
+      // Continue anyway as this doesn't affect the UI functionality
+    }
+  }, [dungeon.id, state.outcome]);
 
   // Continue to next adventure
   const continueToNextAdventure = useCallback(async () => {
@@ -339,22 +477,17 @@ export function DungeonAdventureProvider({
       
       // Reset adventure ID in the database to clear the current adventure
       // This ensures we get a fresh adventure on the next load
-      const supabase = createClient();
-      const { error: updateError } = await supabase
-        .from('character_dungeons')
-        .update({
+      try {
+        await updateDungeonState(dungeon.id, {
           current_adventure_id: null,
           decision_id: null,
           outcome_id: null,
           combat_id: null,
-          current_state: 'started',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', dungeon.id);
-      
-      if (updateError) {
+          current_state: 'started'
+        });
+      } catch (updateError) {
         console.error('Error resetting dungeon adventure state:', updateError);
-        // Continue anyway, this isn't critical
+        // Continue anyway, this isn't critical for UI functionality
       }
       
       // Reset state for next adventure
@@ -363,8 +496,11 @@ export function DungeonAdventureProvider({
       // Set flag to skip combat check on next loadAdventureData call
       dispatch({ type: 'SET_SKIP_COMBAT_CHECK', payload: true });
       
-      // Load a new adventure
-      await loadAdventureData();
+      // Force load a new adventure with special options
+      await loadAdventureData({
+        forceSkipCombatCheck: true,
+        forceLoadNewAdventure: true
+      });
     } catch (error) {
       console.error('Error loading next dungeon adventure:', error);
       dispatch({ type: 'SET_ERROR', payload: 'An unexpected error occurred' });
